@@ -1,0 +1,22 @@
+{
+  "name": "bubble-card-modules",
+  "version": "1.0.0",
+  "description": "Custom modules for Bubble Card",
+  "scripts": {
+    "create-module": "tsx scripts/generate_module.ts",
+    "build": "npm run format && tsx scripts/build_modules.ts",
+    "format": "prettier --write \"**/*.{js,yaml,md}\""
+  },
+  "dependencies": {
+    "glob": "^11.0.2",
+    "inquirer": "^12.6.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.15.2",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

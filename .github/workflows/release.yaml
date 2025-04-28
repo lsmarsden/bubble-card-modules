@@ -1,0 +1,72 @@
+name: Build and Release Modules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "modules/**"
+      - ".github/workflows/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.detect_changes.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Detect changed modules
+        id: detect_changes
+        run: |
+          echo "Detecting changed modules..."
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^modules/' | cut -d/ -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Build modules
+        run: npm run build
+
+  create-release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: needs.build.outputs.changed != '[]'
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.build.outputs.changed) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MODULE=${{ matrix.module }}
+          echo "Creating release for $MODULE..."
+
+          cd modules/$MODULE
+
+          # Parse ID and version
+          ID=$(yq eval '.module_info.id' module.yaml)
+          VERSION=$(yq eval '.module_info.version' module.yaml)
+          NAME=$(yq eval '.module_info.name' module.yaml)
+          TAG="$ID/v$VERSION"
+
+          # Create a release
+          gh release create "${ID}/v${VERSION}" \
+            "dist/${ID}.yaml" \
+            --title "${NAME} v${VERSION}" \
+            --notes "Auto-generated build from module.yaml" \
+            --target ${{ github.sha }}
