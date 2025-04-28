@@ -2,7 +2,7 @@ import inquirer from "inquirer";
 import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
-import {PathLike} from "node:fs";
+import {createFileFromTemplate} from "./helpers";
 
 interface ModuleInfo {
     id: string;
@@ -69,21 +69,11 @@ async function generateModule() {
         MODULE_NAME: moduleInfo.name,
         MODULE_ID: moduleInfo.id,
         MAIN_IMAGE: "preview.png",
-        SUPPORTED_CARDS: moduleInfo.supported.map(s => `> - ${s}`).join("\n")
+        SUPPORTED_CARDS: moduleInfo.supported.map(s => `> - ${s}`).join("\n").substring(2)
     });
 
     console.log(`Created new module at ${modulePath}`);
 }
 
-async function createFileFromTemplate(file: PathLike, templateFile: PathLike, values: Record<string, string>) {
-    const template = await fs.readFile(templateFile, "utf8");
-    const content = replacePlaceholders(template, values);
-
-    await fs.writeFile(file, content, "utf8");
-}
-
-function replacePlaceholders(template: string, values: Record<string, string>): string {
-    return template.replace(/\{\{(.*?)}}/g, (_, key) => values[key.trim()] || "");
-}
 
 generateModule();

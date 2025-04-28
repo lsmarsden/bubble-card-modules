@@ -30,26 +30,25 @@
 
 ## Example YAML
 
----
-
   <details>
     <summary><strong>Please add at least one example!</strong></summary>
     <p>Some example:</p>
 
-    type: custom:bubble-card
-    card_type:
-    modules:
-      - {{MODULE_ID}}
-    {{MODULE_ID}}:
+```yaml
+type: custom:bubble-card
+card_type:
+modules:
+  - ${{MODULE_ID}}
+${{MODULE_ID}}:
+```
 
   </details>
 
 ## Install this module
 
----
-
 1. Install [Bubble Card](https://github.com/Clooos/Bubble-Card) in Home Assistant if you haven't already.
-2. Install this module via the Bubble Card module store by searching for `{{MODULE_NAME}}`. This way you get access to the latest features.
+2. Install this module via the Bubble Card module store by searching for `{{MODULE_NAME}}`. This way you get access to
+   the latest features.
 
 That's all!
 
@@ -64,8 +63,6 @@ module inside.
 
 ## Contributing
 
----
-
 Contributions are welcome!
 
 - Open an issue to suggest features, improvements, or report bugs (or comment on the module store discussion).
@@ -75,7 +72,8 @@ If contributing to a module, please keep code clean and consistent with existing
 
 ### Building Locally
 
-This repository uses a simple build process to combine module parts (code.js, description.md, editor.yaml) into final module YAMLs.
+This repository uses a simple build process to combine module parts (code.js, description.md, editor.yaml) into final
+module YAMLs.
 
 To create a new module, run `npm run create-module` and follow the instructions. This will setup
 a new template module in the `modules/module_id` folder.

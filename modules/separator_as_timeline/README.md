@@ -62,30 +62,32 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![UsingEntitiesAndStaticTime.png](assets/UsingEntitiesAndStaticTime.png)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      show_current_time: false
-      rounded_edges: true
-      marker_color: red
-      ranges:
-        "0":
-          start: "12:30"
-          end: "13:30"
-          label: Lunch
-          color: blue
-          icon: mdi:food-apple
-          icon_color: green
-        "1":
-          start_entity: sensor.sun_next_rising
-          end: "09:00"
-          label: School run
-          icon: mdi:bus-school
-          icon_color: yellow
-          color: teal
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  show_current_time: false
+  rounded_edges: true
+  marker_color: red
+  ranges:
+    "0":
+      start: "12:30"
+      end: "13:30"
+      label: Lunch
+      color: blue
+      icon: mdi:food-apple
+      icon_color: green
+    "1":
+      start_entity: sensor.sun_next_rising
+      end: "09:00"
+      label: School run
+      icon: mdi:bus-school
+      icon_color: yellow
+      color: teal
+```
 
   </details>
 
@@ -94,23 +96,25 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![FullTimestampConversion.png](assets/FullTimestampConversion.png)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      show_current_time: true
-      marker_color: red
-      ranges:
-        "0":
-          start: "2025-04-26T02:00:00+00:00"
-          end: "2025-04-26T04:30:00+00:00"
-          label: Remote Job
-          color: blue
-          icon: mdi:briefcase
-    name: Remote Work
-    icon: mdi:cloud
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  show_current_time: true
+  marker_color: red
+  ranges:
+    "0":
+      start: "2025-04-26T02:00:00+00:00"
+      end: "2025-04-26T04:30:00+00:00"
+      label: Remote Job
+      color: blue
+      icon: mdi:briefcase
+name: Remote Work
+icon: mdi:cloud
+```
 
   </details>
 
@@ -119,40 +123,42 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![GlobalIconStyling.gif](assets/GlobalIconStyling.gif)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      icon_color: orange
-      icon_background_color: black
-      icon_outline_color: yellow
-      icon_active_color: orange
-      show_time_ticks: true
-      highlight_active: true
-      ranges:
-        "0":
-          label: Sunset
-          end_entity: sensor.sun_next_dusk
-          start_entity: sensor.sun_next_setting
-          color: deep-orange
-          icon: mdi:weather-sunset-down
-        "1":
-          label: Sunrise
-          start_entity: sensor.sun_next_dawn
-          end_entity: sensor.sun_next_rising
-          icon: mdi:weather-sunset-up
-          color: deep-orange
-        "2":
-          label: Night
-          start_entity: sensor.sun_next_dusk
-          end_entity: sensor.sun_next_dawn
-          icon: mdi:weather-night
-          color: purple
-          icon_color: white
-    name: Sun
-    icon: mdi:sun-clock
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  icon_color: orange
+  icon_background_color: black
+  icon_outline_color: yellow
+  icon_active_color: orange
+  show_time_ticks: true
+  highlight_active: true
+  ranges:
+    "0":
+      label: Sunset
+      end_entity: sensor.sun_next_dusk
+      start_entity: sensor.sun_next_setting
+      color: deep-orange
+      icon: mdi:weather-sunset-down
+    "1":
+      label: Sunrise
+      start_entity: sensor.sun_next_dawn
+      end_entity: sensor.sun_next_rising
+      icon: mdi:weather-sunset-up
+      color: deep-orange
+    "2":
+      label: Night
+      start_entity: sensor.sun_next_dusk
+      end_entity: sensor.sun_next_dawn
+      icon: mdi:weather-night
+      color: purple
+      icon_color: white
+name: Sun
+icon: mdi:sun-clock
+```
 
   </details>
 
@@ -162,44 +168,46 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![GroupLabels.gif](assets/GroupLabels.gif)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      show_time_ticks: true
-      show_current_time: false
-      ranges:
-        "0":
-          start: "01:00"
-          end: "01:20"
-          label: Flight
-          color: red
-          icon: mdi:airplane-takeoff
-          icon_outline_color: transparent
-        "1":
-          start: "01:15"
-          end: "12:30"
-          label: Flight
-          color: orange
-          icon: mdi:airplane
-          icon_outline_color: transparent
-        "2":
-          start: "12:30"
-          end: "12:50"
-          label: Flight
-          color: red
-          icon: mdi:airplane-landing
-          icon_outline_color: transparent
-        "3":
-          start: "15:30"
-          end: "18:00"
-          label: "Relax"
-          color: green
-          icon: mdi:umbrella-beach
-          icon_color: yellow
-          icon_outline_color: transparent
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  show_time_ticks: true
+  show_current_time: false
+  ranges:
+    "0":
+      start: "01:00"
+      end: "01:20"
+      label: Flight
+      color: red
+      icon: mdi:airplane-takeoff
+      icon_outline_color: transparent
+    "1":
+      start: "01:15"
+      end: "12:30"
+      label: Flight
+      color: orange
+      icon: mdi:airplane
+      icon_outline_color: transparent
+    "2":
+      start: "12:30"
+      end: "12:50"
+      label: Flight
+      color: red
+      icon: mdi:airplane-landing
+      icon_outline_color: transparent
+    "3":
+      start: "15:30"
+      end: "18:00"
+      label: "Relax"
+      color: green
+      icon: mdi:umbrella-beach
+      icon_color: yellow
+      icon_outline_color: transparent
+```
 
   </details>
 
@@ -208,28 +216,30 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![Minimal.gif](assets/Minimal.gif)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      show_time_ticks: false
-      show_current_time: false
-      rounded_edges: false
-      ranges:
-        "0":
-          start: "01:00"
-          end: "03:00"
-          label: Task
-          color: red
-        "1":
-          start: "10:30"
-          end: "12:00"
-          label: Lunch
-          color: green
-    name: Flat Layout
-    icon: mdi:timeline
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  show_time_ticks: false
+  show_current_time: false
+  rounded_edges: false
+  ranges:
+    "0":
+      start: "01:00"
+      end: "03:00"
+      label: Task
+      color: red
+    "1":
+      start: "10:30"
+      end: "12:00"
+      label: Lunch
+      color: green
+name: Flat Layout
+icon: mdi:timeline
+```
 
   </details>
 
@@ -238,34 +248,36 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ![TimeCustomisation.gif](assets/TimeCustomisation.gif)
 
-    type: custom:bubble-card
-    card_type: separator
-    modules:
-      - default
-      - separator_as_timeline
-    separator_as_timeline:
-      show_time_ticks: true
-      show_current_time: false
-      ranges:
-        "0":
-          start: "15:30"
-          end: "18:00"
-          label: "Study"
-          color: blue
-          icon: mdi:desk-lamp
-          icon_color: blue
-          icon_outline_color: purple
-      time_format:
-        use_24_hour: true
-        append_suffix: false
-        pad_hours: true
-        show_minutes: true
-        timeline:
-          override: true
-          use_24_hour: false
-          append_suffix: true
-          show_minutes: false
-          pad_hours: false
+```yaml
+type: custom:bubble-card
+card_type: separator
+modules:
+  - default
+  - separator_as_timeline
+separator_as_timeline:
+  show_time_ticks: true
+  show_current_time: false
+  ranges:
+    "0":
+      start: "15:30"
+      end: "18:00"
+      label: "Study"
+      color: blue
+      icon: mdi:desk-lamp
+      icon_color: blue
+      icon_outline_color: purple
+  time_format:
+    use_24_hour: true
+    append_suffix: false
+    pad_hours: true
+    show_minutes: true
+    timeline:
+      override: true
+      use_24_hour: false
+      append_suffix: true
+      show_minutes: false
+      pad_hours: false
+```
 
   </details>
 

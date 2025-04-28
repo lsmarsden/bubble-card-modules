@@ -1,14 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
+import {shareModule} from "./share_module";
 
-interface ModuleInfo {
+export interface ModuleInfo {
     id: string;
     name: string;
     version: string;
     creator: string;
     link?: string;
-    supported?: string[];
+    supported: string[];
     description_file: string;
     code_file: string;
     styles: string;
@@ -62,6 +63,8 @@ async function buildModules() {
         await fs.writeFile(path.join(distPath, `${info.id}.yaml`), outputYaml, "utf8");
 
         console.log(`Built module: ${info.id}`);
+
+        await shareModule(info.id);
     }
 }
 

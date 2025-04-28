@@ -8,16 +8,12 @@ A collection of custom modules built for [Bubble Card](https://github.com/Clooos
 
 ## Module Structure
 
----
-
 Each module is organized inside its own folder in the `modules` directory.
 
 - Each folder contains its own YAML, description, code, and editor files.
 - Built modules are available in the `modules/module_id/dist` folder for manual installation.
 
 ## Installation
-
----
 
 1. Install [Bubble Card](https://github.com/Clooos/Bubble-Card) in Home Assistant if you haven't already.
 2. Have a look through the `modules` in this repo or the Module Store in the Bubble Card editor in Home Assistant to find a module you like.
@@ -34,8 +30,6 @@ module inside.
 </details>
 
 ## Contributing
-
----
 
 Contributions are welcome!
 
