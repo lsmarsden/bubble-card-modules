@@ -1,0 +1,263 @@
+export default function separator_as_timeline(card, hass) {
+  const config = this.config.separator_as_timeline;
+  if (!config) return;
+
+  const element = card.querySelector(".bubble-line");
+  if (!element) return;
+
+  // 1. ===== Config Defaults =====
+  const defaults = {
+    show_time_ticks: true,
+    show_current_time: true,
+    icon_color: "var(--primary-text-color)",
+    icon_outline_color: "var(--card-background-color)",
+    icon_background_color: "var(--bubble-icon-background-color)",
+    marker_color: "var(--accent-color)",
+    icon_active_color: "var(--primary-color)",
+    highlight_active: true,
+    rounded_edges: false,
+  };
+
+  const getConfig = (key) => config[key] ?? defaults[key];
+
+  // 2. ===== Helpers =====
+  const processColor = (color) => {
+    if (!color) return null;
+    if (["#", "rgb", "hsl"].some((prefix) => color.startsWith(prefix))) {
+      return color;
+    }
+    return `var(--${color}-color)`;
+  };
+  const timeToPercent = (h, m) => ((h * 60 + m) / 1440) * 100;
+
+  const parseTimeString = (str) => {
+    if (!str) return [0, 0];
+    try {
+      // Handle ISO format: 2025-04-23T10:12:23+00:00
+      if (str.includes("T")) {
+        const date = new Date(str);
+        if (!isNaN(date)) {
+          return [date.getHours(), date.getMinutes()];
+        }
+      }
+
+      // Handle HH:MM format
+      if (str.includes(":")) {
+        const [h, m] = str.split(":").map(Number);
+        return [h || 0, m || 0];
+      }
+
+      // Handle numeric time formats (minutes since midnight)
+      if (!isNaN(str)) {
+        const totalMinutes = parseInt(str);
+        return [Math.floor(totalMinutes / 60), totalMinutes % 60];
+      }
+
+      return [0, 0];
+    } catch {
+      return [0, 0];
+    }
+  };
+
+  const getState = (entityId, attribute) => {
+    if (!entityId || !hass.states[entityId]) {
+      return undefined;
+    }
+    const statesObj = hass.states[entityId];
+    return attribute ? statesObj.attributes[attribute] : statesObj.state;
+  };
+
+  // 3. ===== Init wrapper =====
+  let wrapper = element.closest(".bubble-line-wrapper");
+  if (!wrapper) {
+    wrapper = document.createElement("div");
+    wrapper.className = "bubble-line-wrapper";
+    wrapper.style.height = getComputedStyle(element).height;
+    element.classList.add("wrapped");
+    element.parentNode.insertBefore(wrapper, element);
+    wrapper.appendChild(element);
+  }
+
+  // Tooltip init (only one)
+  let tooltip = wrapper.querySelector(".timeline-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.className = "timeline-tooltip";
+    wrapper.appendChild(tooltip);
+  }
+
+  const showTooltip = (el) => {
+    tooltip.innerText = el.dataset.tooltip;
+    tooltip.style.opacity = "1";
+  };
+
+  const hideTooltip = () => {
+    tooltip.style.opacity = "0";
+  };
+
+  // Clear old segments
+  wrapper
+    .querySelectorAll(".timeline-segment, .timeline-icon")
+    .forEach((e) => e.remove());
+
+  // 4. ===== Render Segments =====
+  const ranges = Array.isArray(config.ranges)
+    ? config.ranges
+    : Object.values(config.ranges || {});
+  const now = new Date();
+  const currentPct = timeToPercent(now.getHours(), now.getMinutes());
+  const pad = (n) => String(n).padStart(2, "0");
+
+  for (const r of ranges) {
+    const group = `group-${r.label?.replace(/\s+/g, "-")}`;
+
+    // Get start time (from entity if provided, otherwise from direct value)
+    let startTimeValue;
+    if (r.start_entity) {
+      startTimeValue = getState(r.start_entity, r.start_attribute);
+    } else {
+      startTimeValue = r.start;
+    }
+
+    // Get end time (from entity if provided, otherwise from direct value)
+    let endTimeValue;
+    if (r.end_entity) {
+      endTimeValue = getState(r.end_entity, r.end_attribute);
+    } else {
+      endTimeValue = r.end;
+    }
+
+    const [startH, startM] = parseTimeString(startTimeValue);
+    const [endH, endM] = parseTimeString(endTimeValue);
+
+    const startPct = timeToPercent(startH, startM);
+    const endPct = timeToPercent(endH, endM);
+
+    // Handle wrap-around time ranges (e.g. 22:00–06:00)
+    const segments =
+      startPct < endPct
+        ? [{ left: startPct, width: endPct - startPct }]
+        : [
+            { left: startPct, width: 100 - startPct },
+            { left: 0, width: endPct },
+          ];
+
+    let isActive = false;
+
+    segments.forEach(({ left, width }) => {
+      const seg = document.createElement("div");
+      seg.className = `timeline-segment ${group}`;
+      seg.style.left = `${left}%`;
+      seg.style.width = `${width}%`;
+      seg.style.background = processColor(r.color) || "var(--primary-color)";
+      seg.dataset.tooltip = `${r.label || ""}:  ${pad(startH)}:${pad(startM)} → ${pad(endH)}:${pad(endM)}`;
+      if (r.source_entities) {
+        seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
+      }
+
+      const isRounded = getConfig("rounded_edges");
+      if (isRounded) {
+        const leftEdge = Math.round(left) === 0;
+        const rightEdge = Math.round(left + width) === 100;
+
+        seg.style.borderTopLeftRadius = leftEdge ? "0" : "4px";
+        seg.style.borderBottomLeftRadius = leftEdge ? "0" : "4px";
+        seg.style.borderTopRightRadius = rightEdge ? "0" : "4px";
+        seg.style.borderBottomRightRadius = rightEdge ? "0" : "4px";
+      } else {
+        seg.style.borderRadius = "0";
+      }
+      wrapper.appendChild(seg);
+
+      seg.addEventListener("mouseenter", () => {
+        wrapper
+          .querySelectorAll(`.${group}`)
+          .forEach((e) => e.classList.add("highlighted"));
+        showTooltip(seg);
+      });
+      seg.addEventListener("mouseleave", () => {
+        wrapper
+          .querySelectorAll(`.${group}`)
+          .forEach((e) => e.classList.remove("highlighted"));
+        hideTooltip();
+      });
+
+      if (currentPct >= left && currentPct <= left + width) {
+        isActive = true;
+      }
+
+      if (r.icon) {
+        const iconEl = document.createElement("ha-icon");
+        iconEl.setAttribute("icon", r.icon);
+        iconEl.className = `timeline-icon ${group}`;
+        iconEl.style.left = `${left + width / 2}%`;
+        iconEl.style.color = processColor(
+          r.icon_color || getConfig("icon_color"),
+        );
+        iconEl.style.border = `1px solid ${processColor(r.icon_outline_color || getConfig("icon_outline_color"))}`;
+        iconEl.style.background = processColor(
+          r.icon_background_color || getConfig("icon_background_color"),
+        );
+        wrapper.style.setProperty(
+          `--icon-${group}-active-color`,
+          `${processColor(r.icon_active_color || getConfig("icon_active_color"))}`,
+        );
+
+        wrapper.appendChild(iconEl);
+
+        iconEl.addEventListener("mouseenter", () => {
+          wrapper
+            .querySelectorAll(`.${group}`)
+            .forEach((e) => e.classList.add("highlighted"));
+          showTooltip(seg);
+        });
+        iconEl.addEventListener("mouseleave", () => {
+          wrapper
+            .querySelectorAll(`.${group}`)
+            .forEach((e) => e.classList.remove("highlighted"));
+          hideTooltip();
+        });
+      }
+    });
+
+    // Apply glow to icons if active
+    if (getConfig("highlight_active") && isActive) {
+      wrapper.querySelectorAll(`.timeline-icon.${group}`).forEach((e) => {
+        e.style.filter = `drop-shadow(0 0 5px var(--icon-${group}-active-color))`;
+      });
+    } else {
+      wrapper.querySelectorAll(`.timeline-icon.${group}`).forEach((e) => {
+        e.style.filter = "";
+      });
+    }
+  }
+
+  // 5. ===== Time Ticks =====
+  if (
+    getConfig("show_time_ticks") &&
+    !wrapper.querySelector(".timeline-tick")
+  ) {
+    [0, 6, 12, 18, 24].forEach((h) => {
+      const tick = document.createElement("div");
+      tick.className = "timeline-tick";
+      tick.style.left = `${(h / 24) * 100}%`;
+      tick.innerText = `${pad(h % 24)}:00`;
+      wrapper.appendChild(tick);
+    });
+  }
+
+  // 6. ===== Current Time Marker =====
+  if (getConfig("show_current_time")) {
+    let marker = wrapper.querySelector(".timeline-marker");
+    if (!marker) {
+      marker = document.createElement("div");
+      marker.className = "timeline-marker";
+      wrapper.appendChild(marker);
+    }
+    wrapper.style.setProperty("--timeline-marker-left", `${currentPct}%`);
+    wrapper.style.setProperty(
+      "--marker-color",
+      processColor(getConfig("marker_color")),
+    );
+  }
+}

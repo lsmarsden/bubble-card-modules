@@ -1,0 +1,262 @@
+editor:
+  - type: expandable
+    title: Timeline settings
+    icon: mdi:timeline-text
+    schema:
+      - name: show_time_ticks
+        label: Show time ticks on the timeline.
+        default: true
+        selector:
+          boolean: null
+      - name: rounded_edges
+        label: Round edges of segments. Midnight edges will stay flat for display.
+        default: false
+        selector:
+          boolean: null
+      - name: show_current_time
+        label: Show current time marker on the timeline.
+        default: true
+        selector:
+          boolean: null
+      - name: marker_color
+        label: Color of the current time marker.
+        selector:
+          ui_color: null
+  - type: expandable
+    title: Global icon color settings
+    icon: mdi:palette
+    schema:
+      - name: icon_color
+        label: Icon color. Overridable per icon.
+        selector:
+          ui_color: null
+      - name: icon_background_color
+        label: Icon background color. Overridable per icon.
+        selector:
+          ui_color: null
+      - name: icon_outline_color
+        label: Icon outline color. Overridable per icon.
+        selector:
+          ui_color: null
+      - name: highlight_active
+        title: Highlight active period
+        label: Highlight the current active period.
+        default: true
+        selector:
+          boolean: null
+      - name: icon_active_color
+        label: Icon active period color. Overridable per icon.
+        selector:
+          ui_color: null
+  - type: expandable
+    title: Time Ranges - define additional in YAML
+    icon: mdi:chart-gantt
+    name: ranges
+    schema:
+      - type: expandable
+        title: Time Range 1
+        name: "0"
+        schema:
+          - name: start_entity
+            label: Start Time Entity
+            description: >-
+              Entity whose state will be used as the start time (e.g.
+              sensor.sun_next_dawn)
+            selector:
+              entity: null
+          - name: start_attribute
+            label: Start Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: start
+            label: Fixed start time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: end_entity
+            label: End Time Entity
+            description: Entity whose state will be used as the end time
+            selector:
+              entity: null
+          - name: end_attribute
+            label: End Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: end
+            label: Fixed end time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: label
+            label: Label
+            selector:
+              text: null
+          - name: color
+            label: Timeline color
+            selector:
+              ui_color: null
+          - name: icon
+            label: Icon
+            selector:
+              icon: null
+          - name: icon_color
+            label: Icon color
+            selector:
+              ui_color: null
+          - name: icon_background_color
+            label: Icon background color
+            selector:
+              ui_color: null
+          - name: icon_outline_color
+            label: Icon outline color
+            selector:
+              ui_color: null
+          - name: icon_active_color
+            label: Icon active color
+            selector:
+              ui_color: null
+          - name: source_entities
+            label: Source entities (for tooltip)
+            description: Optional information to show in tooltip
+            selector:
+              text: null
+      - type: expandable
+        title: Time Range 2
+        name: "1"
+        schema:
+          - name: start_entity
+            label: Start Time Entity
+            description: >-
+              Entity whose state will be used as the start time (e.g.
+              sensor.sun_next_dawn)
+            selector:
+              entity: null
+          - name: start_attribute
+            label: Start Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: start
+            label: Fixed start time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: end_entity
+            label: End Time Entity
+            description: Entity whose state will be used as the end time
+            selector:
+              entity: null
+          - name: end_attribute
+            label: End Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: end
+            label: Fixed end time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: label
+            label: Label
+            selector:
+              text: null
+          - name: color
+            label: Timeline color
+            selector:
+              ui_color: null
+          - name: icon
+            label: Icon
+            selector:
+              icon: null
+          - name: icon_color
+            label: Icon color
+            selector:
+              ui_color: null
+          - name: icon_background_color
+            label: Icon background color
+            selector:
+              ui_color: null
+          - name: icon_outline_color
+            label: Icon outline color
+            selector:
+              ui_color: null
+          - name: icon_active_color
+            label: Icon active color
+            selector:
+              ui_color: null
+          - name: source_entities
+            label: Source entities (for tooltip)
+            description: Optional information to show in tooltip
+            selector:
+              text: null
+      - type: expandable
+        title: Time Range 3
+        name: "2"
+        schema:
+          - name: start_entity
+            label: Start Time Entity
+            description: >-
+              Entity whose state will be used as the start time (e.g.
+              sensor.sun_next_dawn)
+            selector:
+              entity: null
+          - name: start_attribute
+            label: Start Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: start
+            label: Fixed start time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: end_entity
+            label: End Time Entity
+            description: Entity whose state will be used as the end time
+            selector:
+              entity: null
+          - name: end_attribute
+            label: End Time Attribute (optional)
+            description: Attribute to use instead of state
+            selector:
+              attribute: {}
+          - name: end
+            label: Fixed end time (ignored if entity is set)
+            selector:
+              time:
+                no_second: true
+          - name: label
+            label: Label
+            selector:
+              text: null
+          - name: color
+            label: Timeline color
+            selector:
+              ui_color: null
+          - name: icon
+            label: Icon
+            selector:
+              icon: null
+          - name: icon_color
+            label: Icon color
+            selector:
+              ui_color: null
+          - name: icon_background_color
+            label: Icon background color
+            selector:
+              ui_color: null
+          - name: icon_outline_color
+            label: Icon outline color
+            selector:
+              ui_color: null
+          - name: icon_active_color
+            label: Icon active color
+            selector:
+              ui_color: null
+          - name: source_entities
+            label: Source entities (for tooltip)
+            description: Optional information to show in tooltip
+            selector:
+              text: null

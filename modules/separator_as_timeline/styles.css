@@ -1,0 +1,111 @@
+.bubble-line {
+    width: 100%;
+    container-type: size;
+}
+
+.bubble-name {
+    overflow: visible !important;
+}
+
+.bubble-line-wrapper {
+    position: relative;
+    background-color: var(--bubble-line-background-color, #444);
+    margin: 0 12px;
+    width: 100cqw;
+}
+
+.timeline-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.timeline-segment {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(to right, var(--accent-color), var(--primary-color));
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+    top: 0;
+}
+
+.timeline-icon {
+    pointer-events: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--card-background-color);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    position: absolute;
+    transform: translateX(-50%);
+    top: -26px;
+    transition: filter 0.3s ease;
+    border: 1px solid var(--icon-border-color, var(--primary-color))
+}
+
+.timeline-icon.active {
+    filter: drop-shadow(0 0 5px var(--icon-active-color));
+}
+
+.highlighted {
+    filter: brightness(1.15);
+    box-shadow: 0 0 8px white;
+    opacity: 1;
+    z-index: 1;
+}
+
+.timeline-tooltip {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-background-color);
+    color: var(--primary-text-color);
+    padding: 2px 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: 0 0 4px white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 3 !important;
+}
+
+.timeline-tick {
+    position: absolute;
+    bottom: -18px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--secondary-text-color);
+    pointer-events: none;
+}
+
+.timeline-tick::before {
+    content: "";
+    position: absolute;
+    bottom: 90%;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 6px;
+    width: 1px;
+    background-color: var(--secondary-text-color);
+    opacity: 0.6;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: -8px;
+    left: calc(var(--timeline-marker-left) - 6px);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--marker-color, var(--primary-color));
+}
