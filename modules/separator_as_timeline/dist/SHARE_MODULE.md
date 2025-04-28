@@ -1,6 +1,6 @@
 # Separator as Timeline
 
-**Version:** 1.2.0  
+**Version:** 1.2.1  
 **Creator:** lsmarsden
 
 > ### Supported cards:
@@ -36,7 +36,7 @@
 ```yaml
 separator_as_timeline:
   name: Separator as Timeline
-  version: v1.2.0
+  version: v1.2.1
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:

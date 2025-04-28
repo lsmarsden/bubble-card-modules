@@ -25,7 +25,7 @@ export async function shareModule(moduleId: string) {
         MODULE_YAML: moduleDistYaml.trim(),
     };
 
-    await createFileFromTemplate(path.join(modulePath, "SHARE_MODULE.md"), "./modules/templates/SHARE_MODUlE_TEMPLATE.md", values);
+    await createFileFromTemplate(path.join(modulePath, "dist/SHARE_MODULE.md"), "./modules/templates/SHARE_MODULE_TEMPLATE.md", values);
 
-    console.log(`Share file generated at ${modulePath}/SHARE_MODULE.md`);
+    console.log(`Share file generated at ${modulePath}/dist/SHARE_MODULE.md`);
 }
