@@ -2,7 +2,22 @@
 
 ---
 
-### v1.1
+### v1.2.0
+
+<details><summary>See Changes</summary>
+
+- Add support for customising time display format globally, in timeline, and in the tooltip.
+  Customisation is now available for:
+  - 12-hour or 24-hour time format
+  - Padding hours (e.g. 5:00/05:00)
+  - Showing AM/PM
+  - Showing/hiding minutes (e.g. 5PM/5:00PM)
+
+_Thanks to [@gandhiarpit](https://github.com/gandhiarpit) for suggesting these improvements!_
+
+</details>
+
+### v1.1.0
 
 <details><summary>See Changes</summary>
 

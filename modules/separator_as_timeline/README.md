@@ -24,13 +24,13 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ---
 
-- Multiple time ranges with `start`/`end` time or entity
+- Define multiple time ranges using dynamic `start`/`end` entities (including `sensor`/`time`), attributes or static times
 - Wraparound time support (e.g. `22:00 → 06:00`)
 - Per-range labels and icons (with highlight when active)
-- Grouped ranges share highlighting and tooltips by label
-- Dynamic entity or attribute-based times (including `sensor`/`time`)
+- Group ranges by label to share highlighting
 - Tooltip on hover with range label and time
 - Optional tick marks at standard intervals (0:00, 6:00, etc.)
+- Customisable time formatting including 12- and 24-hour, AM/PM suffixes
 - Current time marker with color customization
 - Rounded or flat segment edges (with logic for midnight cutoffs)
 - Global or per-range styling for icon color, background, outline, glow
@@ -43,8 +43,14 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 - `marker_color` – Color of current time marker
 - `highlight_active` – Highlight icon when time is active
 - `rounded_edges` – Enable rounded ends (except at midnight)
-- `convert_to_local` – Convert ISO timestamps to local time
 - `icon_color`, `icon_background_color`, `icon_outline_color`, `icon_active_color` – Style per range or globally
+
+### `time_format`
+
+- `use_24_hour` - use 24-hour time. Defaults to `true`.
+- `pad_hours` - Pad hours (5:00 -> 05:00). Defaults to `true`.
+- `show_minutes` - Show minutes. Defaults to `true`.
+- `append_suffix` - Add AM/PM to times. Defaults to `false`.
 
 ## Example YAML
 
@@ -54,46 +60,46 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
     <summary><strong>Using entities or static times</strong></summary>
     <p>Mix entity-based and static times with individual labels/icons.</p>
 
+![UsingEntitiesAndStaticTime.png](assets/UsingEntitiesAndStaticTime.png)
+
     type: custom:bubble-card
     card_type: separator
     modules:
       - default
       - separator_as_timeline
     separator_as_timeline:
-      show_time_ticks: true
-      show_current_time: true
-      highlight_active: true
-      marker_color: blue
+      show_current_time: false
+      rounded_edges: true
+      marker_color: red
       ranges:
         "0":
-          start_entity: time.bedtime_start
-          end_entity: time.bedtime_end
-          label: Bedtime
-          color: indigo
-          icon: mdi:bed
+          start: "12:30"
+          end: "13:30"
+          label: Lunch
+          color: blue
+          icon: mdi:food-apple
+          icon_color: green
         "1":
-          start: "08:00"
+          start_entity: sensor.sun_next_rising
           end: "09:00"
-          label: Breakfast
-          color: orange
-          icon: mdi:coffee
-    name: Day Schedule
-    icon: mdi:calendar-clock
-    grid_options:
-      columns: full
+          label: School run
+          icon: mdi:bus-school
+          icon_color: yellow
+          color: teal
 
   </details>
 
   <details>
     <summary><strong>Full Timestamp with Timezone Conversion</strong></summary>
 
+![FullTimestampConversion.png](assets/FullTimestampConversion.png)
+
     type: custom:bubble-card
     card_type: separator
     modules:
       - default
       - separator_as_timeline
     separator_as_timeline:
-      convert_to_local: true
       show_current_time: true
       marker_color: red
       ranges:
@@ -102,7 +108,7 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
           end: "2025-04-26T04:30:00+00:00"
           label: Remote Job
           color: blue
-          icon: mdi:laptop
+          icon: mdi:briefcase
     name: Remote Work
     icon: mdi:cloud
 
@@ -111,35 +117,42 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
   <details>
     <summary><strong>Global Icon Styling with Overrides</strong></summary>
 
+![GlobalIconStyling.gif](assets/GlobalIconStyling.gif)
+
     type: custom:bubble-card
     card_type: separator
     modules:
       - default
       - separator_as_timeline
     separator_as_timeline:
-      icon_color: grey
-      icon_background_color: transparent
-      icon_outline_color: teal
-      icon_active_color: yellow
+      icon_color: orange
+      icon_background_color: black
+      icon_outline_color: yellow
+      icon_active_color: orange
       show_time_ticks: true
       highlight_active: true
       ranges:
         "0":
-          start: "12:00"
-          end: "13:00"
-          label: Lunch
-          color: green
-          icon: mdi:silverware
+          label: Sunset
+          end_entity: sensor.sun_next_dusk
+          start_entity: sensor.sun_next_setting
+          color: deep-orange
+          icon: mdi:weather-sunset-down
         "1":
-          start: "17:00"
-          end: "17:30"
-          label: Gym
-          color: red
-          icon: mdi:weight-lifter
-          icon_color: red
-          icon_background_color: black
-    name: Daily Activities
-    icon: mdi:timeline-check-outline
+          label: Sunrise
+          start_entity: sensor.sun_next_dawn
+          end_entity: sensor.sun_next_rising
+          icon: mdi:weather-sunset-up
+          color: deep-orange
+        "2":
+          label: Night
+          start_entity: sensor.sun_next_dusk
+          end_entity: sensor.sun_next_dawn
+          icon: mdi:weather-night
+          color: purple
+          icon_color: white
+    name: Sun
+    icon: mdi:sun-clock
 
   </details>
 
@@ -147,38 +160,53 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
     <summary><strong>Grouped Segments with Shared Label</strong></summary>
     <p>Hovering over a segment highlights all segments with the same <code>label</code>, regardless of icon or color.</p>
 
+![GroupLabels.gif](assets/GroupLabels.gif)
+
     type: custom:bubble-card
     card_type: separator
     modules:
       - default
       - separator_as_timeline
     separator_as_timeline:
-      highlight_active: true
-      marker_color: "#333333"
-      show_current_time: true
       show_time_ticks: true
-      rounded_edges: true
+      show_current_time: false
       ranges:
         "0":
-          start: "09:00"
-          end: "09:30"
-          label: Travel
-          color: teal
-          icon: mdi:bike
+          start: "01:00"
+          end: "01:20"
+          label: Flight
+          color: red
+          icon: mdi:airplane-takeoff
+          icon_outline_color: transparent
         "1":
-          start: "17:00"
-          end: "17:45"
-          label: Travel
+          start: "01:15"
+          end: "12:30"
+          label: Flight
           color: orange
-          icon: mdi:train
-          icon_color: red
-    name: Travel Blocks
-    icon: mdi:map-clock-outline
+          icon: mdi:airplane
+          icon_outline_color: transparent
+        "2":
+          start: "12:30"
+          end: "12:50"
+          label: Flight
+          color: red
+          icon: mdi:airplane-landing
+          icon_outline_color: transparent
+        "3":
+          start: "15:30"
+          end: "18:00"
+          label: "Relax"
+          color: green
+          icon: mdi:umbrella-beach
+          icon_color: yellow
+          icon_outline_color: transparent
 
   </details>
 
   <details>
     <summary><strong>Minimal Styling with Flat Edges</strong></summary>
+
+![Minimal.gif](assets/Minimal.gif)
 
     type: custom:bubble-card
     card_type: separator
@@ -198,10 +226,46 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
         "1":
           start: "10:30"
           end: "12:00"
-          label: Task
+          label: Lunch
           color: green
     name: Flat Layout
     icon: mdi:timeline
+
+  </details>
+
+  <details>
+    <summary><strong>Customising time formatting</strong></summary>
+
+![TimeCustomisation.gif](assets/TimeCustomisation.gif)
+
+    type: custom:bubble-card
+    card_type: separator
+    modules:
+      - default
+      - separator_as_timeline
+    separator_as_timeline:
+      show_time_ticks: true
+      show_current_time: false
+      ranges:
+        "0":
+          start: "15:30"
+          end: "18:00"
+          label: "Study"
+          color: blue
+          icon: mdi:desk-lamp
+          icon_color: blue
+          icon_outline_color: purple
+      time_format:
+        use_24_hour: true
+        append_suffix: false
+        pad_hours: true
+        show_minutes: true
+        timeline:
+          override: true
+          use_24_hour: false
+          append_suffix: true
+          show_minutes: false
+          pad_hours: false
 
   </details>
 

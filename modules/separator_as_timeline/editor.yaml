@@ -23,6 +23,97 @@ editor:
         selector:
           ui_color: null
   - type: expandable
+    title: Time Format
+    icon: mdi:clock
+    name: time_format
+    schema:
+      - type: grid
+        schema:
+          - name: use_24_hour
+            label: Use 24-hour time
+            default: true
+            selector:
+              boolean: null
+          - name: append_suffix
+            label: Show AM/PM
+            default: false
+            selector:
+              boolean: null
+          - name: pad_hours
+            label: Pad hours (5:00/05:00)
+            default: true
+            selector:
+              boolean: null
+          - name: show_minutes
+            label: Show minutes (5PM/5:00PM)
+            default: true
+            selector:
+              boolean: null
+      - type: expandable
+        title: Timeline Override (Optional)
+        icon: mdi:clock
+        name: timeline
+        schema:
+          - name: override
+            label: "Apply below options to timeline."
+            default: false
+            selector:
+              boolean: null
+          - type: grid
+            schema:
+              - name: use_24_hour
+                label: Use 24-hour time
+                default: true
+                selector:
+                  boolean: null
+              - name: append_suffix
+                label: Show AM/PM
+                default: false
+                selector:
+                  boolean: null
+              - name: pad_hours
+                label: Pad hours (5:00/05:00)
+                default: true
+                selector:
+                  boolean: null
+              - name: show_minutes
+                label: Show minutes (5PM/5:00PM)
+                default: true
+                selector:
+                  boolean: null
+      - type: expandable
+        title: Tooltip Override (Optional)
+        icon: mdi:clock
+        name: tooltip
+        schema:
+          - name: override
+            label: "Apply below options to tooltip."
+            default: false
+            selector:
+              boolean: null
+          - type: grid
+            schema:
+              - name: use_24_hour
+                label: Use 24-hour time
+                default: true
+                selector:
+                  boolean: null
+              - name: append_suffix
+                label: Show AM/PM
+                default: false
+                selector:
+                  boolean: null
+              - name: pad_hours
+                label: Pad hours (5:00/05:00)
+                default: true
+                selector:
+                  boolean: null
+              - name: show_minutes
+                label: Show minutes (5PM/5:00PM)
+                default: true
+                selector:
+                  boolean: null
+  - type: expandable
     title: Global icon color settings
     icon: mdi:palette
     schema:

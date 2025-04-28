@@ -1,4 +1,4 @@
-export default function separator_as_timeline(card, hass) {
+function separator_as_timeline(card, hass) {
   const config = this.config.separator_as_timeline;
   if (!config) return;
 
@@ -59,6 +59,34 @@ export default function separator_as_timeline(card, hass) {
     }
   };
 
+  const getTimeFormatConfig = (overrideSection) => {
+    const config = getConfig("time_format") || {};
+    if (config[overrideSection] && config[overrideSection].override) {
+      return config[overrideSection];
+    }
+    return config;
+  };
+
+  const formatTime = (h, m, timeFormatConfig) => {
+    const {
+      use_24_hour = true,
+      append_suffix = false,
+      pad_hours = true,
+      show_minutes = true,
+    } = timeFormatConfig || {};
+    let hour = h;
+    const suffix = hour >= 12 ? "PM" : "AM";
+
+    if (!use_24_hour) {
+      hour = hour % 12;
+      if (hour === 0) hour = 12;
+    }
+
+    let hourStr = pad_hours ? pad(hour) : hour;
+
+    return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
+  };
+
   const getState = (entityId, attribute) => {
     if (!entityId || !hass.states[entityId]) {
       return undefined;
@@ -107,7 +135,7 @@ export default function separator_as_timeline(card, hass) {
   const now = new Date();
   const currentPct = timeToPercent(now.getHours(), now.getMinutes());
   const pad = (n) => String(n).padStart(2, "0");
-
+  const tooltipTimeFormatConfig = getTimeFormatConfig("tooltip");
   for (const r of ranges) {
     const group = `group-${r.label?.replace(/\s+/g, "-")}`;
 
@@ -150,7 +178,7 @@ export default function separator_as_timeline(card, hass) {
       seg.style.left = `${left}%`;
       seg.style.width = `${width}%`;
       seg.style.background = processColor(r.color) || "var(--primary-color)";
-      seg.dataset.tooltip = `${r.label || ""}:  ${pad(startH)}:${pad(startM)} → ${pad(endH)}:${pad(endM)}`;
+      seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, tooltipTimeFormatConfig)} → ${formatTime(endH, endM, tooltipTimeFormatConfig)}`;
       if (r.source_entities) {
         seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
       }
@@ -241,7 +269,7 @@ export default function separator_as_timeline(card, hass) {
       const tick = document.createElement("div");
       tick.className = "timeline-tick";
       tick.style.left = `${(h / 24) * 100}%`;
-      tick.innerText = `${pad(h % 24)}:00`;
+      tick.innerText = `${formatTime(h % 24, 0, getTimeFormatConfig("timeline"))}`;
       wrapper.appendChild(tick);
     });
   }

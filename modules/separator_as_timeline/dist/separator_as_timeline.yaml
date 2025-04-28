@@ -1,6 +1,6 @@
 separator_as_timeline:
   name: Separator as Timeline
-  version: v1.1.0
+  version: v1.2.0
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:
@@ -21,8 +21,7 @@ separator_as_timeline:
     </div>
   code: |-
     ${(() => {
-    export default function separator_as_timeline(card, hass) {
-      const config = this.config.separator_as_timeline;
+    const config = this.config.separator_as_timeline;
       if (!config) return;
 
       const element = card.querySelector(".bubble-line");
@@ -82,6 +81,34 @@ separator_as_timeline:
         }
       };
 
+      const getTimeFormatConfig = (overrideSection) => {
+        const config = getConfig("time_format") || {};
+        if (config[overrideSection] && config[overrideSection].override) {
+          return config[overrideSection];
+        }
+        return config;
+      };
+
+      const formatTime = (h, m, timeFormatConfig) => {
+        const {
+          use_24_hour = true,
+          append_suffix = false,
+          pad_hours = true,
+          show_minutes = true,
+        } = timeFormatConfig || {};
+        let hour = h;
+        const suffix = hour >= 12 ? "PM" : "AM";
+
+        if (!use_24_hour) {
+          hour = hour % 12;
+          if (hour === 0) hour = 12;
+        }
+
+        let hourStr = pad_hours ? pad(hour) : hour;
+
+        return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
+      };
+
       const getState = (entityId, attribute) => {
         if (!entityId || !hass.states[entityId]) {
           return undefined;
@@ -130,7 +157,7 @@ separator_as_timeline:
       const now = new Date();
       const currentPct = timeToPercent(now.getHours(), now.getMinutes());
       const pad = (n) => String(n).padStart(2, "0");
-
+      const tooltipTimeFormatConfig = getTimeFormatConfig("tooltip");
       for (const r of ranges) {
         const group = `group-${r.label?.replace(/\s+/g, "-")}`;
 
@@ -173,7 +200,7 @@ separator_as_timeline:
           seg.style.left = `${left}%`;
           seg.style.width = `${width}%`;
           seg.style.background = processColor(r.color) || "var(--primary-color)";
-          seg.dataset.tooltip = `${r.label || ""}:  ${pad(startH)}:${pad(startM)} → ${pad(endH)}:${pad(endM)}`;
+          seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, tooltipTimeFormatConfig)} → ${formatTime(endH, endM, tooltipTimeFormatConfig)}`;
           if (r.source_entities) {
             seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
           }
@@ -264,7 +291,7 @@ separator_as_timeline:
           const tick = document.createElement("div");
           tick.className = "timeline-tick";
           tick.style.left = `${(h / 24) * 100}%`;
-          tick.innerText = `${pad(h % 24)}:00`;
+          tick.innerText = `${formatTime(h % 24, 0, getTimeFormatConfig("timeline"))}`;
           wrapper.appendChild(tick);
         });
       }
@@ -283,7 +310,6 @@ separator_as_timeline:
           processColor(getConfig("marker_color")),
         );
       }
-    }
     })()}
 
     .bubble-line {
@@ -317,7 +343,7 @@ separator_as_timeline:
         opacity: 0.6;
         transition: opacity 0.2s ease;
         cursor: pointer;
-        top: 0px;
+        top: 0;
     }
 
     .timeline-icon {
@@ -360,7 +386,7 @@ separator_as_timeline:
         font-size: 11px;
         border-radius: 4px;
         white-space: nowrap;
-        box-shadow: 0 0px 4px white;
+        box-shadow: 0 0 4px white;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.2s ease;
@@ -421,6 +447,97 @@ separator_as_timeline:
           label: Color of the current time marker.
           selector:
             ui_color: null
+    - type: expandable
+      title: Time Format
+      icon: mdi:clock
+      name: time_format
+      schema:
+        - type: grid
+          schema:
+            - name: use_24_hour
+              label: Use 24-hour time
+              default: true
+              selector:
+                boolean: null
+            - name: append_suffix
+              label: Show AM/PM
+              default: false
+              selector:
+                boolean: null
+            - name: pad_hours
+              label: Pad hours (5:00/05:00)
+              default: true
+              selector:
+                boolean: null
+            - name: show_minutes
+              label: Show minutes (5PM/5:00PM)
+              default: true
+              selector:
+                boolean: null
+        - type: expandable
+          title: Timeline Override (Optional)
+          icon: mdi:clock
+          name: timeline
+          schema:
+            - name: override
+              label: Apply below options to timeline.
+              default: false
+              selector:
+                boolean: null
+            - type: grid
+              schema:
+                - name: use_24_hour
+                  label: Use 24-hour time
+                  default: true
+                  selector:
+                    boolean: null
+                - name: append_suffix
+                  label: Show AM/PM
+                  default: false
+                  selector:
+                    boolean: null
+                - name: pad_hours
+                  label: Pad hours (5:00/05:00)
+                  default: true
+                  selector:
+                    boolean: null
+                - name: show_minutes
+                  label: Show minutes (5PM/5:00PM)
+                  default: true
+                  selector:
+                    boolean: null
+        - type: expandable
+          title: Tooltip Override (Optional)
+          icon: mdi:clock
+          name: tooltip
+          schema:
+            - name: override
+              label: Apply below options to tooltip.
+              default: false
+              selector:
+                boolean: null
+            - type: grid
+              schema:
+                - name: use_24_hour
+                  label: Use 24-hour time
+                  default: true
+                  selector:
+                    boolean: null
+                - name: append_suffix
+                  label: Show AM/PM
+                  default: false
+                  selector:
+                    boolean: null
+                - name: pad_hours
+                  label: Pad hours (5:00/05:00)
+                  default: true
+                  selector:
+                    boolean: null
+                - name: show_minutes
+                  label: Show minutes (5PM/5:00PM)
+                  default: true
+                  selector:
+                    boolean: null
     - type: expandable
       title: Global icon color settings
       icon: mdi:palette
