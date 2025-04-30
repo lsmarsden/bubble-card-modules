@@ -2,10 +2,11 @@ name: Build and Release Modules
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "modules/**"
       - ".github/workflows/**"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: '0'
+          fetch-depth: "0"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -26,18 +27,31 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Get last successful workflow commit
+        id: last_success
+        run: |
+          LAST_SUCCESS=$(gh run list --workflow=release.yaml --branch=main --status=success --limit 1 --json headSha -q '.[0].headSha')
+          echo "last_success=$LAST_SUCCESS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Detect changed modules
         id: detect_changes
         run: |
-          echo "Detecting changed modules..."
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^modules/' | cut -d/ -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Detecting changed modules since last successful workflow..."
+          CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
+            | grep '^modules/' \
+            | grep -v '^modules/templates/' \
+            | cut -d/ -f2 \
+            | sort -u \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "changed=$CHANGED" >> $GITHUB_OUTPUT
 
       - name: Build modules
         run: npm run build
 
   create-release:
-    needs: [build]
+    needs: [ build ]
     runs-on: ubuntu-latest
     if: needs.build.outputs.changed != '[]'
     strategy:
