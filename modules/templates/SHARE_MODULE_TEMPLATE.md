@@ -3,6 +3,8 @@
 **Version:** {{MODULE_VERSION}}  
 **Creator:** {{MODULE_CREATOR}}
 
+> [!IMPORTANT]
+>
 > ### Supported cards:
 >
 > {{SUPPORTED_CARDS}}

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
-import {shareModule} from "./share_module";
+import {generateDocs} from "./generate_docs";
 
 export interface ModuleInfo {
     id: string;
@@ -64,11 +64,10 @@ async function buildModules() {
 
         console.log(`Built module: ${info.id}`);
 
-        await shareModule(info.id);
+        await generateDocs(info.id);
     }
 }
 
-// Helpers
 async function readOrEmpty(filePath: string): Promise<string> {
     try {
         return await fs.readFile(filePath, "utf8");
@@ -77,7 +76,7 @@ async function readOrEmpty(filePath: string): Promise<string> {
     }
 }
 
-async function exists(filePath: string): Promise<boolean> {
+export async function exists(filePath: string): Promise<boolean> {
     try {
         await fs.access(filePath);
         return true;

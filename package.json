@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Custom modules for Bubble Card",
   "scripts": {
-    "create-module": "tsx scripts/generate_module.ts",
-    "build": "npm run format && tsx scripts/build_modules.ts",
+    "create-module": "tsx scripts/ts/generate_module.ts",
+    "build": "tsx scripts/ts/build_modules.ts",
     "format": "prettier --write \"**/*.{js,yaml,md}\""
   },
   "dependencies": {

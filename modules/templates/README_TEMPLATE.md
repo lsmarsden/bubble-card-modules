@@ -26,7 +26,7 @@
 
 ### Configuration Options
 
-- `config_option` - **Add options here**
+See [CONFIG_OPTIONS.md](CONFIG_OPTIONS.md) for a full list of options.
 
 ## Example YAML
 

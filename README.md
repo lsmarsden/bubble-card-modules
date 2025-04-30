@@ -38,21 +38,9 @@ Contributions are welcome!
 
 If contributing to a module, please keep code clean and consistent with existing styles.
 
-### Building Locally
-
-This repository uses a simple build process to combine module parts (code.js, description.md, editor.yaml) into final module YAMLs.
-
-To create a new module, run `npm run create-module` and follow the instructions. This will setup
-a new template module in the `modules/module_id` folder.
-
-To build locally just run:
-
-```
-npm install
-npm run build
-```
-
-Each module will be built into its final `.yaml` file and stored in the `modules/module_id/dist` folder.
+If looking to develop a new module, please check out the existing modules first,
+then open an issue to discuss your idea. More details on module development can be found in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 If you've created/edited a module in HA using the module editor to add great features, please consider
 opening a PR to add it into this repo so that others can benefit too!

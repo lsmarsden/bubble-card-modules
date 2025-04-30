@@ -38,19 +38,7 @@ Use it for schedules, quiet hours, cleaning periods, charging windows - or anyth
 
 ### Configuration Options
 
-- `show_time_ticks` – Show tick marks under the timeline
-- `show_current_time` – Show current time marker
-- `marker_color` – Color of current time marker
-- `highlight_active` – Highlight icon when time is active
-- `rounded_edges` – Enable rounded ends (except at midnight)
-- `icon_color`, `icon_background_color`, `icon_outline_color`, `icon_active_color` – Style per range or globally
-
-### `time_format`
-
-- `use_24_hour` - use 24-hour time. Defaults to `true`.
-- `pad_hours` - Pad hours (5:00 -> 05:00). Defaults to `true`.
-- `show_minutes` - Show minutes. Defaults to `true`.
-- `append_suffix` - Add AM/PM to times. Defaults to `false`.
+See [CONFIG_OPTIONS.md](CONFIG_OPTIONS.md) for a full list of options.
 
 ## Example YAML
 
