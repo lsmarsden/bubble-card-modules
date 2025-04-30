@@ -3,9 +3,6 @@ name: Build and Release Modules
 on:
   push:
     branches: [ main ]
-    paths:
-      - "modules/**"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 jobs:
