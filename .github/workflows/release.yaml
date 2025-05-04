@@ -39,6 +39,7 @@ jobs:
           CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
             | grep '^modules/' \
             | grep -v '^modules/templates/' \
+            | grep -v '^modules/helpers/' \
             | cut -d/ -f2 \
             | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
