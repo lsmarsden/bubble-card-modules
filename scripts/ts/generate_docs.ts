@@ -1,7 +1,7 @@
 import * as util from "node:util";
 import {exec} from "child_process";
 import path from "node:path";
-import {exists} from "./build_modules";
+import {exists} from "./helpers/files";
 import {shareModule} from "./share_module";
 
 export async function generateDocs(moduleId: string) {

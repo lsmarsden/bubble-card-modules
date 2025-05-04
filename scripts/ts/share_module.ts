@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import yaml from "js-yaml";
 import {ModuleInfo} from "./build_modules";
-import {createFileFromTemplate} from "./helpers";
+import {createFileFromTemplate} from "./helpers/files";
 
 export async function shareModule(moduleId: string) {
     const modulePath = path.join("./modules", moduleId);

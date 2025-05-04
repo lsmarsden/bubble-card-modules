@@ -2,7 +2,7 @@ import inquirer from "inquirer";
 import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
-import {createFileFromTemplate} from "./helpers";
+import {createFileFromTemplate} from "./helpers/files";
 
 interface ModuleInfo {
     id: string;

@@ -2,6 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
 import {generateDocs} from "./generate_docs";
+import {createModuleFunction} from "./helpers/extractors";
+import {fileURLToPath} from "node:url";
+import {exists, readOrEmpty} from "./helpers/files";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+export const projectRoot = path.resolve(__dirname, '../..');
+export const modulesDir = path.join(projectRoot, "modules");
 
 export interface ModuleInfo {
     id: string;
@@ -17,7 +25,7 @@ export interface ModuleInfo {
 }
 
 async function buildModules() {
-    const modulesPath = path.resolve("./modules");
+    const modulesPath = path.join(projectRoot, "modules");
 
     const moduleFolders = await fs.readdir(modulesPath);
 
@@ -36,7 +44,7 @@ async function buildModules() {
         validateModuleInfo(info, moduleDir);
 
         const description = await readOrEmpty(path.join(moduleDir, info.description_file));
-        const code = cleanExportedFunction(await readOrEmpty(path.join(moduleDir, info.code_file)));
+        const code = await createModuleFunction(info);
         const styles = await readOrEmpty(path.join(moduleDir, info.styles));
         const editorYaml = await readOrEmpty(path.join(moduleDir, info.editor_file));
 
@@ -68,22 +76,6 @@ async function buildModules() {
     }
 }
 
-async function readOrEmpty(filePath: string): Promise<string> {
-    try {
-        return await fs.readFile(filePath, "utf8");
-    } catch {
-        return "";
-    }
-}
-
-export async function exists(filePath: string): Promise<boolean> {
-    try {
-        await fs.access(filePath);
-        return true;
-    } catch {
-        return false;
-    }
-}
 
 function validateModuleInfo(info: ModuleInfo, moduleDir: string) {
     if (!info.id || !/^[a-z0-9_]+$/.test(info.id)) {
@@ -102,18 +94,6 @@ function validateModuleInfo(info: ModuleInfo, moduleDir: string) {
             throw new Error(`Missing file reference in module info for ${info.id}`);
         }
     }
-}
-
-// remove the function wrapper to inject into the module code block
-function cleanExportedFunction(raw: string): string {
-    const lines = raw.trim().split("\n");
-
-    if (lines[0].startsWith("function")) {
-        lines.shift(); // remove first line
-        lines.pop();   // remove last line
-    }
-
-    return lines.join("\n");
 }
 
 // Entry

@@ -2,7 +2,7 @@ name: Build and Release Modules
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
         run: npm run build
 
   create-release:
-    needs: [ build ]
+    needs: [build]
     runs-on: ubuntu-latest
     if: needs.build.outputs.changed != '[]'
     strategy:
