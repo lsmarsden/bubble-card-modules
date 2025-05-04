@@ -38,8 +38,7 @@ jobs:
           echo "Detecting changed modules since last successful workflow..."
           CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
             | grep '^modules/' \
-            | grep -v '^modules/templates/' \
-            | grep -v '^modules/helpers/' \
+            | grep -vE '^modules/(templates|helpers)/' \
             | cut -d/ -f2 \
             | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
