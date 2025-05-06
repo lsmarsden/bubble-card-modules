@@ -5,6 +5,8 @@ import {generateDocs} from "./generate_docs";
 import {createModuleFunction} from "./helpers/extractors";
 import {fileURLToPath} from "node:url";
 import {exists, readOrEmpty} from "./helpers/files";
+import {logProgress, visibleLog} from "./helpers/logging";
+import chalk from "chalk";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,6 +38,8 @@ async function buildModules() {
 
         const moduleYamlPath = path.join(moduleDir, "module.yaml");
         if (!await exists(moduleYamlPath)) continue;
+
+        logProgress(`BUILDING MODULE: ${moduleFolder}`);
 
         const rawYaml = await fs.readFile(moduleYamlPath, "utf8");
         const parsed = yaml.load(rawYaml) as { module_info: ModuleInfo };
@@ -70,8 +74,7 @@ async function buildModules() {
         await fs.mkdir(distPath, {recursive: true});
         await fs.writeFile(path.join(distPath, `${info.id}.yaml`), outputYaml, "utf8");
 
-        console.log(`Built module: ${info.id}`);
-
+        visibleLog(`BUILT MODULE: ${info.id}`, chalk.green);
         await generateDocs(info.id);
     }
 }

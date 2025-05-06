@@ -2,6 +2,7 @@ import {readOrEmpty} from "./files";
 import path from "node:path";
 import fsSync from "node:fs";
 import {ModuleInfo, modulesDir} from "../build_modules";
+import {logDebug} from "./logging";
 
 /**
  * Creates a module function by combining module-specific code and helper functions.
@@ -31,28 +32,81 @@ function importHelperFunctions(rawCode: string): string[] {
     const importLines = rawCode.trim().split("\n").filter(line => line.startsWith("import") && line.includes("helpers/"));
     const helperFunctions: string[] = [];
     const importMap = new Map<string, Set<string>>();
+    const importedNames = new Set<string>();
+    const importedFiles = new Set<string>();
 
     for (const importLine of importLines) {
         const match = importLine.match(/import\s+{([^}]+)}\s+from\s+["']([^"']+)["']/);
         if (!match) continue;
 
-        const importedNames = match[1].split(",").map(name => name.trim());
+        const names = match[1].split(",").map(name => name.trim());
         const importPath = match[2];
         if (!importMap.has(importPath)) {
             importMap.set(importPath, new Set());
         }
-        importedNames.forEach(name => importMap.get(importPath)!.add(name));
+        names.forEach(name => importMap.get(importPath)!.add(name));
+    }
+
+    logDebug(`Importing the following helper functions:`)
+    for (const [importPath, namesSet] of importMap.entries()) {
+        logDebug(`  - ${importPath}.js: ${Array.from(namesSet).join(", ")}`);
     }
 
     for (const [importPath, namesSet] of importMap.entries()) {
-        const filePath = path.resolve(modulesDir, "helpers", importPath) + ".js";
-        const helperFileContent = fsSync.readFileSync(filePath, "utf8");
-        const extractedFunctionsMap = extractFunctionBodies(helperFileContent, Array.from(namesSet), true);
-        helperFunctions.push(...Array.from(extractedFunctionsMap.values()));
+        const resolvedPath = path.resolve(modulesDir, "helpers", importPath) + ".js";
+
+        if (importedFiles.has(resolvedPath)) continue;
+        importedFiles.add(resolvedPath);
+
+        const helperFileContent = fsSync.readFileSync(resolvedPath, "utf8");
+        resolveHelperDependencies(resolvedPath, helperFileContent, Array.from(namesSet), helperFunctions, importedNames, importedFiles);
+        extractFunctionBodies(helperFileContent, Array.from(namesSet), true);
     }
 
     return helperFunctions;
 }
+
+
+function resolveHelperDependencies(
+    filePath: string,
+    fileContent: string,
+    names: string[],
+    helperFunctions: string[],
+    importedNames: Set<string>,
+    importedFiles: Set<string>
+) {
+    const extracted = extractFunctionBodies(fileContent, names, true);
+    for (const [name, body] of extracted.entries()) {
+        if (importedNames.has(name)) continue;
+        importedNames.add(name);
+        helperFunctions.push(body);
+
+        const calledFunctions = Array.from(body.matchAll(/\b([A-z0-9_]+)\s*\(/g))
+            .map(match => match[1])
+            .filter(functionName =>
+                functionName !== 'if' &&
+                functionName !== 'for' &&
+                functionName !== 'while' &&
+                functionName !== 'switch'
+            );
+
+        // filter already imported or known function names
+        const uniqueCalled = [...new Set(calledFunctions)]
+            .filter(depName => !importedNames.has(depName));
+
+        if (uniqueCalled.length > 0) {
+            const additionalFunctions = extractFunctionBodies(fileContent, uniqueCalled, true);
+            for (const [depName, depBody] of additionalFunctions.entries()) {
+                if (!importedNames.has(depName)) {
+                    importedNames.add(depName);
+                    helperFunctions.push(depBody);
+                }
+            }
+            resolveHelperDependencies(filePath, fileContent, uniqueCalled, helperFunctions, importedNames, importedFiles);
+        }
+    }
+}
+
 
 function extractFunctionBody(code: string, functionName: string, includeDeclaration: boolean): string {
     const extracted = extractFunctionBodies(code, [functionName], includeDeclaration);
@@ -87,11 +141,11 @@ function extractFunctionCode(startIndex: number, code: string, includeDeclaratio
 function extractFunctionBodies(code: string, functionNames: string[], includeDeclaration: boolean): Map<string, string> {
     const result = new Map<string, string>();
     const nameSet = new Set(functionNames);
-    const regex = /function\s+([A-z0-9_]+)\s*\([^)]*\)\s*{/g;
+    const regex = /function\s+([A-z0-9_]+)|const\s+([A-z0-9_]+)\s*=\s*\([^)]*\)\s*=>\s*{/g;
 
     let match;
     while ((match = regex.exec(code)) !== null) {
-        const name = match[1];
+        const name = match[1] || match[2];
         if (!nameSet.has(name)) continue;
         let functionBody = extractFunctionCode(match.index, code, includeDeclaration);
         result.set(name, functionBody);
