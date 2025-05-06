@@ -24,11 +24,16 @@ properties:
     type: boolean
     default: false
     description: Highlight segment icon when current time is within the segment period
-  time_format:
-    $ref: "#/definitions/timeFormat"
+  icon_settings:
+    $ref: "#/definitions/iconSettings"
     type: object
-    description: Global time formatting configuration.
+    description: Global icon settings.
+  time_format:
     properties:
+      global_settings:
+        $ref: "#/definitions/timeFormat"
+        type: object
+        description: Global time formatting configuration.
       timeline:
         $ref: "#/definitions/overridableTimeFormat"
         type: object
@@ -59,6 +64,14 @@ definitions:
       icon_background_color:
         type: string
         description: Icon background colour
+      icon_size:
+        type: integer
+        description: Icon total size in pixels
+        default: 18
+      icon_image_size:
+        type: integer
+        description: Icon image size in pixels (max value is icon_size)
+        default: 16
       icon_outline_color:
         type: string
         description: Icon outline colour
@@ -67,9 +80,11 @@ definitions:
         description: Icon active glow colour
 
   range:
-    $ref: "#/definitions/iconSettings"
-    type: object
     properties:
+      icon_settings:
+        $ref: "#/definitions/iconSettings"
+        type: object
+        description: Icon settings for this range. Overrides global icon settings.
       start_entity:
         type: string
         description: >

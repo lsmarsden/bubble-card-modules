@@ -118,10 +118,12 @@ modules:
   - default
   - separator_as_timeline
 separator_as_timeline:
-  icon_color: orange
-  icon_background_color: black
-  icon_outline_color: yellow
-  icon_active_color: orange
+  icon_settings:
+    icon_color: orange
+    icon_background_color: black
+    icon_outline_color: yellow
+    icon_active_color: orange
+    icon_size: 20px
   show_time_ticks: true
   highlight_active: true
   ranges:
@@ -131,6 +133,9 @@ separator_as_timeline:
       start_entity: sensor.sun_next_setting
       color: deep-orange
       icon: mdi:weather-sunset-down
+      icon_settings:
+        icon_size: 16px
+        icon_image_size: 12px
     "1":
       label: Sunrise
       start_entity: sensor.sun_next_dawn
@@ -143,7 +148,11 @@ separator_as_timeline:
       end_entity: sensor.sun_next_dawn
       icon: mdi:weather-night
       color: purple
-      icon_color: white
+      icon_settings:
+        icon_color: white
+        icon_size: 18
+
+
 name: Sun
 icon: mdi:sun-clock
 ```

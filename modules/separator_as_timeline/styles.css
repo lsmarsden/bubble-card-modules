@@ -34,8 +34,8 @@
 
 .timeline-icon {
     pointer-events: auto;
-    width: 16px;
-    height: 16px;
+    width: var(--icon-size, 18px);
+    height: var(--icon-size, 18px);
     border-radius: 50%;
     background: var(--card-background-color);
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);

@@ -28,6 +28,7 @@ editor:
     name: time_format
     schema:
       - type: grid
+        name: global_settings
         schema:
           - name: use_24_hour
             label: Use 24-hour time
@@ -114,9 +115,24 @@ editor:
                 selector:
                   boolean: null
   - type: expandable
-    title: Global icon color settings
+    title: Global icon settings
     icon: mdi:palette
+    name: icon_settings
     schema:
+      - name: icon_size
+        label: Icon total size in pixels. Overridable per icon.
+        selector:
+          number:
+            min: 1
+            step: 1
+            unit_of_measurement: px
+      - name: icon_image_size
+        label: Icon image size in pixels. Max value is current icon_size. Overridable per icon.
+        selector:
+          number:
+            min: 1
+            step: 1
+            unit_of_measurement: px
       - name: icon_color
         label: Icon color. Overridable per icon.
         selector:
@@ -192,22 +208,41 @@ editor:
             label: Icon
             selector:
               icon: null
-          - name: icon_color
-            label: Icon color
-            selector:
-              ui_color: null
-          - name: icon_background_color
-            label: Icon background color
-            selector:
-              ui_color: null
-          - name: icon_outline_color
-            label: Icon outline color
-            selector:
-              ui_color: null
-          - name: icon_active_color
-            label: Icon active color
-            selector:
-              ui_color: null
+          - type: expandable
+            title: Icon settings
+            icon: mdi:palette
+            name: icon_settings
+            schema:
+              - name: icon_size
+                label: Icon total size in pixels.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_image_size
+                label: Icon image size in pixels. Max value is current icon_size.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_color
+                label: Icon color.
+                selector:
+                  ui_color: null
+              - name: icon_background_color
+                label: Icon background color.
+                selector:
+                  ui_color: null
+              - name: icon_outline_color
+                label: Icon outline color.
+                selector:
+                  ui_color: null
+              - name: icon_active_color
+                label: Icon active period color.
+                selector:
+                  ui_color: null
           - name: source_entities
             label: Source entities (for tooltip)
             description: Optional information to show in tooltip
@@ -261,22 +296,41 @@ editor:
             label: Icon
             selector:
               icon: null
-          - name: icon_color
-            label: Icon color
-            selector:
-              ui_color: null
-          - name: icon_background_color
-            label: Icon background color
-            selector:
-              ui_color: null
-          - name: icon_outline_color
-            label: Icon outline color
-            selector:
-              ui_color: null
-          - name: icon_active_color
-            label: Icon active color
-            selector:
-              ui_color: null
+          - type: expandable
+            title: Icon settings
+            icon: mdi:palette
+            name: icon_settings
+            schema:
+              - name: icon_size
+                label: Icon total size in pixels.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_image_size
+                label: Icon image size in pixels. Max value is current icon_size.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_color
+                label: Icon color.
+                selector:
+                  ui_color: null
+              - name: icon_background_color
+                label: Icon background color.
+                selector:
+                  ui_color: null
+              - name: icon_outline_color
+                label: Icon outline color.
+                selector:
+                  ui_color: null
+              - name: icon_active_color
+                label: Icon active period color.
+                selector:
+                  ui_color: null
           - name: source_entities
             label: Source entities (for tooltip)
             description: Optional information to show in tooltip
@@ -330,22 +384,41 @@ editor:
             label: Icon
             selector:
               icon: null
-          - name: icon_color
-            label: Icon color
-            selector:
-              ui_color: null
-          - name: icon_background_color
-            label: Icon background color
-            selector:
-              ui_color: null
-          - name: icon_outline_color
-            label: Icon outline color
-            selector:
-              ui_color: null
-          - name: icon_active_color
-            label: Icon active color
-            selector:
-              ui_color: null
+          - type: expandable
+            title: Icon settings
+            icon: mdi:palette
+            name: icon_settings
+            schema:
+              - name: icon_size
+                label: Icon total size in pixels. Default 18px.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_image_size
+                label: Icon image size in pixels. Max is icon_size. Default 16px.
+                selector:
+                  number:
+                    min: 1
+                    step: 1
+                    unit_of_measurement: px
+              - name: icon_color
+                label: Icon color.
+                selector:
+                  ui_color: null
+              - name: icon_background_color
+                label: Icon background color.
+                selector:
+                  ui_color: null
+              - name: icon_outline_color
+                label: Icon outline color.
+                selector:
+                  ui_color: null
+              - name: icon_active_color
+                label: Icon active period color.
+                selector:
+                  ui_color: null
           - name: source_entities
             label: Source entities (for tooltip)
             description: Optional information to show in tooltip
