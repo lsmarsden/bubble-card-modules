@@ -1,13 +1,23 @@
+import {getState} from "./hass.js";
+
 /**
- * Processes a given color string and returns it in the appropriate format.
+ * Processes the given color input and returns a resolved color string.
  *
- * @param {string} color - The input color string. Can be a hex code, RGB, HSL, or a variable name.
- * @return {string|null} - Returns the processed color in its appropriate format. If the input is invalid or null, returns null.
+ * @param {string} color - The input color string that needs processing.
+ * @return {string|null} The resolved color in a valid format or null if the input is invalid.
  */
 export function processColor(color) {
-  if (!color) return null;
-  if (["#", "rgb", "hsl"].some((prefix) => color.startsWith(prefix))) {
-    return color;
+  let resolvedColor = getState(color);
+
+  if (!resolvedColor) return null;
+  if (typeof resolvedColor !== 'string') return null;
+
+  resolvedColor = resolvedColor.trim();
+  const validPrefixes = ['#', 'rgb', 'hsl'];
+
+  if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+    return resolvedColor;
   }
-  return `var(--${color}-color)`;
+
+  return `var(--${resolvedColor}-color)`;
 }
