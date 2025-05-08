@@ -1,6 +1,6 @@
 # {{MODULE_NAME}}
 
-[Features](#features) | [Examples](#example-yaml) | [Installation](#install-this-module) | [Contributing](#contributing)
+[Features](#features) | [Dynamic Entity Resolution](#dynamic-entity-resolution-der) | [Examples](#example-yaml) | [Installation](#install-this-module) | [Contributing](#contributing)
 
 [![Buy me a coffee](https://img.shields.io/badge/Buy_me_a_coffee-yellow?logo=buymeacoffee&logoColor=darkred)](https://buymeacoffee.com/lsmarsden)
 
@@ -27,6 +27,19 @@
 ### Configuration Options
 
 See [CONFIG_OPTIONS.md](CONFIG_OPTIONS.md) for a full list of options.
+
+## Dynamic Entity Resolution (DER)
+
+Dynamic Entity Resolution is available in certain fields.
+
+To use DER, look for any input field that contains ✨ in the editor label. This means you can now use:
+- Simple values e.g. `red`
+- Entities e.g. `input_text.my_favourite_color` or `sensor.sun_next_dawn`
+- Attributes using format `entity[attribute]`, such as `sensor.my_phone[battery_level]`
+
+**Example editor with DER fields:**
+
+![DER_inputs](../templates/assets/DER%20inputs.png)
 
 ## Example YAML
 
