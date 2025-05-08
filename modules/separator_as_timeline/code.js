@@ -1,6 +1,7 @@
 import {processColor} from "../helpers/color";
 import {resolveConfig} from "../helpers/config";
 import {suffix} from "../helpers/strings";
+import {getState} from "../helpers/hass";
 
 function separator_as_timeline(card, hass) {
     const config = this.config.separator_as_timeline;
@@ -103,14 +104,6 @@ function separator_as_timeline(card, hass) {
         return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
     };
 
-    const getState = (entityId, attribute) => {
-        if (!entityId || !hass.states[entityId]) {
-            return undefined;
-        }
-        const statesObj = hass.states[entityId];
-        return attribute ? statesObj.attributes[attribute] : statesObj.state;
-    };
-
     // 3. ===== Init wrapper =====
     let wrapper = element.closest(".bubble-line-wrapper");
     if (!wrapper) {
@@ -157,7 +150,10 @@ function separator_as_timeline(card, hass) {
         // Get start time (from entity if provided, otherwise from direct value)
         let startTimeValue;
         if (r.start_entity) {
-            startTimeValue = getState(r.start_entity, r.start_attribute);
+            //TODO - replace with a single start field.
+            // this will be a breaking change, so we need to
+            // implement auto-migration first
+            startTimeValue = getState(`${r.start_entity}${r.start_attribute ? '[${r.start_attribute}]' : ''}`, false);
         } else {
             startTimeValue = r.start;
         }
@@ -165,7 +161,7 @@ function separator_as_timeline(card, hass) {
         // Get end time (from entity if provided, otherwise from direct value)
         let endTimeValue;
         if (r.end_entity) {
-            endTimeValue = getState(r.end_entity, r.end_attribute);
+            endTimeValue = getState(`${r.end_entity}${r.end_attribute ? '[${r.end_attribute}]' : ''}`, false);
         } else {
             endTimeValue = r.end;
         }

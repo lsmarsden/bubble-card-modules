@@ -1,5 +1,18 @@
 # Changelog
 
+### v1.4.0
+
+<details><summary>See Changes</summary>
+
+#### Added ~~AI~~ **Dynamic Entity Resolution** (DER)
+
+To use DER, look for any input field that contains ✨ in the editor label. This means you can now use:
+- Simple values e.g. `red`
+- Entities e.g. `input_text.my_favourite_color` or `sensor.sun_next_dawn`
+- Attributes using format `entity[attribute]`, such as `sensor.my_phone[battery_level]`
+
+</details>
+
 ### v1.3.0
 
 <details><summary>See Changes</summary>

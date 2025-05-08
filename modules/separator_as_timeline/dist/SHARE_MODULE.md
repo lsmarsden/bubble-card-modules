@@ -1,6 +1,6 @@
 # Separator as Timeline
 
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Creator:** lsmarsden
 
 > [!IMPORTANT]
@@ -38,7 +38,7 @@
 ```yaml
 separator_as_timeline:
   name: Separator as Timeline
-  version: v1.3.0
+  version: v1.4.0
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:
@@ -64,11 +64,19 @@ separator_as_timeline:
      */
 
     function processColor(color) {
-      if (!color) return null;
-      if (["#", "rgb", "hsl"].some((prefix) => color.startsWith(prefix))) {
-        return color;
+      let resolvedColor = getState(color);
+
+      if (!resolvedColor) return null;
+      if (typeof resolvedColor !== 'string') return null;
+
+      resolvedColor = resolvedColor.trim();
+      const validPrefixes = ['#', 'rgb', 'hsl'];
+
+      if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+        return resolvedColor;
       }
-      return `var(--${color}-color)`;
+
+      return `var(--${resolvedColor}-color)`;
     }
 
     const resolveConfig = (sources, defaultValue = undefined) => {
@@ -106,6 +114,29 @@ separator_as_timeline:
     function suffix(str, suffix) {
         str = String(str);
         return str.endsWith(suffix) ? str : str + suffix;
+    }
+
+    const getState = (input, fallbackToRaw = true) => {
+        if (typeof input !== 'string') return input;
+
+        // Pattern: entity_id[attribute]
+        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+
+        let entityId, attribute;
+
+        if (match) {
+            [, entityId, attribute] = match;
+        } else if (hass.states[input]) {
+            entityId = input;
+        } else {
+            // Not a known entity or format — treat as raw value
+            return fallbackToRaw ? input : undefined;
+
+        }
+        const stateObj = hass.states[entityId];
+        if (!stateObj) return fallbackToRaw ? input : undefined;
+
+        return attribute ? stateObj.attributes[attribute] : stateObj.state;
     }
 
     /**
@@ -213,14 +244,6 @@ separator_as_timeline:
             return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
         };
 
-        const getState = (entityId, attribute) => {
-            if (!entityId || !hass.states[entityId]) {
-                return undefined;
-            }
-            const statesObj = hass.states[entityId];
-            return attribute ? statesObj.attributes[attribute] : statesObj.state;
-        };
-
         // 3. ===== Init wrapper =====
         let wrapper = element.closest(".bubble-line-wrapper");
         if (!wrapper) {
@@ -267,7 +290,10 @@ separator_as_timeline:
             // Get start time (from entity if provided, otherwise from direct value)
             let startTimeValue;
             if (r.start_entity) {
-                startTimeValue = getState(r.start_entity, r.start_attribute);
+                //TODO - replace with a single start field.
+                // this will be a breaking change, so we need to
+                // implement auto-migration first
+                startTimeValue = getState(`${r.start_entity}${r.start_attribute ? '[${r.start_attribute}]' : ''}`, false);
             } else {
                 startTimeValue = r.start;
             }
@@ -275,7 +301,7 @@ separator_as_timeline:
             // Get end time (from entity if provided, otherwise from direct value)
             let endTimeValue;
             if (r.end_entity) {
-                endTimeValue = getState(r.end_entity, r.end_attribute);
+                endTimeValue = getState(`${r.end_entity}${r.end_attribute ? '[${r.end_attribute}]' : ''}`, false);
             } else {
                 endTimeValue = r.end;
             }
@@ -542,7 +568,17 @@ separator_as_timeline:
     }
   editor:
     - type: expandable
-      title: Timeline settings
+      title: Important Update!
+      icon: mdi:information-variant-circle-outline
+      schema:
+        - type: constant
+          label: Dynamic Entity Resolution (DER)
+          value: >-
+            If you see ✨ in an input field, then it supports DER. This allows entry of an entity, attribute, or regular
+            value. Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g.,
+            sensor.my_phone[battery_level].
+    - type: expandable
+      title: Timeline Settings
       icon: mdi:timeline-text
       schema:
         - name: show_time_ticks
@@ -561,7 +597,7 @@ separator_as_timeline:
           selector:
             boolean: null
         - name: marker_color
-          label: Color of the current time marker.
+          label: ✨ Color of the current time marker.
           selector:
             ui_color: null
     - type: expandable
@@ -657,7 +693,7 @@ separator_as_timeline:
                   selector:
                     boolean: null
     - type: expandable
-      title: Global icon settings
+      title: Global Icon Settings
       icon: mdi:palette
       name: icon_settings
       schema:
@@ -676,15 +712,15 @@ separator_as_timeline:
               step: 1
               unit_of_measurement: px
         - name: icon_color
-          label: Icon color. Overridable per icon.
+          label: ✨ Icon color. Overridable per icon.
           selector:
             ui_color: null
         - name: icon_background_color
-          label: Icon background color. Overridable per icon.
+          label: ✨ Icon background color. Overridable per icon.
           selector:
             ui_color: null
         - name: icon_outline_color
-          label: Icon outline color. Overridable per icon.
+          label: ✨ Icon outline color. Overridable per icon.
           selector:
             ui_color: null
         - name: highlight_active
@@ -694,7 +730,7 @@ separator_as_timeline:
           selector:
             boolean: null
         - name: icon_active_color
-          label: Icon active period color. Overridable per icon.
+          label: ✨ Icon active period color. Overridable per icon.
           selector:
             ui_color: null
     - type: expandable
@@ -741,7 +777,7 @@ separator_as_timeline:
               selector:
                 text: null
             - name: color
-              label: Timeline color
+              label: ✨ Timeline color
               selector:
                 ui_color: null
             - name: icon
@@ -768,19 +804,19 @@ separator_as_timeline:
                       step: 1
                       unit_of_measurement: px
                 - name: icon_color
-                  label: Icon color.
+                  label: ✨ Icon color.
                   selector:
                     ui_color: null
                 - name: icon_background_color
-                  label: Icon background color.
+                  label: ✨ Icon background color.
                   selector:
                     ui_color: null
                 - name: icon_outline_color
-                  label: Icon outline color.
+                  label: ✨ Icon outline color.
                   selector:
                     ui_color: null
                 - name: icon_active_color
-                  label: Icon active period color.
+                  label: ✨ Icon active period color.
                   selector:
                     ui_color: null
             - name: source_entities
@@ -827,7 +863,7 @@ separator_as_timeline:
               selector:
                 text: null
             - name: color
-              label: Timeline color
+              label: ✨ Timeline color
               selector:
                 ui_color: null
             - name: icon
@@ -854,19 +890,19 @@ separator_as_timeline:
                       step: 1
                       unit_of_measurement: px
                 - name: icon_color
-                  label: Icon color.
+                  label: ✨ Icon color.
                   selector:
                     ui_color: null
                 - name: icon_background_color
-                  label: Icon background color.
+                  label: ✨ Icon background color.
                   selector:
                     ui_color: null
                 - name: icon_outline_color
-                  label: Icon outline color.
+                  label: ✨ Icon outline color.
                   selector:
                     ui_color: null
                 - name: icon_active_color
-                  label: Icon active period color.
+                  label: ✨Icon active period color.
                   selector:
                     ui_color: null
             - name: source_entities
@@ -913,7 +949,7 @@ separator_as_timeline:
               selector:
                 text: null
             - name: color
-              label: Timeline color
+              label: ✨ Timeline color
               selector:
                 ui_color: null
             - name: icon
@@ -940,19 +976,19 @@ separator_as_timeline:
                       step: 1
                       unit_of_measurement: px
                 - name: icon_color
-                  label: Icon color.
+                  label: ✨ Icon color.
                   selector:
                     ui_color: null
                 - name: icon_background_color
-                  label: Icon background color.
+                  label: ✨ Icon background color.
                   selector:
                     ui_color: null
                 - name: icon_outline_color
-                  label: Icon outline color.
+                  label: ✨ Icon outline color.
                   selector:
                     ui_color: null
                 - name: icon_active_color
-                  label: Icon active period color.
+                  label: ✨ Icon active period color.
                   selector:
                     ui_color: null
             - name: source_entities
