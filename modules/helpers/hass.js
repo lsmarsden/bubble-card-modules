@@ -6,7 +6,10 @@
  * input does not match any known entity or format and `fallbackToRaw` is true, the raw input value
  * is returned instead.
  *
- * For non-string inputs, the function directly returns the input value.
+ * If the input is an object, the entityId is extracted from either the `entity_id` or `entity` field,
+ * and the attribute is extracted from either the `attribute` or the `att` field.
+ *
+ * For any other inputs, the function directly returns the input value or undefined, depending on the value of `fallbackToRaw`.
  *
  * @param {string} input - The input to retrieve the state or attribute for. Can be an entity ID,
  *                         an entity ID with an attribute (e.g., `entity_id[attribute]`), or a raw value.
@@ -16,22 +19,27 @@
  *                               or `undefined` if the entity is not found and `fallbackToRaw` is false.
  */
 export const getState = (input, fallbackToRaw = true) => {
-    if (typeof input !== 'string') return input;
+    if (input == null) return undefined;
+    if (typeof input !== 'string' && typeof input !== 'object') return input;
 
-    // Pattern: entity_id[attribute]
-    const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
 
     let entityId, attribute;
 
-    if (match) {
-        [, entityId, attribute] = match;
-    } else if (hass.states[input]) {
-        entityId = input;
+    if (typeof input === 'object') {
+        entityId = input.entity_id || input.entity;
+        attribute = input.attribute || input.att;
     } else {
-        // Not a known entity or format — treat as raw value
-        return fallbackToRaw ? input : undefined;
-
+        // Pattern: entity_id[attribute]
+        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+        if (match) {
+            [, entityId, attribute] = match;
+        } else if (hass.states[input]) {
+            entityId = input;
+        } else {
+            return fallbackToRaw ? input : undefined;
+        }
     }
+
     const stateObj = hass.states[entityId];
     if (!stateObj) return fallbackToRaw ? input : undefined;
 
