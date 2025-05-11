@@ -60,6 +60,9 @@ async function generateModule() {
     await fs.writeFile(path.join(modulePath, "editor.yaml"), `editor:`);
     await fs.writeFile(path.join(modulePath, "code.js"), `function ${answers.id}(card, hass) { // this allows IDEs to parse the file normally - will be removed automatically during build.\n  // add module code here\n}`);
 
+    await createFileFromTemplate(path.join(modulePath, "schema.yaml"), "./modules/templates/schema_template.yaml", {
+        MODULE_ID: moduleInfo.id
+    });
     await createFileFromTemplate(path.join(modulePath, "module_store_description.html"), "./modules/templates/module_store_description.html", {
         MODULE_NAME: moduleInfo.name,
         MODULE_ID: moduleInfo.id

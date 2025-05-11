@@ -9,13 +9,13 @@ across modules.
 To use these, import them in the `code.js` file within a module, and use them as you normally would:
 
 ```javascript
-import { processColor } from "../helpers/color"; 
+import {resolveColor} from "../helpers/color";
 
 function module_id(card, hass) {
-    
+
     // use the helper function as normal
-    const iconColor = processColor(config.module_id.icon_color);
-    
+    const iconColor = resolveColor(config.module_id.icon_color);
+
     // module-specific code here...
 }
 ```
@@ -36,7 +36,7 @@ module_id:
      * ======== IMPORTED HELPER FUNCTIONS =========
      */
 
-    function processColor(color) {
+    function resolveColor(color) {
       // logic from helper function
     }
 

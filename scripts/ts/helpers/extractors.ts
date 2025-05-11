@@ -53,7 +53,7 @@ function importHelperFunctions(rawCode: string): string[] {
     }
 
     for (const [importPath, namesSet] of importMap.entries()) {
-        const resolvedPath = path.resolve(modulesDir, "helpers", importPath) + ".js";
+        const resolvedPath = path.resolve(modulesDir, "helpers", importPath.endsWith(".js") ? importPath : importPath + ".js");
 
         if (importedFiles.has(resolvedPath)) continue;
         importedFiles.add(resolvedPath);

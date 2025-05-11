@@ -1,0 +1,6 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: {{MODULE_ID}}
+title: "`{{MODULE_ID}}`"
+type: object
+description: "Main config object"
+properties:

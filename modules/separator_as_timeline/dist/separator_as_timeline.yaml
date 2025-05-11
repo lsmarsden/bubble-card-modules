@@ -28,8 +28,8 @@ separator_as_timeline:
     function processColor(color) {
       let resolvedColor = getState(color);
 
-      if (!resolvedColor) return null;
-      if (typeof resolvedColor !== 'string') return null;
+      if (!resolvedColor) return 'var(--primary-color)';
+      if (typeof resolvedColor !== 'string') return 'var(--primary-color)';
 
       resolvedColor = resolvedColor.trim();
       const validPrefixes = ['#', 'rgb', 'hsl'];
@@ -79,22 +79,27 @@ separator_as_timeline:
     }
 
     const getState = (input, fallbackToRaw = true) => {
-        if (typeof input !== 'string') return input;
+        if (input == null) return undefined;
+        if (typeof input !== 'string' && typeof input !== 'object') return input;
 
-        // Pattern: entity_id[attribute]
-        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
 
         let entityId, attribute;
 
-        if (match) {
-            [, entityId, attribute] = match;
-        } else if (hass.states[input]) {
-            entityId = input;
+        if (typeof input === 'object') {
+            entityId = input.entity_id || input.entity;
+            attribute = input.attribute || input.att;
         } else {
-            // Not a known entity or format — treat as raw value
-            return fallbackToRaw ? input : undefined;
-
+            // Pattern: entity_id[attribute]
+            const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+            if (match) {
+                [, entityId, attribute] = match;
+            } else if (hass.states[input]) {
+                entityId = input;
+            } else {
+                return fallbackToRaw ? input : undefined;
+            }
         }
+
         const stateObj = hass.states[entityId];
         if (!stateObj) return fallbackToRaw ? input : undefined;
 

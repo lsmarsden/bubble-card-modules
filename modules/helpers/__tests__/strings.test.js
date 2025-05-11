@@ -4,7 +4,7 @@ jest.unstable_mockModule('../hass.js', () => ({
     getState: jest.fn()
 }));
 
-const {renderTextTemplate, suffix, prefix } = await import('../strings.js');
+const {renderTextTemplate, suffix, prefix} = await import('../strings.js');
 const hass = await import('../hass.js');
 
 describe('suffix()', () => {
@@ -19,6 +19,12 @@ describe('suffix()', () => {
     it('handles non-string input by coercing to string', () => {
         expect(suffix(123, 'px')).toBe('123px');
     });
+
+    test.each([[undefined], [null], [''], ['   ']])
+    ('handles null or empty input by returning empty string',
+        (input) => {
+            expect(suffix(input, 'px')).toBe('');
+        });
 
     it('handles empty suffix gracefully', () => {
         expect(suffix('test', '')).toBe('test');
@@ -38,6 +44,12 @@ describe('prefix()', () => {
         expect(prefix(42, '$')).toBe('$42');
     });
 
+    test.each([[undefined], [null], [''], ['   ']])
+    ('handles null or empty input by returning empty string',
+        (input) => {
+            expect(prefix(input, 'px')).toBe('');
+        });
+
     it('handles empty prefix gracefully', () => {
         expect(prefix('value', '')).toBe('value');
     });
@@ -55,7 +67,7 @@ describe('renderTextTemplate()', () => {
     });
 
     it('returns original text if no placeholders are provided', () => {
-        expect(renderTextTemplate({ text: 'Hello World' })).toBe('Hello World');
+        expect(renderTextTemplate({text: 'Hello World'})).toBe('Hello World');
     });
 
     it('substitutes a single placeholder using getState', () => {

@@ -1,4 +1,4 @@
-import {processColor} from "../helpers/color";
+import {resolveColor} from "../helpers/color";
 import {resolveConfig} from "../helpers/config";
 import {suffix} from "../helpers/strings";
 import {getState} from "../helpers/hass";
@@ -188,7 +188,7 @@ function separator_as_timeline(card, hass) {
             seg.className = `timeline-segment ${group}`;
             seg.style.left = `${left}%`;
             seg.style.width = `${width}%`;
-            seg.style.background = processColor(r.color) || "var(--primary-color)";
+            seg.style.background = resolveColor(r.color) || "var(--primary-color)";
             seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, "tooltip")} → ${formatTime(endH, endM, "tooltip")}`;
             if (r.source_entities) {
                 seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
@@ -242,9 +242,9 @@ function separator_as_timeline(card, hass) {
                 iconEl.setAttribute("icon", r.icon);
                 iconEl.className = `timeline-icon ${group}`;
                 iconEl.style.left = `${left + width / 2}%`;
-                iconEl.style.color = processColor(getIconConfig("icon_color"));
-                iconEl.style.border = `1px solid ${processColor(getIconConfig("icon_outline_color"))}`;
-                iconEl.style.background = processColor(getIconConfig("icon_background_color"));
+                iconEl.style.color = resolveColor(getIconConfig("icon_color"));
+                iconEl.style.border = `1px solid ${resolveColor(getIconConfig("icon_outline_color"))}`;
+                iconEl.style.background = resolveColor(getIconConfig("icon_background_color"));
                 // TODO invalid values cause this to blow up, so we need it to default if icon size is not a px
                 // value
                 iconEl.style.setProperty("--icon-size", suffix(getIconConfig("icon_size"), "px"));
@@ -252,7 +252,7 @@ function separator_as_timeline(card, hass) {
 
                 wrapper.style.setProperty(
                     `--icon-${group}-active-color`,
-                    `${processColor(getIconConfig("icon_active_color"))}`,
+                    `${resolveColor(getIconConfig("icon_active_color"))}`,
                 );
 
 
@@ -310,7 +310,7 @@ function separator_as_timeline(card, hass) {
         wrapper.style.setProperty("--timeline-marker-left", `${currentPct}%`);
         wrapper.style.setProperty(
             "--marker-color",
-            processColor(getConfig("marker_color")),
+            resolveColor(getConfig("marker_color")),
         );
     }
 }

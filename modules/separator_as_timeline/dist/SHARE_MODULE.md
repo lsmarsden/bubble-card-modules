@@ -63,11 +63,11 @@ separator_as_timeline:
      * ======== IMPORTED HELPER FUNCTIONS =========
      */
 
-    function processColor(color) {
+    function resolveColor(color) {
       let resolvedColor = getState(color);
 
-      if (!resolvedColor) return null;
-      if (typeof resolvedColor !== 'string') return null;
+      if (!resolvedColor) return 'var(--primary-color)';
+      if (typeof resolvedColor !== 'string') return 'var(--primary-color)';
 
       resolvedColor = resolvedColor.trim();
       const validPrefixes = ['#', 'rgb', 'hsl'];
@@ -117,22 +117,27 @@ separator_as_timeline:
     }
 
     const getState = (input, fallbackToRaw = true) => {
-        if (typeof input !== 'string') return input;
+        if (input == null) return undefined;
+        if (typeof input !== 'string' && typeof input !== 'object') return input;
 
-        // Pattern: entity_id[attribute]
-        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
 
         let entityId, attribute;
 
-        if (match) {
-            [, entityId, attribute] = match;
-        } else if (hass.states[input]) {
-            entityId = input;
+        if (typeof input === 'object') {
+            entityId = input.entity_id || input.entity;
+            attribute = input.attribute || input.att;
         } else {
-            // Not a known entity or format — treat as raw value
-            return fallbackToRaw ? input : undefined;
-
+            // Pattern: entity_id[attribute]
+            const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+            if (match) {
+                [, entityId, attribute] = match;
+            } else if (hass.states[input]) {
+                entityId = input;
+            } else {
+                return fallbackToRaw ? input : undefined;
+            }
         }
+
         const stateObj = hass.states[entityId];
         if (!stateObj) return fallbackToRaw ? input : undefined;
 
@@ -328,7 +333,7 @@ separator_as_timeline:
                 seg.className = `timeline-segment ${group}`;
                 seg.style.left = `${left}%`;
                 seg.style.width = `${width}%`;
-                seg.style.background = processColor(r.color) || "var(--primary-color)";
+                seg.style.background = resolveColor(r.color) || "var(--primary-color)";
                 seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, "tooltip")} → ${formatTime(endH, endM, "tooltip")}`;
                 if (r.source_entities) {
                     seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
@@ -382,9 +387,9 @@ separator_as_timeline:
                     iconEl.setAttribute("icon", r.icon);
                     iconEl.className = `timeline-icon ${group}`;
                     iconEl.style.left = `${left + width / 2}%`;
-                    iconEl.style.color = processColor(getIconConfig("icon_color"));
-                    iconEl.style.border = `1px solid ${processColor(getIconConfig("icon_outline_color"))}`;
-                    iconEl.style.background = processColor(getIconConfig("icon_background_color"));
+                    iconEl.style.color = resolveColor(getIconConfig("icon_color"));
+                    iconEl.style.border = `1px solid ${resolveColor(getIconConfig("icon_outline_color"))}`;
+                    iconEl.style.background = resolveColor(getIconConfig("icon_background_color"));
                     // TODO invalid values cause this to blow up, so we need it to default if icon size is not a px
                     // value
                     iconEl.style.setProperty("--icon-size", suffix(getIconConfig("icon_size"), "px"));
@@ -392,7 +397,7 @@ separator_as_timeline:
 
                     wrapper.style.setProperty(
                         `--icon-${group}-active-color`,
-                        `${processColor(getIconConfig("icon_active_color"))}`,
+                        `${resolveColor(getIconConfig("icon_active_color"))}`,
                     );
 
 
@@ -450,7 +455,7 @@ separator_as_timeline:
             wrapper.style.setProperty("--timeline-marker-left", `${currentPct}%`);
             wrapper.style.setProperty(
                 "--marker-color",
-                processColor(getConfig("marker_color")),
+                resolveColor(getConfig("marker_color")),
             );
         }
     })()}

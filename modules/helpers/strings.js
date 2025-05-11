@@ -8,7 +8,8 @@ import {getState} from "./hass.js";
  * @return {string} The resulting string with the suffix added if necessary.
  */
 export function suffix(str, suffix) {
-    str = String(str);
+    str = clean(str);
+    if (str === '') return '';
     return str.endsWith(suffix) ? str : str + suffix;
 }
 
@@ -20,8 +21,16 @@ export function suffix(str, suffix) {
  * @return {string} The resulting string with the prefix added if necessary.
  */
 export function prefix(str, prefix) {
-    str = String(str);
+    str = clean(str);
+    if (str === '') return '';
     return str.startsWith(prefix) ? str : prefix + str;
+}
+
+function clean(str) {
+    if (!str) return '';
+    str = String(str);
+    if (str.trim() === '') return '';
+    return str;
 }
 
 /**
