@@ -1,0 +1,228 @@
+editor:
+  - type: expandable
+    title: Dynamic Entity Resolution
+    icon: mdi:information-variant-circle-outline
+    schema:
+      - type: constant
+        label: Dynamic Entity Resolution (DER)
+        value: >-
+          If you see ✨ in an input field, then it supports DER. This allows entry of an entity, attribute, or regular value.
+          Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g., sensor.my_phone[battery_level].
+  - name: source
+    label: "✨Source entity"
+    selector:
+      entity: { }
+  - name: invert
+    label: "Invert progress (bar decreases as progress completes)"
+    default: false
+    selector:
+      boolean: null
+  - type: expandable
+    title: "Below text"
+    name: below_text
+    schema:
+      - name: text
+        label: "Text template"
+        selector:
+          text: null
+      - name: placeholders
+        label: "Placeholders - format lines like pct: sensor.clean_progress"
+        selector:
+          object: { }
+      - name: condition
+        label: "Condition to show text (see docs for additional condition configuration)"
+        selector:
+          condition: {}
+  - type: expandable
+    title: "Above text"
+    name: above_text
+    schema:
+      - name: text
+        label: "Text template"
+        selector:
+          text: null
+      - name: placeholders
+        label: "Placeholders - format lines like pct: sensor.clean_progress"
+        selector:
+          object: { }
+      - name: condition
+        label: "Condition to show text (see docs for additional condition configuration)"
+        selector:
+          condition: {}
+  - type: expandable
+    title: "Progress Style"
+    name: progress_style
+    schema:
+      - name: interpolate
+        label: "Interpolate the colours"
+        default: true
+        selector:
+          boolean: null
+      - name: height
+        label: "Height of the progress bar, in pixels"
+        selector:
+          number:
+            min: 1
+            max: 50
+            step: 1
+            unit_of_measurement: px
+      - type: expandable
+        name: orb_settings
+        label: "Orb Settings"
+        schema:
+          - name: show_orb
+            default: true
+            label: "Show progress orb animation"
+            selector:
+              boolean: null
+          - name: slow_orb
+            default: false
+            label: "Use slow orb animation"
+            selector:
+              boolean: null
+          - name: orb_color
+            label: "✨Color of progress orb"
+            selector:
+              ui_color:
+          - name: trail_color
+            label: "✨Color of progress orb trail"
+            selector:
+              ui_color:
+          - name: condition
+            label: "Show the orb under these conditions"
+            selector:
+              condition: {}
+      - type: expandable
+        name: shine_settings
+        label: "Shine Settings"
+        schema:
+          - name: show_shine
+            label: "Show shine animation"
+            default: false
+            selector:
+              boolean: null
+          - name: shine_color
+            label: "✨Shine color"
+            selector:
+              ui_color:
+          - name: shine_width
+            label: "Shine width, in pixels. Defaults to half current progress width"
+            selector:
+              number:
+                min: 1
+                step: 1
+                unit_of_measurement: px
+          - name: shine_angle
+            label: "Shine angle, in degrees"
+            default: 0
+            selector:
+              number:
+                unit_of_measurement: deg
+          - name: shine_delay
+            label: "Shine delay, in seconds"
+            default: 0
+            selector:
+              number:
+                min: 0
+                unit_of_measurement: s
+      - type: expandable
+        name: outline
+        label: "Outline Settings"
+        schema:
+          - name: style
+            label: "Outline CSS style"
+            selector:
+              select:
+                options:
+                  - none
+                  - dotted
+                  - dashed
+                  - solid
+                  - double
+                  - groove
+                  - ridge
+                  - inset
+                  - outset
+          - name: color
+            label: "✨Outline color"
+            selector:
+              ui_color:
+          - name: width
+            label: "Outline width, in pixels"
+            selector:
+              number:
+                min: 1
+                step: 1
+                unit_of_measurement: px
+      - type: expandable
+        name: color_stops
+        label: "Progress colors - add more in YAML"
+        schema:
+          - type: expandable
+            label: "Color 1"
+            name: "0"
+            schema:
+              - name: color
+                label: "✨Color"
+                selector:
+                  ui_color:
+              - name: percent
+                label: "From %"
+                selector:
+                  number:
+                    min: 0
+                    max: 100
+                    step: 1
+                    unit_of_measurement: '%'
+          - type: expandable
+            label: "Color 2"
+            name: "1"
+            schema:
+              - name: color
+                label: "✨Color"
+                selector:
+                  ui_color:
+              - name: percent
+                label: "From %"
+                selector:
+                  number:
+                    min: 0
+                    max: 100
+                    step: 1
+                    unit_of_measurement: '%'
+      - type: expandable
+        name: color_stops
+        label: "Background Progress colors - add more in YAML"
+        schema:
+          - type: expandable
+            label: "Color 1"
+            name: "0"
+            schema:
+              - name: color
+                label: "✨Color"
+                selector:
+                  ui_color:
+              - name: percent
+                label: "From %"
+                selector:
+                  number:
+                    min: 0
+                    max: 100
+                    step: 1
+                    unit_of_measurement: '%'
+          - type: expandable
+            label: "Color 2"
+            name: "1"
+            schema:
+              - name: color
+                label: "✨Color"
+                selector:
+                  ui_color:
+              - name: percent
+                label: "From %"
+                selector:
+                  number:
+                    min: 0
+                    max: 100
+                    step: 1
+                    unit_of_measurement: '%'

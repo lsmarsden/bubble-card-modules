@@ -1,0 +1,13 @@
+module_info:
+  id: separator_as_progress_bar
+  name: Separator As Progress Bar
+  version: 1.0.0
+  creator: lsmarsden
+  link: >-
+    https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_progress_bar
+  supported:
+    - separator
+  description_file: module_store_description.html
+  code_file: code.js
+  styles: styles.css
+  editor_file: editor.yaml

@@ -1,0 +1,179 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: separator_as_progress_bar
+title: "`separator_as_progress_bar`"
+type: object
+description: "Main config object"
+properties:
+  source:
+    type: string
+    description: The entity or attribute source.
+    format: entity[attribute]
+  invert:
+    type: boolean
+    description: Invert the progress bar (bar decreases as progress completes)
+    default: false
+  below_text:
+    type: object
+    description: Text template to show below the progress bar
+    $ref: "#/definitions/text_template"
+  above_text:
+    type: object
+    description: Text template to show above the progress bar
+    $ref: "#/definitions/text_template"
+  progress_style:
+    type: object
+    properties:
+      height:
+        type: integer
+        description: The height of the progress bar, in pixels.
+        default: 6
+      interpolate:
+        type: boolean
+        description: Gradually change color from one stop to another as the progress increases
+        default: true
+      orb_settings:
+        type: object
+        description: Settings for the progress orb
+        $ref: "#/definitions/condition"
+        properties:
+          show_orb:
+            type: boolean
+            description: Show the progress orb animation
+            default: true
+          slow_orb:
+            type: boolean
+            description: Use slow orb animation
+            default: false
+          orb_color:
+            type: string
+            description: Color of the progress orb
+          trail_color:
+            type: string
+            description: Color of the orb trail
+      outline:
+        type: object
+        properties:
+          color:
+            type: string
+            description: Outline color.
+          width:
+            type: integer
+            description: Width of outline, in pixels.
+          style:
+            type: string
+            description: Outline CSS style.
+            enum:
+              - none
+              - dotted
+              - dashed
+              - solid
+              - double
+              - groove
+              - ridge
+              - inset
+              - outset
+      color_stops:
+        $ref: "#/definitions/color_stops"
+      background_color_stops:
+        $ref: "#/definitions/color_stops"
+definitions:
+  text_template:
+    type: object
+    $ref: "#/definitions/condition"
+    properties:
+      text:
+        type: string
+        description: The text with placeholders e.g. "Hello {name}".
+      placeholders:
+        type: object
+        description: Placeholders. Use the template field name as the key and entity[attribute] as the value.
+        additionalItems: true
+  color_stops:
+    type: array
+    title: Array of color stop
+    items:
+      $ref: "#/definitions/color_stop"
+  color_stop:
+    type: object
+    properties:
+      from_percent:
+        type: integer
+        description: The percent from which to start using this color.
+      color:
+        type: string
+        description: The color to use.
+  condition:
+    title: Condition
+    oneOf:
+      - required: [condition, entity, state]
+        properties:
+          condition:
+            const: state
+          entity:
+            type: string
+          attribute:
+            type: string
+          state:
+            oneOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+      - required: [condition, entity]
+        properties:
+          condition:
+            const: numeric_state
+          entity:
+            type: string
+          attribute:
+            type: string
+          above:
+            oneOf:
+              - type: number
+              - type: string
+            description: Numeric threshold or another entity to compare from
+          below:
+            oneOf:
+              - type: number
+              - type: string
+            description: Numeric threshold or another entity to compare from
+      - required: [condition, entity]
+        properties:
+          condition:
+            const: exists
+          entity:
+            type: string
+          attribute:
+            type: string
+
+      - required: [condition, conditions]
+        properties:
+          condition:
+            const: and
+          conditions:
+            type: array
+            items:
+              $ref: "#/definitions/condition"
+
+      - required: [condition, conditions]
+        properties:
+          condition:
+            const: or
+          conditions:
+            type: array
+            items:
+              $ref: "#/definitions/condition"
+
+      - required: [condition]
+        properties:
+          condition:
+            const: not
+          conditions:
+            oneOf:
+              - $ref: "#/definitions/condition"
+              - type: array
+                items:
+                  $ref: "#/definitions/condition"
+
+
+

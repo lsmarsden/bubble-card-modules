@@ -1,0 +1,194 @@
+.bubble-line-text {
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+    position: absolute;
+}
+
+.bubble-line-text.above-text {
+    bottom: 100%;
+    margin-bottom: 4px;
+}
+
+.bubble-line-text.below-text {
+    top: 100%;
+    margin-top: 2px;
+}
+
+.bubble-line-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.bubble-line-progress {
+    position: relative;
+    border-radius: calc(var(--bubble-line-height) / 2); /* Same as the orb radius - this lets is fit in the progress bar edges nicely */
+    margin-right: 14px;
+    opacity: 1 !important;
+    flex-grow: 1;
+    height: var(--bubble-line-height);
+    background-color: var(--bubble-line-progress-background-color);
+    container-type: size;
+    outline: var(--bubble-line-progress-outline, none);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.bubble-line-progress-bar {
+    content: '';
+    position: absolute;
+    height: inherit;
+    border-radius: inherit;
+    width: var(--progress-width);
+    background: var(--bubble-line-progress-color);
+    transition: width 0.3s ease-in-out;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.bubble-line-progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.2),
+            rgba(255, 255, 255, 0)
+    );
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    pointer-events: none;
+}
+
+.bubble-line-progress-tip {
+    content: '';
+    position: absolute;
+    width: var(--bubble-line-height);
+    height: var(--bubble-line-height);
+    border-radius: 50%;
+    top: 50%;
+    left: calc(var(--progress-width) - 1.5 * var(--bubble-line-height));
+    transition: left 0.3s ease-in-out;
+    background-color: var(--bubble-line-progress-color);
+    box-shadow: 0 0 6px var(--bubble-line-progress-color),
+    0 0 12px var(--bubble-line-progress-color),
+    0 0 20px var(--bubble-line-progress-color);
+    animation: pulse-glow 1.8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.bubble-line-progress-shine {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    height: 100%;
+    width: var(--bubble-line-progress-shine-width);
+    background: linear-gradient( to right, transparent 0%, var(--bubble-line-progress-shine-color, rgba(255,255,255,0.4)) 50%, transparent 100%);
+    animation: shine 2s linear infinite;
+    pointer-events: none;
+}
+
+.bubble-line-progress-orb {
+    position: absolute;
+    height: inherit;
+    width: 100cqh;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--bubble-line-progress-orb-color));
+}
+
+.bubble-line-progress-orb::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 40%;
+    height: 30%;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    filter: blur(1px);
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(0) skew(var(--bubble-line-progress-shine-angle, 0deg));
+    }
+    20% {
+        transform: translateX(0) skew(var(--bubble-line-progress-shine-angle, 0deg));
+    }
+
+    100% {
+        transform: translateX(calc(1.5 * var(--progress-width) + 2.5 * var(--bubble-line-height))) skew(var(--bubble-line-progress-shine-angle, 0deg));
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translate(50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(50%, -50%) scale(1.3);
+    }
+}
+
+@keyframes orb-slow {
+    0% {
+        transform-origin: left;
+        transform: translateX(0);
+        scale: 0;
+    }
+
+    20% {
+        transform: translateX(0);
+        scale: 1;
+        box-shadow: none;
+        clip-path: none;
+    }
+    50% {
+        box-shadow: calc(-1 * var(--bubble-line-height)) 0 var(--bubble-line-height) calc(var(--bubble-line-height) / 4) var(--bubble-line-progress-orb-trail-color);
+        clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 95%, calc(-2.5 * var(--bubble-line-height)) 50%);
+    }
+
+    80% {
+        transform: translateX(calc(var(--progress-width) - var(--bubble-line-height)));
+        scale: 1;
+    }
+    100% {
+        transform-origin: var(--progress-width);
+        transform: translateX(calc(var(--progress-width) - var(--bubble-line-height)));
+        scale: 0;
+        box-shadow: none;
+        clip-path: none;
+    }
+}
+
+@keyframes orb-fast {
+    0% {
+        transform-origin: left;
+        scale: 0;
+        transform: translateX(0);
+        box-shadow: none;
+        clip-path: none;
+    }
+
+    20% {
+        scale: 1;
+        transform: translateX(0);
+        box-shadow: calc(-1 * var(--bubble-line-height)) 0 var(--bubble-line-height) calc(var(--bubble-line-height) / 4) var(--bubble-line-progress-orb-trail-color);
+        clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 95%, calc(-2.5 * var(--bubble-line-height)) 50%);
+    }
+
+    100% {
+        transform: translateX(calc(1.5 * var(--progress-width) + 2.5 * var(--bubble-line-height)));
+        box-shadow: calc(-1 * var(--bubble-line-height)) 0 var(--bubble-line-height) calc(var(--bubble-line-height) / 4) var(--bubble-line-progress-orb-trail-color);
+        clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 95%, calc(-2.5 * var(--bubble-line-height)) 50%);
+    }
+}
