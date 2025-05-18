@@ -1,6 +1,6 @@
 editor:
   - type: expandable
-    title: Important Update!
+    title: Dynamic Entity Resolution
     icon: mdi:information-variant-circle-outline
     schema:
       - type: constant

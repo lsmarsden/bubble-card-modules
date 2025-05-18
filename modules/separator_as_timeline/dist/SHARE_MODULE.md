@@ -1,6 +1,6 @@
 # Separator as Timeline
 
-**Version:** 1.4.0  
+**Version:** 1.4.1  
 **Creator:** lsmarsden
 
 > [!IMPORTANT]
@@ -38,7 +38,7 @@
 ```yaml
 separator_as_timeline:
   name: Separator as Timeline
-  version: v1.4.0
+  version: v1.4.1
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:
@@ -63,20 +63,19 @@ separator_as_timeline:
      * ======== IMPORTED HELPER FUNCTIONS =========
      */
 
-    function resolveColor(color) {
-      let resolvedColor = getState(color);
+    function resolveColor(color, defaultColor) {
+        let resolvedColor = getState(color);
+        if (!resolvedColor) return defaultColor ?? 'var(--primary-color)';
+        if (typeof resolvedColor !== 'string') return defaultColor ?? 'var(--primary-color)';
 
-      if (!resolvedColor) return 'var(--primary-color)';
-      if (typeof resolvedColor !== 'string') return 'var(--primary-color)';
+        resolvedColor = resolvedColor.trim();
+        const validPrefixes = ['#', 'rgb', 'hsl'];
 
-      resolvedColor = resolvedColor.trim();
-      const validPrefixes = ['#', 'rgb', 'hsl'];
+        if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+            return resolvedColor;
+        }
 
-      if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
-        return resolvedColor;
-      }
-
-      return `var(--${resolvedColor}-color)`;
+        return `var(--${resolvedColor}-color)`;
     }
 
     const resolveConfig = (sources, defaultValue = undefined) => {
@@ -112,8 +111,16 @@ separator_as_timeline:
     }
 
     function suffix(str, suffix) {
-        str = String(str);
+        str = clean(str);
+        if (str === '') return '';
         return str.endsWith(suffix) ? str : str + suffix;
+    }
+
+    function clean(str) {
+        if (!str) return '';
+        str = String(str);
+        if (str.trim() === '') return '';
+        return str;
     }
 
     const getState = (input, fallbackToRaw = true) => {
@@ -573,7 +580,7 @@ separator_as_timeline:
     }
   editor:
     - type: expandable
-      title: Important Update!
+      title: Dynamic Entity Resolution
       icon: mdi:information-variant-circle-outline
       schema:
         - type: constant

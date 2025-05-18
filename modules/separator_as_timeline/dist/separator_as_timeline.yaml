@@ -1,6 +1,6 @@
 separator_as_timeline:
   name: Separator as Timeline
-  version: v1.4.0
+  version: v1.4.1
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:
@@ -25,20 +25,19 @@ separator_as_timeline:
      * ======== IMPORTED HELPER FUNCTIONS =========
      */
 
-    function processColor(color) {
-      let resolvedColor = getState(color);
+    function resolveColor(color, defaultColor) {
+        let resolvedColor = getState(color);
+        if (!resolvedColor) return defaultColor ?? 'var(--primary-color)';
+        if (typeof resolvedColor !== 'string') return defaultColor ?? 'var(--primary-color)';
 
-      if (!resolvedColor) return 'var(--primary-color)';
-      if (typeof resolvedColor !== 'string') return 'var(--primary-color)';
+        resolvedColor = resolvedColor.trim();
+        const validPrefixes = ['#', 'rgb', 'hsl'];
 
-      resolvedColor = resolvedColor.trim();
-      const validPrefixes = ['#', 'rgb', 'hsl'];
+        if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+            return resolvedColor;
+        }
 
-      if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
-        return resolvedColor;
-      }
-
-      return `var(--${resolvedColor}-color)`;
+        return `var(--${resolvedColor}-color)`;
     }
 
     const resolveConfig = (sources, defaultValue = undefined) => {
@@ -74,8 +73,16 @@ separator_as_timeline:
     }
 
     function suffix(str, suffix) {
-        str = String(str);
+        str = clean(str);
+        if (str === '') return '';
         return str.endsWith(suffix) ? str : str + suffix;
+    }
+
+    function clean(str) {
+        if (!str) return '';
+        str = String(str);
+        if (str.trim() === '') return '';
+        return str;
     }
 
     const getState = (input, fallbackToRaw = true) => {
@@ -295,7 +302,7 @@ separator_as_timeline:
                 seg.className = `timeline-segment ${group}`;
                 seg.style.left = `${left}%`;
                 seg.style.width = `${width}%`;
-                seg.style.background = processColor(r.color) || "var(--primary-color)";
+                seg.style.background = resolveColor(r.color) || "var(--primary-color)";
                 seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, "tooltip")} → ${formatTime(endH, endM, "tooltip")}`;
                 if (r.source_entities) {
                     seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
@@ -349,9 +356,9 @@ separator_as_timeline:
                     iconEl.setAttribute("icon", r.icon);
                     iconEl.className = `timeline-icon ${group}`;
                     iconEl.style.left = `${left + width / 2}%`;
-                    iconEl.style.color = processColor(getIconConfig("icon_color"));
-                    iconEl.style.border = `1px solid ${processColor(getIconConfig("icon_outline_color"))}`;
-                    iconEl.style.background = processColor(getIconConfig("icon_background_color"));
+                    iconEl.style.color = resolveColor(getIconConfig("icon_color"));
+                    iconEl.style.border = `1px solid ${resolveColor(getIconConfig("icon_outline_color"))}`;
+                    iconEl.style.background = resolveColor(getIconConfig("icon_background_color"));
                     // TODO invalid values cause this to blow up, so we need it to default if icon size is not a px
                     // value
                     iconEl.style.setProperty("--icon-size", suffix(getIconConfig("icon_size"), "px"));
@@ -359,7 +366,7 @@ separator_as_timeline:
 
                     wrapper.style.setProperty(
                         `--icon-${group}-active-color`,
-                        `${processColor(getIconConfig("icon_active_color"))}`,
+                        `${resolveColor(getIconConfig("icon_active_color"))}`,
                     );
 
 
@@ -417,7 +424,7 @@ separator_as_timeline:
             wrapper.style.setProperty("--timeline-marker-left", `${currentPct}%`);
             wrapper.style.setProperty(
                 "--marker-color",
-                processColor(getConfig("marker_color")),
+                resolveColor(getConfig("marker_color")),
             );
         }
     })()}
@@ -535,7 +542,7 @@ separator_as_timeline:
     }
   editor:
     - type: expandable
-      title: Important Update!
+      title: Dynamic Entity Resolution
       icon: mdi:information-variant-circle-outline
       schema:
         - type: constant
