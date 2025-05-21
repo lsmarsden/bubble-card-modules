@@ -1,0 +1,33 @@
+.bubble-icon-container.has-bubble-border-radius:before {
+    position: absolute;
+    content: "";
+    margin-top: 2px !important;
+    margin-left: 2px !important;
+    margin-bottom: 2px !important;
+    height: calc(100% - 4px) !important;
+    width: calc(100% - 4px) !important;
+    border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
+    opacity: 1 !important;
+}
+
+.bubble-sub-button.has-bubble-border-radius:before {
+    position: absolute;
+    content: "";
+    margin-top: 2px !important;
+    margin-left: 2px !important;
+    margin-bottom: 2px !important;
+    height: calc(100% - 4px) !important;
+    width: calc(100% - 4px) !important;
+    border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
+    opacity: 1 !important;
+}
+
+.progress-border::before {
+    background: radial-gradient(var(--custom-background-color) 60%, transparent 0%), conic-gradient(var(--progress-color, green) var(--progress, 70%), var(--remaining-progress-color, transparent) 0%);
+    opacity: 1;
+    position: absolute;
+    inset: 0;
+    content: '';
+    border-radius: 50%;
+    transition: --progress 500ms;
+}

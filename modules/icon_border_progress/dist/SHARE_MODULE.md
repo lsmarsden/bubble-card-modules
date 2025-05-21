@@ -1,0 +1,504 @@
+# Icon Border Progress
+
+**Version:** 1.0.0  
+**Creator:** lsmarsden
+
+> [!IMPORTANT]
+>
+> ### Supported cards:
+>
+> - button
+> - climate
+> - cover
+> - media-player
+> - pop-up
+> - select
+> - separator
+
+![preview.png](assets/preview.png)
+
+<div><h2>Icon Border Progress</h2>
+    <p>
+        Forked from <a href="https://github.com/Clooos/Bubble-Card/discussions/1296" target="_blank">Nick's module</a>.
+
+        This module adds the ability to show progress of an entity via icon borders. If using a custom border-radius please make sure you define --bubble-icon-border-radius for this to work correctly.
+    </p>
+
+    <p>
+        For full documentation including configuration, examples, and more, visit the <a
+            href="https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/icon_border_progress"
+            target="_blank">GitHub repo</a>.
+    </p>
+</div>
+
+---
+
+<details>
+
+<summary><b>🧩 Get this Module</b></summary>
+
+<br>
+
+> To use this module, simply copy and paste the following configuration into your `/www/bubble/bubble-modules.yaml` file.
+
+```yaml
+icon_border_progress:
+  name: Icon Border Progress
+  version: v1.0.0
+  creator: lsmarsden
+  link: https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
+  supported:
+    - button
+    - climate
+    - cover
+    - media-player
+    - pop-up
+    - select
+    - separator
+  description: |-
+    <div><h2>Icon Border Progress</h2>
+        <p>
+            Forked from <a href="https://github.com/Clooos/Bubble-Card/discussions/1296" target="_blank">Nick's module</a>.
+
+            This module adds the ability to show progress of an entity via icon borders. If using a custom border-radius please make sure you define --bubble-icon-border-radius for this to work correctly.
+        </p>
+
+        <p>
+            For full documentation including configuration, examples, and more, visit the <a
+                href="https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/icon_border_progress"
+                target="_blank">GitHub repo</a>.
+        </p>
+    </div>
+  code: |-
+    ${(() => {
+    /**
+     * ======== IMPORTED HELPER FUNCTIONS =========
+     */
+
+    function checkAllConditions(cProp) {
+        if (!cProp) return true;
+        if (Array.isArray(cProp)) {
+            return cProp.every(condition => evaluateSingleCondition(condition));
+        }
+        return evaluateSingleCondition(cProp);
+    }
+
+    function evaluateSingleCondition(condObj) {
+        if (!condObj || typeof condObj !== 'object') return false;
+        if (!condObj.condition) return false;
+        const t = condObj.condition;
+        switch (t) {
+            case 'state': {
+                const state = getState(condObj, false);
+                if (state === undefined) return false;
+                if (Array.isArray(condObj.state)) {
+                    return condObj.state.includes(state);
+                }
+                return state === condObj.state;
+            }
+            case 'numeric_state': {
+                const numVal = parseFloat(getState(condObj));
+                if (isNaN(numVal)) return false;
+
+                const aboveVal = parseFloat(getState(condObj.above));
+                if (!isNaN(aboveVal) && numVal <= aboveVal) {
+                    return false;
+                }
+
+                const belowVal = parseFloat(getState(condObj.below));
+                if (!isNaN(belowVal) && numVal >= belowVal) {
+                    return false;
+                }
+
+                return true;
+            }
+            case 'exists':
+                return getState(condObj) !== undefined;
+            case 'and':
+                if (!Array.isArray(condObj.conditions)) return false;
+                return condObj.conditions.every(sc => evaluateSingleCondition(sc));
+            case 'or':
+                if (!Array.isArray(condObj.conditions)) return false;
+                return condObj.conditions.some(sc => evaluateSingleCondition(sc));
+            case 'not':
+                if (Array.isArray(condObj.conditions) && condObj.conditions.length > 0) {
+                    return !evaluateSingleCondition(condObj.conditions[0]);
+                }
+                if (condObj.conditions) {
+                    return !evaluateSingleCondition(condObj.conditions);
+                }
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    function resolveColor(color, defaultColor) {
+        let resolvedColor = getState(color);
+        if (!resolvedColor) return defaultColor ?? 'var(--primary-color)';
+        if (typeof resolvedColor !== 'string') return defaultColor ?? 'var(--primary-color)';
+
+        resolvedColor = resolvedColor.trim();
+        const validPrefixes = ['#', 'rgb', 'hsl'];
+
+        if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+            return resolvedColor;
+        }
+
+        return `var(--${resolvedColor}-color)`;
+    }
+
+    function resolveColorFromStops(progress, stops, interpolate) {
+        // handles the situation when HA reformats arrays into objects keyed by numbers.
+        if (!Array.isArray(stops) && typeof stops === 'object' && stops !== null) {
+            stops = Object.values(stops).sort((a, b) => a.percent - b.percent);
+        }
+        if (!Array.isArray(stops) || !stops || stops.length === 0) {
+            return 'var(--primary-color)';
+        }
+        // Sort stops in ascending order by percent
+        const sortedStops = stops.slice().sort((a, b) => a.percent - b.percent);
+
+        // Handle out-of-range progress values
+        if (progress <= sortedStops[0].percent) {
+            return resolveColor(sortedStops[0].color);
+        }
+        if (progress >= sortedStops[sortedStops.length - 1].percent) {
+            return resolveColor(sortedStops[sortedStops.length - 1].color);
+        }
+
+        // Find the lower and upper bounds
+        const lower = [...sortedStops].reverse().find(s => s.percent <= progress);
+        const upper = sortedStops.find(s => s.percent >= progress);
+
+        if (!interpolate || resolveColor(lower.color) === resolveColor(upper.color)) {
+            return resolveColor(lower.color);
+        }
+
+        const range = upper.percent - lower.percent;
+        const frac = (progress - lower.percent) / range;
+        const format = v => parseFloat(v.toFixed(2));
+
+        return `color-mix(in srgb, ${resolveColor(lower.color)} ${format((1 - frac) * 100)}%, ${resolveColor(upper.color)} ${format(frac * 100)}%)`;
+    }
+
+    function applyEffects(element, effects) {
+        Object.values(effects).forEach((eff) => {
+            if (eff.effect) {
+                if (checkAllConditions(eff.condition)) {
+                    element.classList.add(`progress-effect-${eff.effect}`, 'has-effect');
+                } else {
+                    element.classList.remove(`progress-effect-${eff.effect}`);
+                }
+            }
+        });
+    }
+
+    const getState = (input, fallbackToRaw = true) => {
+        if (input == null) return undefined;
+        if (typeof input !== 'string' && typeof input !== 'object') return input;
+
+
+        let entityId, attribute;
+
+        if (typeof input === 'object') {
+            entityId = input.entity_id || input.entity;
+            attribute = input.attribute || input.att;
+        } else {
+            // Pattern: entity_id[attribute]
+            const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+            if (match) {
+                [, entityId, attribute] = match;
+            } else if (hass.states[input]) {
+                entityId = input;
+            } else {
+                return fallbackToRaw ? input : undefined;
+            }
+        }
+
+        const stateObj = hass.states[entityId];
+        if (!stateObj) return fallbackToRaw ? input : undefined;
+
+        return attribute ? stateObj.attributes[attribute] : stateObj.state;
+    }
+
+    function toArray(object) {
+
+        if (Array.isArray(object)) return object;
+        if (!object || typeof object !== 'object') return [];
+
+        return Object.values(object);
+    }
+
+    /**
+     * ======== MAIN MODULE CODE =========
+     */
+
+     // this allows IDEs to parse the file normally - will be removed automatically during build.
+        const {icon_border_progress: config} = this.config;
+        toArray(config).forEach(({button, condition, entity, start, end, interpolate_colors, color_stops, backcolor, remainingcolor, effects}) => {
+            if (!button) return;
+
+            let selector;
+            if (button === 'main-button' || button === 'main') {
+                selector = '.bubble-icon-container';
+            } else {
+                selector = `.bubble-${button}`;
+            }
+
+            const element = card.querySelector(selector);
+            if (!element) return;
+
+            if (!checkAllConditions(condition)) {
+                return;
+            }
+
+            let progressValue = parseFloat(getState(entity));
+            let startValue = parseInt(getState(start));
+            let endValue = parseInt(getState(end));
+
+            startValue = isNaN(startValue) ? 0 : startValue;
+            endValue = isNaN(endValue) ? 100 : endValue;
+
+            if (isNaN(progressValue) || progressValue < startValue || progressValue > endValue) {
+                progressValue = startValue;
+            }
+
+            progressValue = (progressValue - startValue) / (endValue - startValue) * 100;
+            const colorStops = color_stops || [];
+            const progressColor = resolveColorFromStops(progressValue, colorStops, interpolate_colors)
+
+            const remainingProgressColor = resolveColor(remainingcolor, 'var(--dark-grey-color)');
+            const backgroundColor = resolveColor(backcolor, 'var(--bubble-icon-background-color)');
+
+            const bubbleBorderRadius = getComputedStyle(element).getPropertyValue('--bubble-icon-border-radius');
+            if (bubbleBorderRadius && bubbleBorderRadius.trim() !== '') {
+                element.classList.add('has-bubble-border-radius');
+            } else {
+                element.classList.remove('has-bubble-border-radius');
+            }
+
+            element.style.background = `${backgroundColor}`;
+            element.classList.add('progress-border');
+            element.style.setProperty('--custom-background-color', `${backgroundColor}`);
+            element.style.setProperty('--progress', `${progressValue}%`);
+            element.style.setProperty('--orb-angle', `${progressValue / 100 * 360}deg`);
+            element.style.setProperty('--progress-color', `${progressColor}`);
+            element.style.setProperty('--remaining-progress-color', `${remainingProgressColor}`);
+            applyEffects(element, effects || []);
+        });
+    })()}
+
+    .bubble-icon-container.has-bubble-border-radius:before {
+        position: absolute;
+        content: "";
+        margin-top: 2px !important;
+        margin-left: 2px !important;
+        margin-bottom: 2px !important;
+        height: calc(100% - 4px) !important;
+        width: calc(100% - 4px) !important;
+        border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
+        opacity: 1 !important;
+    }
+
+    .bubble-sub-button.has-bubble-border-radius:before {
+        position: absolute;
+        content: "";
+        margin-top: 2px !important;
+        margin-left: 2px !important;
+        margin-bottom: 2px !important;
+        height: calc(100% - 4px) !important;
+        width: calc(100% - 4px) !important;
+        border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
+        opacity: 1 !important;
+    }
+
+    .progress-border::before {
+        background: radial-gradient(var(--custom-background-color) 60%, transparent 0%), conic-gradient(var(--progress-color, green) var(--progress, 70%), var(--remaining-progress-color, transparent) 0%);
+        opacity: 1;
+        position: absolute;
+        inset: 0;
+        content: '';
+        border-radius: 50%;
+        transition: --progress 500ms;
+    }
+  editor:
+    - type: expandable
+      title: Dynamic Entity Resolution
+      icon: mdi:information-variant-circle-outline
+      schema:
+        - type: constant
+          label: Dynamic Entity Resolution (DER)
+          value: >-
+            If you see ✨ in an input field, then it supports DER. This allows entry of an entity, attribute, or regular
+            value. Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g.,
+            sensor.my_phone[battery_level].
+    - type: expandable
+      name: '0'
+      title: Icon 1 settings (define more in YAML)
+      schema:
+        - name: button
+          label: Button to apply to. Use 'main' or 'sub-button-1' etc.
+          selector:
+            text: null
+        - name: source
+          label: ✨Source entity
+          selector:
+            entity: {}
+        - name: condition
+          label: Condition to show progress (see docs for additional condition configuration)
+          selector:
+            condition: {}
+        - type: expandable
+          label: Custom start/end values (optional)
+          schema:
+            - type: constant
+              value: Use these to override the default 0-100 progress range.
+            - name: start
+              label: Start value of entity
+              selector:
+                number:
+                  default: 0
+            - name: end
+              label: End value of entity
+              selector:
+                number:
+                  default: 100
+        - type: expandable
+          label: Color settings
+          schema:
+            - name: interpolate_colors
+              label: Gradually transition between colours
+              selector:
+                boolean: null
+            - type: expandable
+              name: color_stops
+              label: Progress colors - add more in YAML
+              schema:
+                - type: expandable
+                  label: Color 1
+                  name: '0'
+                  schema:
+                    - name: color
+                      label: ✨Color
+                      selector:
+                        ui_color: null
+                    - name: percent
+                      label: From %
+                      selector:
+                        number:
+                          min: 0
+                          max: 100
+                          step: 1
+                          unit_of_measurement: '%'
+                - type: expandable
+                  label: Color 2
+                  name: '1'
+                  schema:
+                    - name: color
+                      label: ✨Color
+                      selector:
+                        ui_color: null
+                    - name: percent
+                      label: From %
+                      selector:
+                        number:
+                          min: 0
+                          max: 100
+                          step: 1
+                          unit_of_measurement: '%'
+        - name: backcolor
+          label: ✨Background colour of icon
+          selector:
+            ui_color: null
+        - remainingcolor: null
+          label: ✨color of remaining progress section
+    - type: expandable
+      name: '1'
+      title: Icon 2 settings (define more in YAML)
+      schema:
+        - name: button
+          label: Button to apply to. Use 'main' or 'sub-button-1' etc.
+          selector:
+            text: null
+        - name: source
+          label: ✨Source entity
+          selector:
+            entity: {}
+        - name: condition
+          label: Condition to show progress (see docs for additional condition configuration)
+          selector:
+            condition: {}
+        - type: expandable
+          label: Custom start/end values (optional)
+          schema:
+            - type: constant
+              value: Use these to override the default 0-100 progress range.
+            - name: start
+              label: Start value of entity
+              selector:
+                number:
+                  default: 0
+            - name: end
+              label: End value of entity
+              selector:
+                number:
+                  default: 100
+        - type: expandable
+          label: Color settings
+          schema:
+            - name: interpolate_colors
+              label: Gradually transition between colours
+              selector:
+                boolean: null
+            - type: expandable
+              name: color_stops
+              label: Progress colors - add more in YAML
+              schema:
+                - type: expandable
+                  label: Color 1
+                  name: '0'
+                  schema:
+                    - name: color
+                      label: ✨Color
+                      selector:
+                        ui_color: null
+                    - name: percent
+                      label: From %
+                      selector:
+                        number:
+                          min: 0
+                          max: 100
+                          step: 1
+                          unit_of_measurement: '%'
+                - type: expandable
+                  label: Color 2
+                  name: '1'
+                  schema:
+                    - name: color
+                      label: ✨Color
+                      selector:
+                        ui_color: null
+                    - name: percent
+                      label: From %
+                      selector:
+                        number:
+                          min: 0
+                          max: 100
+                          step: 1
+                          unit_of_measurement: '%'
+        - name: backcolor
+          label: ✨Background colour of icon
+          selector:
+            ui_color: null
+        - remainingcolor: null
+          label: ✨color of remaining progress section
+```
+
+</details>
+
+---
+
+### Screenshot:
+
+**ADD SCREENSHOTS HERE**

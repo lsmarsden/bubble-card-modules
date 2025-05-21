@@ -1,0 +1,19 @@
+module_info:
+  id: icon_border_progress
+  name: Icon Border Progress
+  version: 1.0.0
+  creator: lsmarsden
+  link: >-
+    https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
+  supported:
+    - button
+    - climate
+    - cover
+    - media-player
+    - pop-up
+    - select
+    - separator
+  description_file: module_store_description.html
+  code_file: code.js
+  styles: styles.css
+  editor_file: editor.yaml

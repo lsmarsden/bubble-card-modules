@@ -1,0 +1,170 @@
+editor:
+  - type: expandable
+    title: Dynamic Entity Resolution
+    icon: mdi:information-variant-circle-outline
+    schema:
+      - type: constant
+        label: Dynamic Entity Resolution (DER)
+        value: >-
+          If you see ✨ in an input field, then it supports DER. This allows entry of an entity, attribute, or regular value.
+          Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g., sensor.my_phone[battery_level].
+  - type: expandable
+    name: "0"
+    title: Icon 1 settings (define more in YAML)
+    schema:
+      - name: button
+        label: "Button to apply to. Use 'main' or 'sub-button-1' etc."
+        selector:
+          text:
+      - name: source
+        label: "✨Source entity"
+        selector:
+          entity: { }
+      - name: condition
+        label: "Condition to show progress (see docs for additional condition configuration)"
+        selector:
+          condition: { }
+      - type: expandable
+        label: "Custom start/end values (optional)"
+        schema:
+          - type: constant
+            value: Use these to override the default 0-100 progress range.
+          - name: start
+            label: "Start value of entity"
+            selector:
+              number:
+                default: 0
+          - name: end
+            label: "End value of entity"
+            selector:
+              number:
+                default: 100
+      - type: expandable
+        label: "Color settings"
+        schema:
+          - name: interpolate_colors
+            label: "Gradually transition between colours"
+            selector:
+              boolean: null
+          - type: expandable
+            name: color_stops
+            label: "Progress colors - add more in YAML"
+            schema:
+              - type: expandable
+                label: "Color 1"
+                name: "0"
+                schema:
+                  - name: color
+                    label: "✨Color"
+                    selector:
+                      ui_color:
+                  - name: percent
+                    label: "From %"
+                    selector:
+                      number:
+                        min: 0
+                        max: 100
+                        step: 1
+                        unit_of_measurement: '%'
+              - type: expandable
+                label: "Color 2"
+                name: "1"
+                schema:
+                  - name: color
+                    label: "✨Color"
+                    selector:
+                      ui_color:
+                  - name: percent
+                    label: "From %"
+                    selector:
+                      number:
+                        min: 0
+                        max: 100
+                        step: 1
+                        unit_of_measurement: '%'
+      - name: backcolor
+        label: "✨Background colour of icon"
+        selector:
+          ui_color: null
+      - remainingcolor:
+        label: "✨color of remaining progress section"
+  - type: expandable
+    name: "1"
+    title: Icon 2 settings (define more in YAML)
+    schema:
+      - name: button
+        label: "Button to apply to. Use 'main' or 'sub-button-1' etc."
+        selector:
+          text:
+      - name: source
+        label: "✨Source entity"
+        selector:
+          entity: { }
+      - name: condition
+        label: "Condition to show progress (see docs for additional condition configuration)"
+        selector:
+          condition: { }
+      - type: expandable
+        label: "Custom start/end values (optional)"
+        schema:
+          - type: constant
+            value: Use these to override the default 0-100 progress range.
+          - name: start
+            label: "Start value of entity"
+            selector:
+              number:
+                default: 0
+          - name: end
+            label: "End value of entity"
+            selector:
+              number:
+                default: 100
+      - type: expandable
+        label: "Color settings"
+        schema:
+          - name: interpolate_colors
+            label: "Gradually transition between colours"
+            selector:
+              boolean: null
+          - type: expandable
+            name: color_stops
+            label: "Progress colors - add more in YAML"
+            schema:
+              - type: expandable
+                label: "Color 1"
+                name: "0"
+                schema:
+                  - name: color
+                    label: "✨Color"
+                    selector:
+                      ui_color:
+                  - name: percent
+                    label: "From %"
+                    selector:
+                      number:
+                        min: 0
+                        max: 100
+                        step: 1
+                        unit_of_measurement: '%'
+              - type: expandable
+                label: "Color 2"
+                name: "1"
+                schema:
+                  - name: color
+                    label: "✨Color"
+                    selector:
+                      ui_color:
+                  - name: percent
+                    label: "From %"
+                    selector:
+                      number:
+                        min: 0
+                        max: 100
+                        step: 1
+                        unit_of_measurement: '%'
+      - name: backcolor
+        label: "✨Background colour of icon"
+        selector:
+          ui_color: null
+      - remainingcolor:
+        label: "✨color of remaining progress section"
