@@ -1,6 +1,6 @@
 # Icon Border Progress
 
-**Version:** 1.0.0  
+**Version:** 1.0.2  
 **Creator:** lsmarsden
 
 > [!IMPORTANT]
@@ -39,12 +39,13 @@
 
 <br>
 
-> To use this module, simply copy and paste the following configuration into your `/www/bubble/bubble-modules.yaml` file.
+> To use this module, search for Icon Border Progress in the module store.
+> Alternatively, copy and paste the following configuration into your `/www/bubble/bubble-modules.yaml` file.
 
 ```yaml
 icon_border_progress:
   name: Icon Border Progress
-  version: v1.0.0
+  version: v1.0.2
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
   supported:
@@ -230,13 +231,46 @@ icon_border_progress:
         return Object.values(object);
     }
 
+    const resolveConfig = (sources, defaultValue = undefined) => {
+        for (const source of sources) {
+            const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
+            const value = getConfigValue(source.config, keys);
+
+            if (value !== undefined && (!source.condition || source.condition(value, source.config))) {
+                const metadata = source.metadata || {};
+                if (metadata.deprecated) {
+                    console.warn(
+                        `[DEPRECATED] Config path "${source.path}" used.` +
+                        (metadata.replacedWith ? ` Use "${metadata.replacedWith}" instead.` : "") +
+                        (metadata.message ? ` ${metadata.message}` : "")
+                    );
+                }
+                return value;
+            }
+        }
+        return defaultValue;
+    }
+
+    function getConfigValue(config, keys) {
+        let current = config;
+        for (const key of keys) {
+            if (current && key in current) {
+                current = current[key];
+            } else {
+                return undefined;
+            }
+        }
+        return current;
+    }
+
     /**
      * ======== MAIN MODULE CODE =========
      */
 
      // this allows IDEs to parse the file normally - will be removed automatically during build.
         const {icon_border_progress: config} = this.config;
-        toArray(config).forEach(({button, condition, entity, start, end, interpolate_colors, color_stops, backcolor, remainingcolor, effects}) => {
+        toArray(config).forEach((buttonConfig) => {
+            const button = buttonConfig.button;
             if (!button) return;
 
             let selector;
@@ -249,13 +283,24 @@ icon_border_progress:
             const element = card.querySelector(selector);
             if (!element) return;
 
-            if (!checkAllConditions(condition)) {
+            if (!checkAllConditions(buttonConfig.condition)) {
                 return;
             }
 
-            let progressValue = parseFloat(getState(entity));
-            let startValue = parseInt(getState(start));
-            let endValue = parseInt(getState(end));
+            const progressSource = resolveConfig([
+                {
+                    config: buttonConfig,
+                    path: 'source'
+                },
+                {
+                    config: buttonConfig,
+                    path: 'entity',
+                    metadata: {deprecated: true, replacedWith: 'source'}
+                }
+            ]);
+            let progressValue = parseFloat(getState(progressSource));
+            let startValue = parseInt(getState(buttonConfig.start));
+            let endValue = parseInt(getState(buttonConfig.end));
 
             startValue = isNaN(startValue) ? 0 : startValue;
             endValue = isNaN(endValue) ? 100 : endValue;
@@ -265,11 +310,11 @@ icon_border_progress:
             }
 
             progressValue = (progressValue - startValue) / (endValue - startValue) * 100;
-            const colorStops = color_stops || [];
-            const progressColor = resolveColorFromStops(progressValue, colorStops, interpolate_colors)
+            const colorStops = buttonConfig.color_stops || [];
+            const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors)
 
-            const remainingProgressColor = resolveColor(remainingcolor, 'var(--dark-grey-color)');
-            const backgroundColor = resolveColor(backcolor, 'var(--bubble-icon-background-color)');
+            const remainingProgressColor = resolveColor(buttonConfig.remainingcolor, 'var(--dark-grey-color)');
+            const backgroundColor = resolveColor(buttonConfig.backcolor, 'var(--bubble-icon-background-color)');
 
             const bubbleBorderRadius = getComputedStyle(element).getPropertyValue('--bubble-icon-border-radius');
             if (bubbleBorderRadius && bubbleBorderRadius.trim() !== '') {
@@ -285,7 +330,7 @@ icon_border_progress:
             element.style.setProperty('--orb-angle', `${progressValue / 100 * 360}deg`);
             element.style.setProperty('--progress-color', `${progressColor}`);
             element.style.setProperty('--remaining-progress-color', `${remainingProgressColor}`);
-            applyEffects(element, effects || []);
+            applyEffects(element, buttonConfig.effects || []);
         });
     })()}
 
@@ -355,12 +400,12 @@ icon_border_progress:
             - type: constant
               value: Use these to override the default 0-100 progress range.
             - name: start
-              label: Start value of entity
+              label: ✨Start value of entity
               selector:
                 number:
                   default: 0
             - name: end
-              label: End value of entity
+              label: ✨End value of entity
               selector:
                 number:
                   default: 100
@@ -435,12 +480,12 @@ icon_border_progress:
             - type: constant
               value: Use these to override the default 0-100 progress range.
             - name: start
-              label: Start value of entity
+              label: ✨Start value of entity
               selector:
                 number:
                   default: 0
             - name: end
-              label: End value of entity
+              label: ✨End value of entity
               selector:
                 number:
                   default: 100

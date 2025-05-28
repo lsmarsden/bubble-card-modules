@@ -8,6 +8,7 @@
 
 ![icon_border_preview.png](assets/icon_border_preview.png)
 
+Forked and inspired from [Nick's module](https://github.com/Clooos/Bubble-Card/discussions/1296).
 This module adds the ability to show progress of entities via icon and sub-button borders.
 
 > See the [examples](#example-yaml) for different styling options.
@@ -61,7 +62,7 @@ To use DER, look for any input field that contains ✨ in the editor label. This
 ```yaml
 icon_border_progress:
    - button: sub-button-1
-     entity: sensor.saros_10_battery
+     source: sensor.saros_10_battery
      start: 0
      end: 200
      color_stops:
@@ -100,7 +101,7 @@ modules:
   - icon_border_progress
 icon_border_progress:
   - button: main
-    entity: sensor.x1c_print_progress
+    source: sensor.x1c_print_progress
     color_stops:
       "1":
         percent: 0
@@ -108,7 +109,7 @@ icon_border_progress:
     background_color: "#2c2c2c"
     remaining_color: "#444"
   - button: sub-button-1
-    entity: sensor.filament_pla_level
+    source: sensor.filament_pla_level
     interpolate_colors: true
     color_stops:
       "0":
@@ -120,7 +121,7 @@ icon_border_progress:
     background_color: "#2c2c2c"
     remaining_color: "#444"
   - button: sub-button-2
-    entity: sensor.sensor.filament_abs_level
+    source: sensor.sensor.filament_abs_level
     interpolate_colors: true
     color_stops:
       "1":
@@ -129,7 +130,7 @@ icon_border_progress:
     background_color: "#2c2c2c"
     remaining_color: "#444"
   - button: sub-button-3
-    entity: sensor.sensor.filament_petg_level
+    source: sensor.sensor.filament_petg_level
     interpolate_colors: true
     color_stops:
       - percent: 0
@@ -137,7 +138,7 @@ icon_border_progress:
     background_color: "#2c2c2c"
     remaining_color: "#444"
   - button: sub-button-4
-    entity: sensor.sensor.filament_cf_level
+    source: sensor.sensor.filament_cf_level
     interpolate_colors: true
     color_stops:
       - percent: 0

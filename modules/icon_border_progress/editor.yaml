@@ -30,12 +30,12 @@ editor:
           - type: constant
             value: Use these to override the default 0-100 progress range.
           - name: start
-            label: "Start value of entity"
+            label: "✨Start value of entity"
             selector:
               number:
                 default: 0
           - name: end
-            label: "End value of entity"
+            label: "✨End value of entity"
             selector:
               number:
                 default: 100
