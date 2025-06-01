@@ -82,12 +82,14 @@ editor:
                         max: 100
                         step: 1
                         unit_of_measurement: '%'
-      - name: backcolor
+      - name: background_color
         label: "✨Background colour of icon"
         selector:
           ui_color: null
-      - remainingcolor:
-        label: "✨color of remaining progress section"
+      - name: remaining_color
+        label: "✨Color of remaining progress section"
+        selector:
+          ui_color: null
   - type: expandable
     name: "1"
     title: Icon 2 settings (define more in YAML)
@@ -162,9 +164,11 @@ editor:
                         max: 100
                         step: 1
                         unit_of_measurement: '%'
-      - name: backcolor
+      - name: background_color
         label: "✨Background colour of icon"
         selector:
           ui_color: null
-      - remainingcolor:
-        label: "✨color of remaining progress section"
+      - name: remaining_color
+        label: "✨Color of remaining progress section"
+        selector:
+          ui_color: null

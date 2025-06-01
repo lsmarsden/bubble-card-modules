@@ -51,8 +51,25 @@ function icon_border_progress(card, hass) { // this allows IDEs to parse the fil
         const colorStops = buttonConfig.color_stops || [];
         const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors)
 
-        const remainingProgressColor = resolveColor(buttonConfig.remainingcolor, 'var(--dark-grey-color)');
-        const backgroundColor = resolveColor(buttonConfig.backcolor, 'var(--bubble-icon-background-color)');
+
+        const remainingColor = resolveConfig([
+            {config: buttonConfig, path: 'remaining_color'},
+            {
+                config: buttonConfig,
+                path: 'remainingcolor',
+                metadata: {deprecated: true, replacedWith: 'remaining_color'}
+            },
+        ]);
+        const backColor = resolveConfig([
+            {config: buttonConfig, path: 'background_color'},
+            {
+                config: buttonConfig,
+                path: 'backcolor',
+                metadata: {deprecated: true, replacedWith: 'background_color'}
+            },
+        ]);
+        const remainingProgressColor = resolveColor(remainingColor, 'var(--dark-grey-color)');
+        const backgroundColor = resolveColor(backColor, 'var(--bubble-icon-background-color)');
 
         const bubbleBorderRadius = getComputedStyle(element).getPropertyValue('--bubble-icon-border-radius');
         if (bubbleBorderRadius && bubbleBorderRadius.trim() !== '') {
