@@ -43,7 +43,8 @@
 
 <br>
 
-> To use this module, simply copy and paste the following configuration into your `/www/bubble/bubble-modules.yaml` file.
+> To use this module, search for Separator As Progress Bar in the module store.
+> Alternatively, copy and paste the following configuration into your `/www/bubble/bubble-modules.yaml` file.
 
 ```yaml
 separator_as_progress_bar:
