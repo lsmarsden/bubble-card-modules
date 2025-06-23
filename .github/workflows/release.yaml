@@ -5,11 +5,46 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  NODE_VERSION: 23
+
 jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run format:check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            reports/
+            coverage/
+
   build:
     runs-on: ubuntu-latest
+    needs: [lint-and-test]
     outputs:
       changed: ${{ steps.detect_changes.outputs.changed }}
+      changed_files: ${{ steps.detect_changes.outputs.changed_files }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,8 +54,8 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 23
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -37,19 +72,59 @@ jobs:
         id: detect_changes
         run: |
           echo "Detecting changed modules since last successful workflow..."
+
+          # Get all changed files
+          CHANGED_FILES=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+          # Only consider modules with code changes (not just docs)
           CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
             | grep '^modules/' \
             | grep -vE '^modules/(templates|helpers)/' \
+            | grep -vE '\.(md|txt)$' \
             | cut -d/ -f2 \
             | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "changed=$CHANGED" >> $GITHUB_OUTPUT
 
+          echo "Changed files: $CHANGED_FILES"
+          echo "Modules with code changes: $CHANGED"
+
       - name: Build modules
         run: npm run build:parallel
 
-  create-release:
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-modules
+          path: modules/*/dist/
+
+  test-changed-modules:
+    runs-on: ubuntu-latest
     needs: [build]
+    if: needs.build.outputs.changed != '[]'
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.build.outputs.changed) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test specific module
+        run: npm test -- --testPathPattern="modules/${{ matrix.module }}"
+        continue-on-error: true
+
+  create-release:
+    needs: [build, test-changed-modules]
     runs-on: ubuntu-latest
     if: needs.build.outputs.changed != '[]'
     strategy:
@@ -59,11 +134,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-modules
+          path: modules/
+
       - name: Install dependencies
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
+
+      - name: Check if release already exists
+        id: check_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MODULE=${{ matrix.module }}
+          cd modules/$MODULE
+
+          ID=$(yq eval '.module_info.id' module.yaml)
+          VERSION=$(yq eval '.module_info.version' module.yaml)
+          TAG="$ID/v$VERSION"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping..."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create release
+        if: steps.check_release.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -79,7 +181,7 @@ jobs:
           TAG="$ID/v$VERSION"
 
           # Create a release
-          gh release create "${ID}/v${VERSION}" \
+          gh release create "${TAG}" \
             "dist/${ID}.yaml" \
             --title "${NAME} v${VERSION}" \
             --notes "Auto-generated build from module.yaml" \
