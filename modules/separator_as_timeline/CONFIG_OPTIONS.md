@@ -65,22 +65,22 @@
 
 **Description:** Main config object
 
-| Property                                                         | Type    | Default | Description                                                                                                   |
-| ---------------------------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| - [icon_color](#icon_settings_icon_color )                       | string  | -       | Icon colour                                                                                                   |
-| - [icon_background_color](#icon_settings_icon_background_color ) | string  | -       | Icon background colour                                                                                        |
-| - [icon_size](#icon_settings_icon_size )                         | integer | 18      | Icon total size in pixels                                                                                     |
-| - [icon_image_size](#icon_settings_icon_image_size )             | integer | 16      | Icon image size in pixels (max value is icon_size)                                                            |
-| - [icon_outline_color](#icon_settings_icon_outline_color )       | string  | -       | Icon outline colour                                                                                           |
-| - [icon_active_color](#icon_settings_icon_active_color )         | string  | -       | Icon active glow colour                                                                                       |
-| - [rounded_edges](#rounded_edges )                               | boolean | false   | Use rounded ends on each segment. Segments that pass through midnight will still be flat for optimal visuals. |
-| - [show_time_ticks](#show_time_ticks )                           | boolean | false   | Show time ticks on the timeline                                                                               |
-| - [show_current_time](#show_current_time )                       | boolean | true    | Show the current time marker on the timeline.                                                                 |
-| - [marker_color](#marker_color )                                 | string  | -       | Color of the current time marker.                                                                             |
-| - [highlight_active](#highlight_active )                         | boolean | false   | Highlight segment icon when current time is within the segment period                                         |
-| - [icon_settings](#icon_settings )                               | object  | -       | Global icon settings.                                                                                         |
-| - [time_format](#time_format )                                   | object  | -       | -                                                                                                             |
-| - [ranges](#ranges )                                             | object  | -       | List of time ranges to display on the timeline                                                                |
+| Property                                                        | Type    | Default | Description                                                                                                   |
+| --------------------------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| - [icon_color](#icon_settings_icon_color)                       | string  | -       | Icon colour                                                                                                   |
+| - [icon_background_color](#icon_settings_icon_background_color) | string  | -       | Icon background colour                                                                                        |
+| - [icon_size](#icon_settings_icon_size)                         | integer | 18      | Icon total size in pixels                                                                                     |
+| - [icon_image_size](#icon_settings_icon_image_size)             | integer | 16      | Icon image size in pixels (max value is icon_size)                                                            |
+| - [icon_outline_color](#icon_settings_icon_outline_color)       | string  | -       | Icon outline colour                                                                                           |
+| - [icon_active_color](#icon_settings_icon_active_color)         | string  | -       | Icon active glow colour                                                                                       |
+| - [rounded_edges](#rounded_edges)                               | boolean | false   | Use rounded ends on each segment. Segments that pass through midnight will still be flat for optimal visuals. |
+| - [show_time_ticks](#show_time_ticks)                           | boolean | false   | Show time ticks on the timeline                                                                               |
+| - [show_current_time](#show_current_time)                       | boolean | true    | Show the current time marker on the timeline.                                                                 |
+| - [marker_color](#marker_color)                                 | string  | -       | Color of the current time marker.                                                                             |
+| - [highlight_active](#highlight_active)                         | boolean | false   | Highlight segment icon when current time is within the segment period                                         |
+| - [icon_settings](#icon_settings)                               | object  | -       | Global icon settings.                                                                                         |
+| - [time_format](#time_format)                                   | object  | -       | -                                                                                                             |
+| - [ranges](#ranges)                                             | object  | -       | List of time ranges to display on the timeline                                                                |
 
 ## 1. Property `icon_color`
 
@@ -178,14 +178,14 @@
 
 **Description:** Global icon settings.
 
-| Property                                                         | Type    | Default | Description                                        |
-| ---------------------------------------------------------------- | ------- | ------- | -------------------------------------------------- |
-| - [icon_color](#icon_settings_icon_color )                       | string  | -       | Icon colour                                        |
-| - [icon_background_color](#icon_settings_icon_background_color ) | string  | -       | Icon background colour                             |
-| - [icon_size](#icon_settings_icon_size )                         | integer | 18      | Icon total size in pixels                          |
-| - [icon_image_size](#icon_settings_icon_image_size )             | integer | 16      | Icon image size in pixels (max value is icon_size) |
-| - [icon_outline_color](#icon_settings_icon_outline_color )       | string  | -       | Icon outline colour                                |
-| - [icon_active_color](#icon_settings_icon_active_color )         | string  | -       | Icon active glow colour                            |
+| Property                                                        | Type    | Default | Description                                        |
+| --------------------------------------------------------------- | ------- | ------- | -------------------------------------------------- |
+| - [icon_color](#icon_settings_icon_color)                       | string  | -       | Icon colour                                        |
+| - [icon_background_color](#icon_settings_icon_background_color) | string  | -       | Icon background colour                             |
+| - [icon_size](#icon_settings_icon_size)                         | integer | 18      | Icon total size in pixels                          |
+| - [icon_image_size](#icon_settings_icon_image_size)             | integer | 16      | Icon image size in pixels (max value is icon_size) |
+| - [icon_outline_color](#icon_settings_icon_outline_color)       | string  | -       | Icon outline colour                                |
+| - [icon_active_color](#icon_settings_icon_active_color)         | string  | -       | Icon active glow colour                            |
 
 ### 12.1. Property `icon_color`
 
@@ -241,11 +241,11 @@
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                           | Type   | Default | Description                                                                     |
-| -------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------- |
-| - [global_settings](#time_format_global_settings ) | object | -       | Global time formatting configuration.                                           |
-| - [timeline](#time_format_timeline )               | object | -       | Time formatting settings for the timeline. Overrides global formatting settings |
-| - [tooltip](#time_format_tooltip )                 | object | -       | Time formatting settings for the tooltip. Overrides global formatting settings  |
+| Property                                          | Type   | Default | Description                                                                     |
+| ------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------- |
+| - [global_settings](#time_format_global_settings) | object | -       | Global time formatting configuration.                                           |
+| - [timeline](#time_format_timeline)               | object | -       | Time formatting settings for the timeline. Overrides global formatting settings |
+| - [tooltip](#time_format_tooltip)                 | object | -       | Time formatting settings for the tooltip. Overrides global formatting settings  |
 
 ### 13.1. Property `global_settings`
 
@@ -255,12 +255,12 @@
 
 **Description:** Global time formatting configuration.
 
-| Property                                                       | Type    | Default | Description                            |
-| -------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
-| - [use_24_hour](#time_format_global_settings_use_24_hour )     | boolean | true    | Show time in 24-hour format            |
-| - [append_suffix](#time_format_global_settings_append_suffix ) | boolean | false   | Display AM/PM.                         |
-| - [pad_hours](#time_format_global_settings_pad_hours )         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
-| - [show_minutes](#time_format_global_settings_show_minutes )   | boolean | true    | Show minutes in times                  |
+| Property                                                      | Type    | Default | Description                            |
+| ------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| - [use_24_hour](#time_format_global_settings_use_24_hour)     | boolean | true    | Show time in 24-hour format            |
+| - [append_suffix](#time_format_global_settings_append_suffix) | boolean | false   | Display AM/PM.                         |
+| - [pad_hours](#time_format_global_settings_pad_hours)         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
+| - [show_minutes](#time_format_global_settings_show_minutes)   | boolean | true    | Show minutes in times                  |
 
 #### 13.1.1. Property `use_24_hour`
 
@@ -302,13 +302,13 @@
 
 **Description:** Time formatting settings for the timeline. Overrides global formatting settings
 
-| Property                                                       | Type    | Default | Description                            |
-| -------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
-| - [use_24_hour](#time_format_global_settings_use_24_hour )     | boolean | true    | Show time in 24-hour format            |
-| - [append_suffix](#time_format_global_settings_append_suffix ) | boolean | false   | Display AM/PM.                         |
-| - [pad_hours](#time_format_global_settings_pad_hours )         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
-| - [show_minutes](#time_format_global_settings_show_minutes )   | boolean | true    | Show minutes in times                  |
-| - [override](#time_format_timeline_override )                  | boolean | false   | Override global time formatting        |
+| Property                                                      | Type    | Default | Description                            |
+| ------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| - [use_24_hour](#time_format_global_settings_use_24_hour)     | boolean | true    | Show time in 24-hour format            |
+| - [append_suffix](#time_format_global_settings_append_suffix) | boolean | false   | Display AM/PM.                         |
+| - [pad_hours](#time_format_global_settings_pad_hours)         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
+| - [show_minutes](#time_format_global_settings_show_minutes)   | boolean | true    | Show minutes in times                  |
+| - [override](#time_format_timeline_override)                  | boolean | false   | Override global time formatting        |
 
 #### 13.2.1. Property `use_24_hour`
 
@@ -358,13 +358,13 @@
 
 **Description:** Time formatting settings for the tooltip. Overrides global formatting settings
 
-| Property                                                       | Type    | Default | Description                            |
-| -------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
-| - [use_24_hour](#time_format_global_settings_use_24_hour )     | boolean | true    | Show time in 24-hour format            |
-| - [append_suffix](#time_format_global_settings_append_suffix ) | boolean | false   | Display AM/PM.                         |
-| - [pad_hours](#time_format_global_settings_pad_hours )         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
-| - [show_minutes](#time_format_global_settings_show_minutes )   | boolean | true    | Show minutes in times                  |
-| - [override](#time_format_timeline_override )                  | boolean | false   | Override global time formatting        |
+| Property                                                      | Type    | Default | Description                            |
+| ------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| - [use_24_hour](#time_format_global_settings_use_24_hour)     | boolean | true    | Show time in 24-hour format            |
+| - [append_suffix](#time_format_global_settings_append_suffix) | boolean | false   | Display AM/PM.                         |
+| - [pad_hours](#time_format_global_settings_pad_hours)         | boolean | true    | Zero-pad hours e.g. 5:00 becomes 05:00 |
+| - [show_minutes](#time_format_global_settings_show_minutes)   | boolean | true    | Show minutes in times                  |
+| - [override](#time_format_timeline_override)                  | boolean | false   | Override global time formatting        |
 
 #### 13.3.1. Property `use_24_hour`
 
@@ -445,18 +445,18 @@
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                                     | Type   | Default | Description                                                                         |
-| ------------------------------------------------------------ | ------ | ------- | ----------------------------------------------------------------------------------- |
-| - [icon_settings](#ranges_anyOf_i0_items_icon_settings )     | object | -       | Icon settings for this range. Overrides global icon settings.                       |
-| - [start_entity](#ranges_anyOf_i0_items_start_entity )       | string | -       | Entity whose state will be used as the start time (e.g. sensor.sun_next_dawn)<br /> |
-| - [start_attribute](#ranges_anyOf_i0_items_start_attribute ) | string | -       | Attribute to use instead of state                                                   |
-| - [start](#ranges_anyOf_i0_items_start )                     | string | -       | Fixed start time (ignored if entity is set)                                         |
-| - [end_entity](#ranges_anyOf_i0_items_end_entity )           | string | -       | Entity whose state will be used as the end time                                     |
-| - [end_attribute](#ranges_anyOf_i0_items_end_attribute )     | string | -       | Attribute to use instead of state                                                   |
-| - [end](#ranges_anyOf_i0_items_end )                         | string | -       | Fixed end time (ignored if entity is set)                                           |
-| - [label](#ranges_anyOf_i0_items_label )                     | string | -       | Label to use for segment on tooltip                                                 |
-| - [color](#ranges_anyOf_i0_items_color )                     | string | -       | Color to use for this segment on the timeline                                       |
-| - [source_entities](#ranges_anyOf_i0_items_source_entities ) | string | -       | Optional information to show in tooltip                                             |
+| Property                                                    | Type   | Default | Description                                                                         |
+| ----------------------------------------------------------- | ------ | ------- | ----------------------------------------------------------------------------------- |
+| - [icon_settings](#ranges_anyOf_i0_items_icon_settings)     | object | -       | Icon settings for this range. Overrides global icon settings.                       |
+| - [start_entity](#ranges_anyOf_i0_items_start_entity)       | string | -       | Entity whose state will be used as the start time (e.g. sensor.sun_next_dawn)<br /> |
+| - [start_attribute](#ranges_anyOf_i0_items_start_attribute) | string | -       | Attribute to use instead of state                                                   |
+| - [start](#ranges_anyOf_i0_items_start)                     | string | -       | Fixed start time (ignored if entity is set)                                         |
+| - [end_entity](#ranges_anyOf_i0_items_end_entity)           | string | -       | Entity whose state will be used as the end time                                     |
+| - [end_attribute](#ranges_anyOf_i0_items_end_attribute)     | string | -       | Attribute to use instead of state                                                   |
+| - [end](#ranges_anyOf_i0_items_end)                         | string | -       | Fixed end time (ignored if entity is set)                                           |
+| - [label](#ranges_anyOf_i0_items_label)                     | string | -       | Label to use for segment on tooltip                                                 |
+| - [color](#ranges_anyOf_i0_items_color)                     | string | -       | Color to use for this segment on the timeline                                       |
+| - [source_entities](#ranges_anyOf_i0_items_source_entities) | string | -       | Optional information to show in tooltip                                             |
 
 ##### 14.1.1.1. Property `icon_settings`
 
@@ -466,14 +466,14 @@
 
 **Description:** Icon settings for this range. Overrides global icon settings.
 
-| Property                                                         | Type    | Default | Description                                        |
-| ---------------------------------------------------------------- | ------- | ------- | -------------------------------------------------- |
-| - [icon_color](#icon_settings_icon_color )                       | string  | -       | Icon colour                                        |
-| - [icon_background_color](#icon_settings_icon_background_color ) | string  | -       | Icon background colour                             |
-| - [icon_size](#icon_settings_icon_size )                         | integer | 18      | Icon total size in pixels                          |
-| - [icon_image_size](#icon_settings_icon_image_size )             | integer | 16      | Icon image size in pixels (max value is icon_size) |
-| - [icon_outline_color](#icon_settings_icon_outline_color )       | string  | -       | Icon outline colour                                |
-| - [icon_active_color](#icon_settings_icon_active_color )         | string  | -       | Icon active glow colour                            |
+| Property                                                        | Type    | Default | Description                                        |
+| --------------------------------------------------------------- | ------- | ------- | -------------------------------------------------- |
+| - [icon_color](#icon_settings_icon_color)                       | string  | -       | Icon colour                                        |
+| - [icon_background_color](#icon_settings_icon_background_color) | string  | -       | Icon background colour                             |
+| - [icon_size](#icon_settings_icon_size)                         | integer | 18      | Icon total size in pixels                          |
+| - [icon_image_size](#icon_settings_icon_image_size)             | integer | 16      | Icon image size in pixels (max value is icon_size) |
+| - [icon_outline_color](#icon_settings_icon_outline_color)       | string  | -       | Icon outline colour                                |
+| - [icon_active_color](#icon_settings_icon_active_color)         | string  | -       | Icon active glow colour                            |
 
 ###### 14.1.1.1.1. Property `icon_color`
 
@@ -525,10 +525,10 @@
 
 ##### 14.1.1.2. Property `start_entity`
 
-| **Type** | **Default** | **Description**                                                                |
-| -------- | ----------- | ------------------------------------------------------------------------------ |
-| string   | -           | Entity whose state will be used as the start time (e.g. sensor.sun_next_dawn)
- |
+| **Type** | **Default** | **Description**                                                               |
+| -------- | ----------- | ----------------------------------------------------------------------------- |
+| string   | -           | Entity whose state will be used as the start time (e.g. sensor.sun_next_dawn) |
+|          |
 
 **Description:** Entity whose state will be used as the start time (e.g. sensor.sun_next_dawn)
 

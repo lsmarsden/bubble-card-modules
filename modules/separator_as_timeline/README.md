@@ -45,6 +45,7 @@ See [CONFIG_OPTIONS.md](CONFIG_OPTIONS.md) for a full list of options.
 Dynamic Entity Resolution is available in certain fields.
 
 To use DER, look for any input field that contains ✨ in the editor label. This means you can now use:
+
 - Simple values e.g. `red`
 - Entities e.g. `input_text.my_favourite_color` or `sensor.sun_next_dawn`
 - Attributes using format `entity[attribute]`, such as `sensor.my_phone[battery_level]`
@@ -164,7 +165,6 @@ separator_as_timeline:
       icon_settings:
         icon_color: white
         icon_size: 18
-
 
 name: Sun
 icon: mdi:sun-clock

@@ -33,6 +33,7 @@
             href="https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/separator_as_progress_bar"
             target="_blank">GitHub repo</a>.
     </p>
+
 </div>
 
 ---
@@ -609,7 +610,7 @@ separator_as_progress_bar:
           selector:
             text: null
         - name: placeholders
-          label: 'Placeholders - format lines like pct: sensor.clean_progress'
+          label: "Placeholders - format lines like pct: sensor.clean_progress"
           selector:
             object: {}
         - name: condition
@@ -625,7 +626,7 @@ separator_as_progress_bar:
           selector:
             text: null
         - name: placeholders
-          label: 'Placeholders - format lines like pct: sensor.clean_progress'
+          label: "Placeholders - format lines like pct: sensor.clean_progress"
           selector:
             object: {}
         - name: condition
@@ -743,7 +744,7 @@ separator_as_progress_bar:
           schema:
             - type: expandable
               label: Color 1
-              name: '0'
+              name: "0"
               schema:
                 - name: color
                   label: ✨Color
@@ -756,10 +757,10 @@ separator_as_progress_bar:
                       min: 0
                       max: 100
                       step: 1
-                      unit_of_measurement: '%'
+                      unit_of_measurement: "%"
             - type: expandable
               label: Color 2
-              name: '1'
+              name: "1"
               schema:
                 - name: color
                   label: ✨Color
@@ -772,14 +773,14 @@ separator_as_progress_bar:
                       min: 0
                       max: 100
                       step: 1
-                      unit_of_measurement: '%'
+                      unit_of_measurement: "%"
         - type: expandable
           name: color_stops
           label: Background Progress colors - add more in YAML
           schema:
             - type: expandable
               label: Color 1
-              name: '0'
+              name: "0"
               schema:
                 - name: color
                   label: ✨Color
@@ -792,10 +793,10 @@ separator_as_progress_bar:
                       min: 0
                       max: 100
                       step: 1
-                      unit_of_measurement: '%'
+                      unit_of_measurement: "%"
             - type: expandable
               label: Color 2
-              name: '1'
+              name: "1"
               schema:
                 - name: color
                   label: ✨Color
@@ -808,7 +809,7 @@ separator_as_progress_bar:
                       min: 0
                       max: 100
                       step: 1
-                      unit_of_measurement: '%'
+                      unit_of_measurement: "%"
 ```
 
 </details>

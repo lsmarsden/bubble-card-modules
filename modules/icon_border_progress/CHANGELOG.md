@@ -5,11 +5,10 @@
 <details><summary>See Changes</summary>
 
 - Added support for `background_color` and `remaining_color` YAML fields in place of `backcolor` and `remainingcolor`.
-Old values will still work, but new fields will take priority.
+  Old values will still work, but new fields will take priority.
 - Fixed editor missing `remaining_color` options.
 
 </details>
-
 
 ### v1.0.2
 

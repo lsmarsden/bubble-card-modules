@@ -7,9 +7,8 @@
  * @return {Array} The resulting array obtained from the input.
  */
 export function toArray(object) {
+  if (Array.isArray(object)) return object;
+  if (!object || typeof object !== "object") return [];
 
-    if (Array.isArray(object)) return object;
-    if (!object || typeof object !== 'object') return [];
-
-    return Object.values(object);
+  return Object.values(object);
 }

@@ -25,13 +25,13 @@ bar with multiple styling and animation options.
 
 ---
 
-  - Bind to any numeric entity or attribute as the source for progress
-  - Define progress colors at specific percentage stops, with optional smooth interpolation between them
-  - Fully customizable progress bar appearance: height, outline, background, and color transitions
-  - Support for conditional and templated text above and below the progress bar using entity values
-  - Optional animated orb and/or shine effects, each fully customizable and independently toggleable by
-      conditions
-  - Invert progress direction (e.g. countdown behavior)
+- Bind to any numeric entity or attribute as the source for progress
+- Define progress colors at specific percentage stops, with optional smooth interpolation between them
+- Fully customizable progress bar appearance: height, outline, background, and color transitions
+- Support for conditional and templated text above and below the progress bar using entity values
+- Optional animated orb and/or shine effects, each fully customizable and independently toggleable by
+  conditions
+- Invert progress direction (e.g. countdown behavior)
 
 ### Configuration Options
 
@@ -75,17 +75,17 @@ gradually blend colours from one to another as the percentage increases.</p>
 
 ```yaml
 separator_as_progress_bar:
-   source: sensor.download_progress
-   progress_style:
-      height: 14
-      interpolate: true
-      color_stops:
-         - color: red
-           percent: 0
-         - color: orange
-           percent: 50
-         - color: green
-           percent: 100
+  source: sensor.download_progress
+  progress_style:
+    height: 14
+    interpolate: true
+    color_stops:
+      - color: red
+        percent: 0
+      - color: orange
+        percent: 50
+      - color: green
+        percent: 100
 ```
 
 </details>
@@ -95,21 +95,21 @@ separator_as_progress_bar:
 
 ```yaml
 separator_as_progress_bar:
-   source: sensor.vacuum_progress
-   progress_style:
-      height: 14
-      color_stops:
-         - color: darkblue
-           percent: 0
-      orb_settings:
-         show_orb: true
-         slow_orb: true
-         orb_color: "#00e5ff"
-         trail_color: "#00acc1"
-         condition:
-            condition: numeric_state
-            entity: sensor.vacuum_progress
-            above: 20
+  source: sensor.vacuum_progress
+  progress_style:
+    height: 14
+    color_stops:
+      - color: darkblue
+        percent: 0
+    orb_settings:
+      show_orb: true
+      slow_orb: true
+      orb_color: "#00e5ff"
+      trail_color: "#00acc1"
+      condition:
+        condition: numeric_state
+        entity: sensor.vacuum_progress
+        above: 20
 ```
 
 </details>
@@ -119,25 +119,25 @@ separator_as_progress_bar:
 
 ```yaml
 separator_as_progress_bar:
-   source: sensor.cpu_load
-   progress_style:
-      height: 16
-      color_stops:
-         - color: "#81d4fa"
-           percent: 0
-         - color: yellow
-           percent: 70
-         - color: red
-           percent: 100
-      shine_settings:
-         show_shine: true
-         shine_color: "#ffffff"
-         shine_angle: 30
-         shine_delay: 0.5
-         condition:
-            condition: numeric_state
-            entity: sensor.cpu_load
-            below: 30
+  source: sensor.cpu_load
+  progress_style:
+    height: 16
+    color_stops:
+      - color: "#81d4fa"
+        percent: 0
+      - color: yellow
+        percent: 70
+      - color: red
+        percent: 100
+    shine_settings:
+      show_shine: true
+      shine_color: "#ffffff"
+      shine_angle: 30
+      shine_delay: 0.5
+      condition:
+        condition: numeric_state
+        entity: sensor.cpu_load
+        below: 30
 ```
 
 </details><details>
@@ -145,22 +145,22 @@ separator_as_progress_bar:
 
 ```yaml
 separator_as_progress_bar:
-   source: sensor.washing_machine_progress
-   progress_style:
-      height: 16
-      color_stops:
-         - color: "#4caf50"
-           percent: 100
-   above_text:
-      text: Washing in progress
-      condition:
-         condition: state
-         entity: sensor.washer_status
-         state: running
-   below_text:
-      text: "{pct}%"
-      placeholders:
-         pct: sensor.washing_machine_progress
+  source: sensor.washing_machine_progress
+  progress_style:
+    height: 16
+    color_stops:
+      - color: "#4caf50"
+        percent: 100
+  above_text:
+    text: Washing in progress
+    condition:
+      condition: state
+      entity: sensor.washer_status
+      state: running
+  below_text:
+    text: "{pct}%"
+    placeholders:
+      pct: sensor.washing_machine_progress
 ```
 
 </details>

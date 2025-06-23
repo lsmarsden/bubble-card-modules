@@ -7,6 +7,7 @@
 #### Added ~~AI~~ **Dynamic Entity Resolution** (DER)
 
 To use DER, look for any input field that contains ✨ in the editor label. This means you can now use:
+
 - Simple values e.g. `red`
 - Entities e.g. `input_text.my_favourite_color` or `sensor.sun_next_dawn`
 - Attributes using format `entity[attribute]`, such as `sensor.my_phone[battery_level]`
@@ -21,13 +22,12 @@ To use DER, look for any input field that contains ✨ in the editor label. This
 
 The default total icon size is 18px, and the default icon image size is 16px.
 
-
 <details><summary>Deprecated Fields</summary>
 
 Old schema settings are still valid to allow backwards compatibility but will be removed in a future release. Making changes to values via the editor
 will add the new schema fields instead. These new schema fields will take priority over any existing deprecated fields.
 
-**Deprecated icon settings:** 
+**Deprecated icon settings:**
 
 - `icon_color`
 - `icon_background_color`

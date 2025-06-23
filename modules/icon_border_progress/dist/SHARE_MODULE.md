@@ -29,6 +29,7 @@
             href="https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/icon_border_progress"
             target="_blank">GitHub repo</a>.
     </p>
+
 </div>
 
 ---
@@ -396,7 +397,7 @@ icon_border_progress:
             value. Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g.,
             sensor.my_phone[battery_level].
     - type: expandable
-      name: '0'
+      name: "0"
       title: Icon 1 settings (define more in YAML)
       schema:
         - name: button
@@ -439,7 +440,7 @@ icon_border_progress:
               schema:
                 - type: expandable
                   label: Color 1
-                  name: '0'
+                  name: "0"
                   schema:
                     - name: color
                       label: ✨Color
@@ -452,10 +453,10 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: '%'
+                          unit_of_measurement: "%"
                 - type: expandable
                   label: Color 2
-                  name: '1'
+                  name: "1"
                   schema:
                     - name: color
                       label: ✨Color
@@ -468,7 +469,7 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: '%'
+                          unit_of_measurement: "%"
         - name: background_color
           label: ✨Background colour of icon
           selector:
@@ -478,7 +479,7 @@ icon_border_progress:
           selector:
             ui_color: null
     - type: expandable
-      name: '1'
+      name: "1"
       title: Icon 2 settings (define more in YAML)
       schema:
         - name: button
@@ -521,7 +522,7 @@ icon_border_progress:
               schema:
                 - type: expandable
                   label: Color 1
-                  name: '0'
+                  name: "0"
                   schema:
                     - name: color
                       label: ✨Color
@@ -534,10 +535,10 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: '%'
+                          unit_of_measurement: "%"
                 - type: expandable
                   label: Color 2
-                  name: '1'
+                  name: "1"
                   schema:
                     - name: color
                       label: ✨Color
@@ -550,7 +551,7 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: '%'
+                          unit_of_measurement: "%"
         - name: background_color
           label: ✨Background colour of icon
           selector:

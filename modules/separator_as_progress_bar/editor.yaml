@@ -11,7 +11,7 @@ editor:
   - name: source
     label: "✨Source entity"
     selector:
-      entity: { }
+      entity: {}
   - name: invert
     label: "Invert progress (bar decreases as progress completes)"
     default: false
@@ -28,7 +28,7 @@ editor:
       - name: placeholders
         label: "Placeholders - format lines like pct: sensor.clean_progress"
         selector:
-          object: { }
+          object: {}
       - name: condition
         label: "Condition to show text (see docs for additional condition configuration)"
         selector:
@@ -44,7 +44,7 @@ editor:
       - name: placeholders
         label: "Placeholders - format lines like pct: sensor.clean_progress"
         selector:
-          object: { }
+          object: {}
       - name: condition
         label: "Condition to show text (see docs for additional condition configuration)"
         selector:
@@ -173,7 +173,7 @@ editor:
                     min: 0
                     max: 100
                     step: 1
-                    unit_of_measurement: '%'
+                    unit_of_measurement: "%"
           - type: expandable
             label: "Color 2"
             name: "1"
@@ -189,7 +189,7 @@ editor:
                     min: 0
                     max: 100
                     step: 1
-                    unit_of_measurement: '%'
+                    unit_of_measurement: "%"
       - type: expandable
         name: color_stops
         label: "Background Progress colors - add more in YAML"
@@ -209,7 +209,7 @@ editor:
                     min: 0
                     max: 100
                     step: 1
-                    unit_of_measurement: '%'
+                    unit_of_measurement: "%"
           - type: expandable
             label: "Color 2"
             name: "1"
@@ -225,4 +225,4 @@ editor:
                     min: 0
                     max: 100
                     step: 1
-                    unit_of_measurement: '%'
+                    unit_of_measurement: "%"

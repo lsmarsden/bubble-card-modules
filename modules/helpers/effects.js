@@ -1,4 +1,4 @@
-import {checkAllConditions} from "./condition.js";
+import { checkAllConditions } from "./condition.js";
 
 /**
  * Applies a set of visual effects to a given DOM element based on specified conditions.
@@ -13,13 +13,13 @@ import {checkAllConditions} from "./condition.js";
  * @return {void} Does not return a value.
  */
 export function applyEffects(element, effects) {
-    Object.values(effects).forEach((eff) => {
-        if (eff.effect) {
-            if (checkAllConditions(eff.condition)) {
-                element.classList.add(`progress-effect-${eff.effect}`, 'has-effect');
-            } else {
-                element.classList.remove(`progress-effect-${eff.effect}`);
-            }
-        }
-    });
+  Object.values(effects).forEach((eff) => {
+    if (eff.effect) {
+      if (checkAllConditions(eff.condition)) {
+        element.classList.add(`progress-effect-${eff.effect}`, "has-effect");
+      } else {
+        element.classList.remove(`progress-effect-${eff.effect}`);
+      }
+    }
+  });
 }

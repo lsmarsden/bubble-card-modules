@@ -753,7 +753,7 @@ separator_as_timeline:
       schema:
         - type: expandable
           title: Time Range 1
-          name: '0'
+          name: "0"
           schema:
             - name: start_entity
               label: Start Time Entity
@@ -839,7 +839,7 @@ separator_as_timeline:
                 text: null
         - type: expandable
           title: Time Range 2
-          name: '1'
+          name: "1"
           schema:
             - name: start_entity
               label: Start Time Entity
@@ -925,7 +925,7 @@ separator_as_timeline:
                 text: null
         - type: expandable
           title: Time Range 3
-          name: '2'
+          name: "2"
           schema:
             - name: start_entity
               label: Start Time Entity

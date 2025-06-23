@@ -17,33 +17,40 @@
  * @property {string} [metadata.message] - Custom deprecation message.
  */
 export const resolveConfig = (sources, defaultValue = undefined) => {
-    for (const source of sources) {
-        const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-        const value = getConfigValue(source.config, keys);
+  for (const source of sources) {
+    const keys = Array.isArray(source.path)
+      ? source.path
+      : source.path.split(".");
+    const value = getConfigValue(source.config, keys);
 
-        if (value !== undefined && (!source.condition || source.condition(value, source.config))) {
-            const metadata = source.metadata || {};
-            if (metadata.deprecated) {
-                console.warn(
-                    `[DEPRECATED] Config path "${source.path}" used.` +
-                    (metadata.replacedWith ? ` Use "${metadata.replacedWith}" instead.` : "") +
-                    (metadata.message ? ` ${metadata.message}` : "")
-                );
-            }
-            return value;
-        }
+    if (
+      value !== undefined &&
+      (!source.condition || source.condition(value, source.config))
+    ) {
+      const metadata = source.metadata || {};
+      if (metadata.deprecated) {
+        console.warn(
+          `[DEPRECATED] Config path "${source.path}" used.` +
+            (metadata.replacedWith
+              ? ` Use "${metadata.replacedWith}" instead.`
+              : "") +
+            (metadata.message ? ` ${metadata.message}` : ""),
+        );
+      }
+      return value;
     }
-    return defaultValue;
+  }
+  return defaultValue;
 };
 
 function getConfigValue(config, keys) {
-    let current = config;
-    for (const key of keys) {
-        if (current && key in current) {
-            current = current[key];
-        } else {
-            return undefined;
-        }
+  let current = config;
+  for (const key of keys) {
+    if (current && key in current) {
+      current = current[key];
+    } else {
+      return undefined;
     }
-    return current;
+  }
+  return current;
 }

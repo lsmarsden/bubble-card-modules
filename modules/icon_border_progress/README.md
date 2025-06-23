@@ -46,6 +46,7 @@ See [CONFIG_OPTIONS.md](CONFIG_OPTIONS.md) for a full list of options.
 Dynamic Entity Resolution is available in certain fields.
 
 To use DER, look for any input field that contains ✨ in the editor label. This means you can now use:
+
 - Simple values e.g. `red`
 - Entities e.g. `input_text.my_favourite_color` or `sensor.sun_next_dawn`
 - Attributes using format `entity[attribute]`, such as `sensor.my_phone[battery_level]`
@@ -61,21 +62,20 @@ To use DER, look for any input field that contains ✨ in the editor label. This
 
 ```yaml
 icon_border_progress:
-   - button: sub-button-1
-     source: sensor.saros_10_battery
-     start: 0
-     end: 200
-     color_stops:
-        - percent: 0
-          color: "#424242"   # Depleted CF
-        - percent: 100
-          color: "#eeeeee"   # Full CF
-     remaining_color: "#222"
-     background_color: "#0a0a0a"
+  - button: sub-button-1
+    source: sensor.saros_10_battery
+    start: 0
+    end: 200
+    color_stops:
+      - percent: 0
+        color: "#424242" # Depleted CF
+      - percent: 100
+        color: "#eeeeee" # Full CF
+    remaining_color: "#222"
+    background_color: "#0a0a0a"
 ```
 
   </details>
-
 
   <details>
     <summary><strong>Multiple icon progress borders with colours</strong></summary>
@@ -145,10 +145,9 @@ icon_border_progress:
         color: "#cfd8dc"
     background_color: "#2c2c2c"
     remaining_color: "#444"
-
 ```
-  </details>
 
+  </details>
 
 ## Install this module
 

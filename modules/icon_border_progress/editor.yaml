@@ -19,11 +19,11 @@ editor:
       - name: source
         label: "✨Source entity"
         selector:
-          entity: { }
+          entity: {}
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:
-          condition: { }
+          condition: {}
       - type: expandable
         label: "Custom start/end values (optional)"
         schema:
@@ -65,7 +65,7 @@ editor:
                         min: 0
                         max: 100
                         step: 1
-                        unit_of_measurement: '%'
+                        unit_of_measurement: "%"
               - type: expandable
                 label: "Color 2"
                 name: "1"
@@ -81,7 +81,7 @@ editor:
                         min: 0
                         max: 100
                         step: 1
-                        unit_of_measurement: '%'
+                        unit_of_measurement: "%"
       - name: background_color
         label: "✨Background colour of icon"
         selector:
@@ -101,11 +101,11 @@ editor:
       - name: source
         label: "✨Source entity"
         selector:
-          entity: { }
+          entity: {}
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:
-          condition: { }
+          condition: {}
       - type: expandable
         label: "Custom start/end values (optional)"
         schema:
@@ -147,7 +147,7 @@ editor:
                         min: 0
                         max: 100
                         step: 1
-                        unit_of_measurement: '%'
+                        unit_of_measurement: "%"
               - type: expandable
                 label: "Color 2"
                 name: "1"
@@ -163,7 +163,7 @@ editor:
                         min: 0
                         max: 100
                         step: 1
-                        unit_of_measurement: '%'
+                        unit_of_measurement: "%"
       - name: background_color
         label: "✨Background colour of icon"
         selector:

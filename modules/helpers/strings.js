@@ -1,4 +1,4 @@
-import {getState} from "./hass.js";
+import { getState } from "./hass.js";
 
 /**
  * Adds a specified suffix to a given string if it doesn't already end with the suffix.
@@ -8,9 +8,9 @@ import {getState} from "./hass.js";
  * @return {string} The resulting string with the suffix added if necessary.
  */
 export function suffix(str, suffix) {
-    str = clean(str);
-    if (str === '') return '';
-    return str.endsWith(suffix) ? str : str + suffix;
+  str = clean(str);
+  if (str === "") return "";
+  return str.endsWith(suffix) ? str : str + suffix;
 }
 
 /**
@@ -21,16 +21,16 @@ export function suffix(str, suffix) {
  * @return {string} The resulting string with the prefix added if necessary.
  */
 export function prefix(str, prefix) {
-    str = clean(str);
-    if (str === '') return '';
-    return str.startsWith(prefix) ? str : prefix + str;
+  str = clean(str);
+  if (str === "") return "";
+  return str.startsWith(prefix) ? str : prefix + str;
 }
 
 function clean(str) {
-    if (!str) return '';
-    str = String(str);
-    if (str.trim() === '') return '';
-    return str;
+  if (!str) return "";
+  str = String(str);
+  if (str.trim() === "") return "";
+  return str;
 }
 
 /**
@@ -45,14 +45,14 @@ function clean(str) {
  * If the textTemplate object or text is not provided, an empty string is returned.
  */
 export function renderTextTemplate(textTemplate) {
-    if (!textTemplate || !textTemplate.text) return "";
+  if (!textTemplate || !textTemplate.text) return "";
 
-    const placeholders = textTemplate.placeholders ?? {};
-    const data = {};
+  const placeholders = textTemplate.placeholders ?? {};
+  const data = {};
 
-    for (const key in placeholders) {
-        data[key] = getState(placeholders[key]) ?? '';
-    }
+  for (const key in placeholders) {
+    data[key] = getState(placeholders[key]) ?? "";
+  }
 
-    return textTemplate.text.replace(/\{(\w+)}/g, (_, key) => data[key] ?? '');
+  return textTemplate.text.replace(/\{(\w+)}/g, (_, key) => data[key] ?? "");
 }

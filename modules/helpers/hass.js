@@ -19,29 +19,28 @@
  *                               or `undefined` if the entity is not found and `fallbackToRaw` is false.
  */
 export const getState = (input, fallbackToRaw = true) => {
-    if (input == null) return undefined;
-    if (typeof input !== 'string' && typeof input !== 'object') return input;
+  if (input == null) return undefined;
+  if (typeof input !== "string" && typeof input !== "object") return input;
 
+  let entityId, attribute;
 
-    let entityId, attribute;
-
-    if (typeof input === 'object') {
-        entityId = input.entity_id || input.entity;
-        attribute = input.attribute || input.att;
+  if (typeof input === "object") {
+    entityId = input.entity_id || input.entity;
+    attribute = input.attribute || input.att;
+  } else {
+    // Pattern: entity_id[attribute]
+    const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+    if (match) {
+      [, entityId, attribute] = match;
+    } else if (hass.states[input]) {
+      entityId = input;
     } else {
-        // Pattern: entity_id[attribute]
-        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
-        if (match) {
-            [, entityId, attribute] = match;
-        } else if (hass.states[input]) {
-            entityId = input;
-        } else {
-            return fallbackToRaw ? input : undefined;
-        }
+      return fallbackToRaw ? input : undefined;
     }
+  }
 
-    const stateObj = hass.states[entityId];
-    if (!stateObj) return fallbackToRaw ? input : undefined;
+  const stateObj = hass.states[entityId];
+  if (!stateObj) return fallbackToRaw ? input : undefined;
 
-    return attribute ? stateObj.attributes[attribute] : stateObj.state;
-}
+  return attribute ? stateObj.attributes[attribute] : stateObj.state;
+};

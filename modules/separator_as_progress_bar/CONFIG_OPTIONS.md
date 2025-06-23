@@ -142,13 +142,13 @@
 
 **Description:** Main config object
 
-| Property                             | Type    | Default | Description                                                   |
-| ------------------------------------ | ------- | ------- | ------------------------------------------------------------- |
-| - [source](#source )                 | string  | -       | The entity or attribute source.                               |
-| - [invert](#invert )                 | boolean | false   | Invert the progress bar (bar decreases as progress completes) |
-| - [below_text](#below_text )         | object  | -       | Condition                                                     |
-| - [above_text](#above_text )         | object  | -       | Condition                                                     |
-| - [progress_style](#progress_style ) | object  | -       | -                                                             |
+| Property                            | Type    | Default | Description                                                   |
+| ----------------------------------- | ------- | ------- | ------------------------------------------------------------- |
+| - [source](#source)                 | string  | -       | The entity or attribute source.                               |
+| - [invert](#invert)                 | boolean | false   | Invert the progress bar (bar decreases as progress completes) |
+| - [below_text](#below_text)         | object  | -       | Condition                                                     |
+| - [above_text](#above_text)         | object  | -       | Condition                                                     |
+| - [progress_style](#progress_style) | object  | -       | -                                                             |
 
 ## 1. Property `source`
 
@@ -176,10 +176,10 @@
 
 **Description:** Text template to show below the progress bar
 
-| Property                                    | Type   | Default | Description                                                                              |
-| ------------------------------------------- | ------ | ------- | ---------------------------------------------------------------------------------------- |
-| - [text](#below_text_text )                 | string | -       | The text with placeholders e.g. "Hello {name}".                                          |
-| - [placeholders](#below_text_placeholders ) | object | -       | Placeholders. Use the template field name as the key and entity[attribute] as the value. |
+| Property                                   | Type   | Default | Description                                                                              |
+| ------------------------------------------ | ------ | ------- | ---------------------------------------------------------------------------------------- |
+| - [text](#below_text_text)                 | string | -       | The text with placeholders e.g. "Hello {name}".                                          |
+| - [placeholders](#below_text_placeholders) | object | -       | Placeholders. Use the template field name as the key and entity[attribute] as the value. |
 
 | One of(Option)                 |
 | ------------------------------ |
@@ -196,12 +196,12 @@
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i0_attribute ) | string | -       | -           |
-| + state                                        | object | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i0_attribute) | string | -       | -           |
+| + state                                       | object | -       | -           |
 
 #### 3.1.1. Property `condition`
 
@@ -270,13 +270,13 @@ Specific value: `"state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description                                         |
-| ---------------------------------------------- | ------ | ------- | --------------------------------------------------- |
-| + condition                                    | const  | -       | -                                                   |
-| + entity                                       | string | -       | -                                                   |
-| - [attribute](#below_text_oneOf_i1_attribute ) | string | -       | -                                                   |
-| - [above](#below_text_oneOf_i1_above )         | object | -       | Numeric threshold or another entity to compare from |
-| - [below](#below_text_oneOf_i1_below )         | object | -       | Numeric threshold or another entity to compare from |
+| Property                                      | Type   | Default | Description                                         |
+| --------------------------------------------- | ------ | ------- | --------------------------------------------------- |
+| + condition                                   | const  | -       | -                                                   |
+| + entity                                      | string | -       | -                                                   |
+| - [attribute](#below_text_oneOf_i1_attribute) | string | -       | -                                                   |
+| - [above](#below_text_oneOf_i1_above)         | object | -       | Numeric threshold or another entity to compare from |
+| - [below](#below_text_oneOf_i1_below)         | object | -       | Numeric threshold or another entity to compare from |
 
 #### 3.2.1. Property `condition`
 
@@ -354,11 +354,11 @@ Specific value: `"numeric_state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i2_attribute ) | string | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i2_attribute) | string | -       | -           |
 
 #### 3.3.1. Property `condition`
 
@@ -476,10 +476,10 @@ Specific value: `"or"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                         | Type   | Default | Description |
-| ------------------------------------------------ | ------ | ------- | ----------- |
-| + condition                                      | const  | -       | -           |
-| - [conditions](#below_text_oneOf_i5_conditions ) | object | -       | -           |
+| Property                                        | Type   | Default | Description |
+| ----------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                     | const  | -       | -           |
+| - [conditions](#below_text_oneOf_i5_conditions) | object | -       | -           |
 
 #### 3.6.1. Property `condition`
 
@@ -560,10 +560,10 @@ Specific value: `"not"`
 
 **Description:** Text template to show above the progress bar
 
-| Property                                    | Type   | Default | Description                                                                              |
-| ------------------------------------------- | ------ | ------- | ---------------------------------------------------------------------------------------- |
-| - [text](#below_text_text )                 | string | -       | The text with placeholders e.g. "Hello {name}".                                          |
-| - [placeholders](#below_text_placeholders ) | object | -       | Placeholders. Use the template field name as the key and entity[attribute] as the value. |
+| Property                                   | Type   | Default | Description                                                                              |
+| ------------------------------------------ | ------ | ------- | ---------------------------------------------------------------------------------------- |
+| - [text](#below_text_text)                 | string | -       | The text with placeholders e.g. "Hello {name}".                                          |
+| - [placeholders](#below_text_placeholders) | object | -       | Placeholders. Use the template field name as the key and entity[attribute] as the value. |
 
 | One of(Option)                 |
 | ------------------------------ |
@@ -580,12 +580,12 @@ Specific value: `"not"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i0_attribute ) | string | -       | -           |
-| + state                                        | object | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i0_attribute) | string | -       | -           |
+| + state                                       | object | -       | -           |
 
 #### 4.1.1. Property `condition`
 
@@ -654,13 +654,13 @@ Specific value: `"state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description                                         |
-| ---------------------------------------------- | ------ | ------- | --------------------------------------------------- |
-| + condition                                    | const  | -       | -                                                   |
-| + entity                                       | string | -       | -                                                   |
-| - [attribute](#below_text_oneOf_i1_attribute ) | string | -       | -                                                   |
-| - [above](#below_text_oneOf_i1_above )         | object | -       | Numeric threshold or another entity to compare from |
-| - [below](#below_text_oneOf_i1_below )         | object | -       | Numeric threshold or another entity to compare from |
+| Property                                      | Type   | Default | Description                                         |
+| --------------------------------------------- | ------ | ------- | --------------------------------------------------- |
+| + condition                                   | const  | -       | -                                                   |
+| + entity                                      | string | -       | -                                                   |
+| - [attribute](#below_text_oneOf_i1_attribute) | string | -       | -                                                   |
+| - [above](#below_text_oneOf_i1_above)         | object | -       | Numeric threshold or another entity to compare from |
+| - [below](#below_text_oneOf_i1_below)         | object | -       | Numeric threshold or another entity to compare from |
 
 #### 4.2.1. Property `condition`
 
@@ -738,11 +738,11 @@ Specific value: `"numeric_state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i2_attribute ) | string | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i2_attribute) | string | -       | -           |
 
 #### 4.3.1. Property `condition`
 
@@ -860,10 +860,10 @@ Specific value: `"or"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                         | Type   | Default | Description |
-| ------------------------------------------------ | ------ | ------- | ----------- |
-| + condition                                      | const  | -       | -           |
-| - [conditions](#below_text_oneOf_i5_conditions ) | object | -       | -           |
+| Property                                        | Type   | Default | Description |
+| ----------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                     | const  | -       | -           |
+| - [conditions](#below_text_oneOf_i5_conditions) | object | -       | -           |
 
 #### 4.6.1. Property `condition`
 
@@ -940,14 +940,14 @@ Specific value: `"not"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                                            | Type    | Default | Description                                                               |
-| ------------------------------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------- |
-| - [height](#progress_style_height )                                 | integer | 6       | The height of the progress bar, in pixels.                                |
-| - [interpolate](#progress_style_interpolate )                       | boolean | true    | Gradually change color from one stop to another as the progress increases |
-| - [orb_settings](#progress_style_orb_settings )                     | object  | -       | Condition                                                                 |
-| - [outline](#progress_style_outline )                               | object  | -       | -                                                                         |
-| - [color_stops](#progress_style_color_stops )                       | array   | -       | Array of color stop                                                       |
-| - [background_color_stops](#progress_style_background_color_stops ) | array   | -       | Array of color stop                                                       |
+| Property                                                           | Type    | Default | Description                                                               |
+| ------------------------------------------------------------------ | ------- | ------- | ------------------------------------------------------------------------- |
+| - [height](#progress_style_height)                                 | integer | 6       | The height of the progress bar, in pixels.                                |
+| - [interpolate](#progress_style_interpolate)                       | boolean | true    | Gradually change color from one stop to another as the progress increases |
+| - [orb_settings](#progress_style_orb_settings)                     | object  | -       | Condition                                                                 |
+| - [outline](#progress_style_outline)                               | object  | -       | -                                                                         |
+| - [color_stops](#progress_style_color_stops)                       | array   | -       | Array of color stop                                                       |
+| - [background_color_stops](#progress_style_background_color_stops) | array   | -       | Array of color stop                                                       |
 
 ### 5.1. Property `height`
 
@@ -975,12 +975,12 @@ Specific value: `"not"`
 
 **Description:** Settings for the progress orb
 
-| Property                                                   | Type    | Default | Description                     |
-| ---------------------------------------------------------- | ------- | ------- | ------------------------------- |
-| - [show_orb](#progress_style_orb_settings_show_orb )       | boolean | true    | Show the progress orb animation |
-| - [slow_orb](#progress_style_orb_settings_slow_orb )       | boolean | false   | Use slow orb animation          |
-| - [orb_color](#progress_style_orb_settings_orb_color )     | string  | -       | Color of the progress orb       |
-| - [trail_color](#progress_style_orb_settings_trail_color ) | string  | -       | Color of the orb trail          |
+| Property                                                  | Type    | Default | Description                     |
+| --------------------------------------------------------- | ------- | ------- | ------------------------------- |
+| - [show_orb](#progress_style_orb_settings_show_orb)       | boolean | true    | Show the progress orb animation |
+| - [slow_orb](#progress_style_orb_settings_slow_orb)       | boolean | false   | Use slow orb animation          |
+| - [orb_color](#progress_style_orb_settings_orb_color)     | string  | -       | Color of the progress orb       |
+| - [trail_color](#progress_style_orb_settings_trail_color) | string  | -       | Color of the orb trail          |
 
 | One of(Option)                 |
 | ------------------------------ |
@@ -997,12 +997,12 @@ Specific value: `"not"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i0_attribute ) | string | -       | -           |
-| + state                                        | object | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i0_attribute) | string | -       | -           |
+| + state                                       | object | -       | -           |
 
 ##### 5.3.1.1. Property `condition`
 
@@ -1071,13 +1071,13 @@ Specific value: `"state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description                                         |
-| ---------------------------------------------- | ------ | ------- | --------------------------------------------------- |
-| + condition                                    | const  | -       | -                                                   |
-| + entity                                       | string | -       | -                                                   |
-| - [attribute](#below_text_oneOf_i1_attribute ) | string | -       | -                                                   |
-| - [above](#below_text_oneOf_i1_above )         | object | -       | Numeric threshold or another entity to compare from |
-| - [below](#below_text_oneOf_i1_below )         | object | -       | Numeric threshold or another entity to compare from |
+| Property                                      | Type   | Default | Description                                         |
+| --------------------------------------------- | ------ | ------- | --------------------------------------------------- |
+| + condition                                   | const  | -       | -                                                   |
+| + entity                                      | string | -       | -                                                   |
+| - [attribute](#below_text_oneOf_i1_attribute) | string | -       | -                                                   |
+| - [above](#below_text_oneOf_i1_above)         | object | -       | Numeric threshold or another entity to compare from |
+| - [below](#below_text_oneOf_i1_below)         | object | -       | Numeric threshold or another entity to compare from |
 
 ##### 5.3.2.1. Property `condition`
 
@@ -1155,11 +1155,11 @@ Specific value: `"numeric_state"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                       | Type   | Default | Description |
-| ---------------------------------------------- | ------ | ------- | ----------- |
-| + condition                                    | const  | -       | -           |
-| + entity                                       | string | -       | -           |
-| - [attribute](#below_text_oneOf_i2_attribute ) | string | -       | -           |
+| Property                                      | Type   | Default | Description |
+| --------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                   | const  | -       | -           |
+| + entity                                      | string | -       | -           |
+| - [attribute](#below_text_oneOf_i2_attribute) | string | -       | -           |
 
 ##### 5.3.3.1. Property `condition`
 
@@ -1277,10 +1277,10 @@ Specific value: `"or"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                         | Type   | Default | Description |
-| ------------------------------------------------ | ------ | ------- | ----------- |
-| + condition                                      | const  | -       | -           |
-| - [conditions](#below_text_oneOf_i5_conditions ) | object | -       | -           |
+| Property                                        | Type   | Default | Description |
+| ----------------------------------------------- | ------ | ------- | ----------- |
+| + condition                                     | const  | -       | -           |
+| - [conditions](#below_text_oneOf_i5_conditions) | object | -       | -           |
 
 ##### 5.3.6.1. Property `condition`
 
@@ -1373,11 +1373,11 @@ Specific value: `"not"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                  | Type             | Default | Description                  |
-| ----------------------------------------- | ---------------- | ------- | ---------------------------- |
-| - [color](#progress_style_outline_color ) | string           | -       | Outline color.               |
-| - [width](#progress_style_outline_width ) | integer          | -       | Width of outline, in pixels. |
-| - [style](#progress_style_outline_style ) | enum (of string) | -       | Outline CSS style.           |
+| Property                                 | Type             | Default | Description                  |
+| ---------------------------------------- | ---------------- | ------- | ---------------------------- |
+| - [color](#progress_style_outline_color) | string           | -       | Outline color.               |
+| - [width](#progress_style_outline_width) | integer          | -       | Width of outline, in pixels. |
+| - [style](#progress_style_outline_style) | enum (of string) | -       | Outline CSS style.           |
 
 #### 5.4.1. Property `color`
 
@@ -1449,10 +1449,10 @@ Must be one of:
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-| Property                                                          | Type    | Default | Description                                       |
-| ----------------------------------------------------------------- | ------- | ------- | ------------------------------------------------- |
-| - [from_percent](#progress_style_color_stops_items_from_percent ) | integer | -       | The percent from which to start using this color. |
-| - [color](#progress_style_color_stops_items_color )               | string  | -       | The color to use.                                 |
+| Property                                                         | Type    | Default | Description                                       |
+| ---------------------------------------------------------------- | ------- | ------- | ------------------------------------------------- |
+| - [from_percent](#progress_style_color_stops_items_from_percent) | integer | -       | The percent from which to start using this color. |
+| - [color](#progress_style_color_stops_items_color)               | string  | -       | The color to use.                                 |
 
 ##### 5.5.1.1. Property `from_percent`
 
