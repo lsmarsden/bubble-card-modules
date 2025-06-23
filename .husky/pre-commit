@@ -1,0 +1,5 @@
+# Format staged files and add them back to staging
+npx lint-staged
+
+# Run tests only if there are relevant changes
+npm test

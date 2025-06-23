@@ -6,9 +6,15 @@
   "scripts": {
     "create-module": "tsx scripts/ts/generate_module.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "npm test -- --watch",
+    "test:module": "npm test -- --testPathPattern=modules/$npm_config_module",
+    "test:coverage": "npm test -- --coverage",
     "build": "tsx scripts/ts/build_modules.ts",
     "build:parallel": "tsx scripts/ts/build_modules.ts --parallel",
-    "format": "prettier --write \"**/*.{js,yaml,md}\""
+    "format": "prettier --write \"**/*.{js,yaml,md}\"",
+    "format:check": "prettier --check \"**/*.{js,yaml,md}\"",
+    "clean": "rm -rf modules/*/dist coverage reports",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@jest/globals": "^29.7.0",
@@ -21,11 +27,18 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.2",
     "chalk": "^5.4.1",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-html-reporter": "^4.1.0",
+    "lint-staged": "^16.1.2",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.2",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,yaml,yml,md,json}": [
+      "prettier --write"
+    ]
   }
 }
