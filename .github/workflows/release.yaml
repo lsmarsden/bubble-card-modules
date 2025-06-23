@@ -20,9 +20,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 23
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Get last successful workflow commit
         id: last_success
@@ -45,7 +46,7 @@ jobs:
           echo "changed=$CHANGED" >> $GITHUB_OUTPUT
 
       - name: Build modules
-        run: npm run build
+        run: npm run build:parallel
 
   create-release:
     needs: [build]

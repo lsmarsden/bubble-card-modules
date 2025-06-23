@@ -28,9 +28,12 @@ export interface ModuleInfo {
 
 async function buildModules() {
     const modulesPath = path.join(projectRoot, "modules");
+    const isParallel = process.argv.includes('--parallel');
 
     const moduleFolders = await fs.readdir(modulesPath);
 
+    // Filter valid module directories
+    const validModules = [];
     for (const moduleFolder of moduleFolders) {
         const moduleDir = path.join(modulesPath, moduleFolder);
         const stat = await fs.stat(moduleDir);
@@ -38,6 +41,30 @@ async function buildModules() {
 
         const moduleYamlPath = path.join(moduleDir, "module.yaml");
         if (!await exists(moduleYamlPath)) continue;
+
+        validModules.push(moduleFolder);
+    }
+
+    if (validModules.length === 0) {
+        console.log("No modules to build");
+        return;
+    }
+
+    if (isParallel) {
+        logProgress(`Building ${validModules.length} modules in parallel...`);
+        await Promise.all(validModules.map(moduleFolder => buildSingleModule(moduleFolder)));
+    } else {
+        logProgress(`Building ${validModules.length} modules sequentially...`);
+        for (const moduleFolder of validModules) {
+            await buildSingleModule(moduleFolder);
+        }
+    }
+}
+
+async function buildSingleModule(moduleFolder: string): Promise<void> {
+    try {
+        const moduleDir = path.join(modulesDir, moduleFolder);
+        const moduleYamlPath = path.join(moduleDir, "module.yaml");
 
         logProgress(`BUILDING MODULE: ${moduleFolder}`);
 
@@ -76,6 +103,9 @@ async function buildModules() {
 
         visibleLog(`BUILT MODULE: ${info.id}`, chalk.green);
         await generateDocs(info.id);
+    } catch (error) {
+        console.error(`Failed to build module ${moduleFolder}:`, error);
+        throw error; // Re-throw to maintain current error handling behavior
     }
 }
 

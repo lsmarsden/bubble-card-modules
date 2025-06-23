@@ -7,6 +7,7 @@
     "create-module": "tsx scripts/ts/generate_module.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "build": "tsx scripts/ts/build_modules.ts",
+    "build:parallel": "tsx scripts/ts/build_modules.ts --parallel",
     "format": "prettier --write \"**/*.{js,yaml,md}\""
   },
   "dependencies": {
