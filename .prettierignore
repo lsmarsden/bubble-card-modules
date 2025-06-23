@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.venv/
+**/.venv/
+
+# Build outputs
+dist/
+coverage/
+reports/
+
+# Template files with placeholders that break when formatted
+modules/templates/schema_template.yaml
+modules/templates/SHARE_MODULE_TEMPLATE.md
+modules/templates/README_TEMPLATE.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
