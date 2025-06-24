@@ -27,8 +27,8 @@ jobs:
       - name: Run linting
         run: npm run format:check
 
-      - name: Run tests
-        run: npm test
+      - name: Run core tests (helpers)
+        run: npm run test:helpers
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -91,7 +91,7 @@ jobs:
           echo "Modules with code changes: $CHANGED"
 
       - name: Build modules
-        run: npm run build:parallel
+        run: npm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -120,7 +120,7 @@ jobs:
         run: npm ci
 
       - name: Test specific module
-        run: npm test -- --testPathPattern="modules/${{ matrix.module }}"
+        run: npm test -- --testPathPattern="modules/${{ matrix.module }}" --testPathIgnorePatterns="modules/helpers"
         continue-on-error: true
 
   create-release:

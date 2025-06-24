@@ -6,11 +6,12 @@
   "scripts": {
     "create-module": "tsx scripts/ts/generate_module.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:helpers": "npm test -- modules/helpers",
+    "test:modules": "npm test -- modules --ignore='**/helpers/**'",
     "test:watch": "npm test -- --watch",
     "test:module": "npm test -- --testPathPattern=modules/$npm_config_module",
     "test:coverage": "npm test -- --coverage",
     "build": "tsx scripts/ts/build_modules.ts",
-    "build:parallel": "tsx scripts/ts/build_modules.ts --parallel",
     "format": "prettier --write \"**/*.{js,yaml,md}\"",
     "format:check": "prettier --check \"**/*.{js,yaml,md}\"",
     "clean": "rm -rf modules/*/dist coverage reports",

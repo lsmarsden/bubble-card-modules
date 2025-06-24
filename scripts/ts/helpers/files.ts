@@ -53,15 +53,8 @@ function replacePlaceholders(
   template: string,
   values: Record<string, string>,
 ): string {
-  // Support multiple placeholder formats:
-  // {{key}} - for excluded template files
-  // ${key} - for template literals in code
-  // ${{key}} - alternative format
-  return template.replace(
-    /\${{(.*?)}}|\{\{(.*?)}}\$\{(.*?)\}/g,
-    (_, key1, key2, key3) => {
-      const key = (key1 || key2 || key3).trim();
-      return values[key] || "";
-    },
-  );
+  return template.replace(/\${{(.*?)}}|\{\{(.*?)}}/g, (_, key1, key2, key3) => {
+    const key = (key1 || key2 || key3).trim();
+    return values[key] || "";
+  });
 }
