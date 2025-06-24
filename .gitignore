@@ -6,5 +6,6 @@ coverage/
 reports/
 
 node_modules/
+venv/
 
 **/*/todo.md

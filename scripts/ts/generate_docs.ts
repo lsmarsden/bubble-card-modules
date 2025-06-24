@@ -19,9 +19,10 @@ async function generateSchemaDoc(moduleDir: string, moduleId: string) {
   const schemaPath = path.join(moduleDir, "schema.yaml");
   if (await exists(schemaPath)) {
     try {
-      const { stdout } = await execAsync(
-        `python3 scripts/py/generate_schema_doc.py "${moduleDir}"`,
-      );
+      // Use virtual environment if it exists, otherwise fallback to system python
+      const venvPython = path.join(process.cwd(), "venv", "bin", "python3");
+      const pythonCmd = (await exists(venvPython)) ? venvPython : "python3";
+      const { stdout } = await execAsync(`${pythonCmd} scripts/py/generate_schema_doc.py "${moduleDir}"`);
       console.debug(`Generated schema doc for ${moduleId}`);
       console.debug(stdout);
     } catch (err) {

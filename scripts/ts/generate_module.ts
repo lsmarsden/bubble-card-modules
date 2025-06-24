@@ -63,37 +63,24 @@ async function generateModule() {
   };
 
   await fs.mkdir(path.join(modulePath, "assets"), { recursive: true });
-  await fs.copyFile(
-    "./modules/templates/assets/preview.png",
-    path.join(modulePath, "assets/preview.png"),
-  );
-  await fs.writeFile(
-    path.join(modulePath, "module.yaml"),
-    yaml.dump(moduleYaml),
-  );
-  await fs.writeFile(
-    path.join(modulePath, "styles.css"),
-    `/* Styles for ${answers.name} */`,
-  );
+  await fs.copyFile("./modules/templates/assets/preview.png", path.join(modulePath, "assets/preview.png"));
+  await fs.writeFile(path.join(modulePath, "module.yaml"), yaml.dump(moduleYaml));
+  await fs.writeFile(path.join(modulePath, "styles.css"), `/* Styles for ${answers.name} */`);
   await fs.writeFile(path.join(modulePath, "editor.yaml"), `editor:`);
   await fs.writeFile(
     path.join(modulePath, "code.js"),
-    `function ${answers.id}(card, hass) { // this allows IDEs to parse the file normally - will be removed automatically during build.\n  // add module code here\n}`,
+    `export function ${answers.id}(card, hass) { // this allows IDEs to parse the file normally - will be removed automatically during build.\n  // add module code here\n}`,
   );
 
   await fs.mkdir(path.join(modulePath, "__tests__"), { recursive: true });
   await fs.writeFile(
     path.join(modulePath, "__tests__", "code.test.js"),
-    `import {jest} from '@jest/globals';\n\n// TODO: Import your module function when implementing tests\n// import {${answers.id}} from '../code.js';\n\ndescribe('${answers.id}()', () => {\n    it('should be implemented', () => {\n        // TODO: Add tests for your module\n        expect(true).toBe(true);\n    });\n});\n`,
+    `import {jest} from '@jest/globals';\n\n const { ${answers.id} } = await import("../code.js");\n\ndescribe('${answers.id}()', () => {\n    it('should be implemented', () => {\n        // TODO: Add tests for your module\n        expect(true).toBe(true);\n    });\n});\n`,
   );
 
-  await createFileFromTemplate(
-    path.join(modulePath, "schema.yaml"),
-    "./modules/templates/schema_template.yaml",
-    {
-      MODULE_ID: moduleInfo.id,
-    },
-  );
+  await createFileFromTemplate(path.join(modulePath, "schema.yaml"), "./modules/templates/schema_template.yaml", {
+    MODULE_ID: moduleInfo.id,
+  });
   await createFileFromTemplate(
     path.join(modulePath, "module_store_description.html"),
     "./modules/templates/module_store_description.html",
@@ -103,19 +90,15 @@ async function generateModule() {
     },
   );
 
-  await createFileFromTemplate(
-    path.join(modulePath, "README.md"),
-    "./modules/templates/README_TEMPLATE.md",
-    {
-      MODULE_NAME: moduleInfo.name,
-      MODULE_ID: moduleInfo.id,
-      MAIN_IMAGE: "preview.png",
-      SUPPORTED_CARDS: moduleInfo.supported
-        .map((s) => `> - ${s}`)
-        .join("\n")
-        .substring(2),
-    },
-  );
+  await createFileFromTemplate(path.join(modulePath, "README.md"), "./modules/templates/README_TEMPLATE.md", {
+    MODULE_NAME: moduleInfo.name,
+    MODULE_ID: moduleInfo.id,
+    MAIN_IMAGE: "preview.png",
+    SUPPORTED_CARDS: moduleInfo.supported
+      .map((s) => `> - ${s}`)
+      .join("\n")
+      .substring(2),
+  });
 
   console.log(`Created new module at ${modulePath}`);
   console.log(`Don't forget to add tests in ${modulePath}/tests/code.test.js`);
