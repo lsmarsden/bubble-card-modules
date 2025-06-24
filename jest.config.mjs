@@ -1,6 +1,6 @@
 const config = {
     preset: 'ts-jest/presets/default-esm',
-    testEnvironment: 'node',
+    testEnvironment: 'jsdom',
     testMatch: ['**/__tests__/**/*.(test|spec).[jt]s'],
     moduleFileExtensions: ['ts', 'js'],
     collectCoverage: true,

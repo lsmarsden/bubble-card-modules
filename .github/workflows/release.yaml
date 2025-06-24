@@ -77,11 +77,12 @@ jobs:
           CHANGED_FILES=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
-          # Only consider modules with code changes (not just docs)
+          # Only consider modules with code changes (not just docs or tests)
           CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
             | grep '^modules/' \
             | grep -vE '^modules/(templates|helpers)/' \
-            | grep -vE '\.(md|txt)$' \
+            | grep -vE '/__tests__/' \
+            | grep -vE '\.(md|txt|test\.js|spec\.js)$' \
             | cut -d/ -f2 \
             | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
