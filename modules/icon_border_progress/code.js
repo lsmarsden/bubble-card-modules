@@ -22,6 +22,16 @@ export function icon_border_progress(card, hass) {
     const element = card.querySelector(selector);
     if (!element) return;
 
+    // Always clean up previous state first
+    element.classList.remove("progress-border", "has-bubble-border-radius");
+    element.style.background = "";
+    element.style.removeProperty("--custom-background-color");
+    element.style.removeProperty("--progress");
+    element.style.removeProperty("--orb-angle");
+    element.style.removeProperty("--progress-color");
+    element.style.removeProperty("--remaining-progress-color");
+
+    // Only apply styling if conditions are met
     if (!checkAllConditions(buttonConfig.condition)) {
       return;
     }

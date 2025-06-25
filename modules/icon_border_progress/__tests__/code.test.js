@@ -1000,4 +1000,219 @@ describe("icon_border_progress", () => {
       });
     });
   });
+
+  describe("Integration Tests - Real YAML Configs", () => {
+    describe("Conditional Display Bug Reproduction", () => {
+      it("should completely clean up DOM when condition becomes false", () => {
+        // Use the exact configuration from the GitHub issue
+        mockThis.config.icon_border_progress = [
+          {
+            button: "main",
+            source: "fan.mi_standing_fan[percentage]",
+            condition: [
+              {
+                condition: "state",
+                entity_id: "fan.mi_standing_fan",
+                state: "on",
+              },
+            ],
+          },
+        ];
+
+        // Set up entity states
+        mockHass.states["fan.mi_standing_fan"] = {
+          state: "on",
+          attributes: { percentage: 75 },
+        };
+
+        // Mock getState to handle the bracket notation properly
+        hass.getState.mockImplementation((entityId) => {
+          if (entityId === "fan.mi_standing_fan[percentage]") {
+            return "75";
+          }
+          return mockHass.states[entityId]?.state;
+        });
+
+        // Mock resolveConfig to handle source and color resolution properly
+        config.resolveConfig.mockImplementation((sources, defaultValue) => {
+          for (const source of sources) {
+            const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
+            let value = source.config;
+            for (const key of keys) {
+              value = value?.[key];
+            }
+            if (value !== undefined) return value;
+          }
+          return defaultValue;
+        });
+
+        // Mock color resolution to return actual values
+        color.resolveColor.mockImplementation((colorValue, defaultColor) => {
+          return colorValue || defaultColor;
+        });
+
+        // Mock condition to be true initially
+        condition.checkAllConditions.mockReturnValue(true);
+
+        // First call - condition is true, should apply styling
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        // Verify styling was applied
+        expect(mockElement.classList.contains("progress-border")).toBe(true);
+        expect(mockElement.style.getPropertyValue("--progress")).toBe("75%");
+        expect(mockElement.style.getPropertyValue("--orb-angle")).toBe("270deg");
+
+        // Now condition becomes false (fan turns off)
+        mockHass.states["fan.mi_standing_fan"].state = "off";
+        condition.checkAllConditions.mockReturnValue(false);
+
+        // Second call - condition is false, should clean up DOM completely
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        // THIS IS THE CORE BUG FIX - DOM should be completely cleaned up
+        expect(mockElement.classList.contains("progress-border")).toBe(false);
+        expect(mockElement.classList.contains("has-bubble-border-radius")).toBe(false);
+        expect(mockElement.style.background).toBe("");
+        expect(mockElement.style.getPropertyValue("--custom-background-color")).toBe("");
+        expect(mockElement.style.getPropertyValue("--progress")).toBe("");
+        expect(mockElement.style.getPropertyValue("--orb-angle")).toBe("");
+        expect(mockElement.style.getPropertyValue("--progress-color")).toBe("");
+        expect(mockElement.style.getPropertyValue("--remaining-progress-color")).toBe("");
+      });
+
+      it("should handle rapid condition state changes correctly", () => {
+        mockThis.config.icon_border_progress = [
+          {
+            button: "main",
+            source: "sensor.progress",
+            condition: [
+              {
+                condition: "state",
+                entity_id: "sensor.enabled",
+                state: "on",
+              },
+            ],
+          },
+        ];
+
+        mockHass.states["sensor.progress"] = { state: "50" };
+        mockHass.states["sensor.enabled"] = { state: "on" };
+
+        // Rapid state changes: true → false → true
+        condition.checkAllConditions.mockReturnValue(true);
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+        expect(mockElement.classList.contains("progress-border")).toBe(true);
+
+        condition.checkAllConditions.mockReturnValue(false);
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+        expect(mockElement.classList.contains("progress-border")).toBe(false);
+
+        condition.checkAllConditions.mockReturnValue(true);
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+        expect(mockElement.classList.contains("progress-border")).toBe(true);
+      });
+
+      it("should clean up all CSS custom properties when condition is false", () => {
+        mockThis.config.icon_border_progress = [
+          {
+            button: "main",
+            source: "sensor.progress",
+            color_stops: [
+              { percentage: 0, color: "red" },
+              { percentage: 100, color: "green" },
+            ],
+            remaining_color: "blue",
+            background_color: "white",
+            condition: [
+              {
+                condition: "state",
+                entity_id: "sensor.enabled",
+                state: "on",
+              },
+            ],
+          },
+        ];
+
+        mockHass.states["sensor.progress"] = { state: "75" };
+        mockHass.states["sensor.enabled"] = { state: "on" };
+
+        // Apply styling when condition is true
+        condition.checkAllConditions.mockReturnValue(true);
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        // Verify all properties are set
+        expect(mockElement.style.getPropertyValue("--progress")).toBe("75%");
+        expect(mockElement.style.getPropertyValue("--orb-angle")).toBe("270deg");
+        expect(mockElement.style.getPropertyValue("--progress-color")).toBeTruthy();
+        expect(mockElement.style.getPropertyValue("--remaining-progress-color")).toBeTruthy();
+        expect(mockElement.style.getPropertyValue("--custom-background-color")).toBeTruthy();
+
+        // Condition becomes false
+        condition.checkAllConditions.mockReturnValue(false);
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        // All custom properties should be removed
+        expect(mockElement.style.getPropertyValue("--progress")).toBe("");
+        expect(mockElement.style.getPropertyValue("--orb-angle")).toBe("");
+        expect(mockElement.style.getPropertyValue("--progress-color")).toBe("");
+        expect(mockElement.style.getPropertyValue("--remaining-progress-color")).toBe("");
+        expect(mockElement.style.getPropertyValue("--custom-background-color")).toBe("");
+      });
+
+      it("should handle missing condition gracefully (always show)", () => {
+        mockThis.config.icon_border_progress = [
+          {
+            button: "main",
+            source: "sensor.progress",
+            // No condition specified - should always show
+          },
+        ];
+
+        mockHass.states["sensor.progress"] = { state: "50" };
+
+        // The real condition helper returns true for undefined/null conditions
+        condition.checkAllConditions.mockReturnValue(true);
+
+        // Should work without condition
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+        expect(mockElement.classList.contains("progress-border")).toBe(true);
+      });
+    });
+
+    describe("Real Configuration Examples", () => {
+      it("should work with exact user configuration from issue", () => {
+        // Exact YAML from the GitHub issue
+        mockThis.config = {
+          icon_border_progress: [
+            {
+              button: "main",
+              source: "fan.mi_standing_fan[percentage]",
+              condition: [
+                {
+                  condition: "state",
+                  entity_id: "fan.mi_standing_fan",
+                  state: "on",
+                },
+              ],
+            },
+          ],
+        };
+
+        // Set up the fan entity with attributes
+        mockHass.states["fan.mi_standing_fan"] = {
+          state: "on",
+          attributes: { percentage: 60 },
+        };
+        mockHass.states["fan.mi_standing_fan[percentage]"] = { state: "60" };
+
+        condition.checkAllConditions.mockReturnValue(true);
+
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        expect(mockElement.classList.contains("progress-border")).toBe(true);
+        expect(mockElement.style.getPropertyValue("--progress")).toBe("60%");
+        expect(mockElement.style.getPropertyValue("--orb-angle")).toBe("216deg"); // 60% of 360deg
+      });
+    });
+  });
 });
