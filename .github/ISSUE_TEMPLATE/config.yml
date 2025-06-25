@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🚀 Bubble Card Main Repository
+    url: https://github.com/Clooos/Bubble-Card
+    about: For general Bubble Card issues not related to these specific modules
+  - name: 💬 Home Assistant Community
+    url: https://community.home-assistant.io/
+    about: For general Home Assistant questions and community support
+  - name: 📖 Documentation
+    url: https://github.com/your-username/bubble-card-modules/blob/main/README.md
+    about: Check the documentation for usage examples and configuration
