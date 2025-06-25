@@ -11,8 +11,7 @@ import { getState } from "./hass.js";
 export function resolveColor(color, defaultColor) {
   let resolvedColor = getState(color);
   if (!resolvedColor) return defaultColor ?? "var(--primary-color)";
-  if (typeof resolvedColor !== "string")
-    return defaultColor ?? "var(--primary-color)";
+  if (typeof resolvedColor !== "string") return defaultColor ?? "var(--primary-color)";
 
   resolvedColor = resolvedColor.trim();
   const validPrefixes = ["#", "rgb", "hsl"];

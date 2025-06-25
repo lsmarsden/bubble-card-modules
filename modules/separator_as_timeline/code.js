@@ -141,14 +141,10 @@ function separator_as_timeline(card, hass) {
   };
 
   // Clear old segments
-  wrapper
-    .querySelectorAll(".timeline-segment, .timeline-icon")
-    .forEach((e) => e.remove());
+  wrapper.querySelectorAll(".timeline-segment, .timeline-icon").forEach((e) => e.remove());
 
   // 4. ===== Render Segments =====
-  const ranges = Array.isArray(config.ranges)
-    ? config.ranges
-    : Object.values(config.ranges || {});
+  const ranges = Array.isArray(config.ranges) ? config.ranges : Object.values(config.ranges || {});
   const now = new Date();
   const currentPct = timeToPercent(now.getHours(), now.getMinutes());
   const pad = (n) => String(n).padStart(2, "0");
@@ -161,10 +157,7 @@ function separator_as_timeline(card, hass) {
       //TODO - replace with a single start field.
       // this will be a breaking change, so we need to
       // implement auto-migration first
-      startTimeValue = getState(
-        `${r.start_entity}${r.start_attribute ? "[${r.start_attribute}]" : ""}`,
-        false,
-      );
+      startTimeValue = getState(`${r.start_entity}${r.start_attribute ? "[${r.start_attribute}]" : ""}`, false);
     } else {
       startTimeValue = r.start;
     }
@@ -172,10 +165,7 @@ function separator_as_timeline(card, hass) {
     // Get end time (from entity if provided, otherwise from direct value)
     let endTimeValue;
     if (r.end_entity) {
-      endTimeValue = getState(
-        `${r.end_entity}${r.end_attribute ? "[${r.end_attribute}]" : ""}`,
-        false,
-      );
+      endTimeValue = getState(`${r.end_entity}${r.end_attribute ? "[${r.end_attribute}]" : ""}`, false);
     } else {
       endTimeValue = r.end;
     }
@@ -223,15 +213,11 @@ function separator_as_timeline(card, hass) {
       wrapper.appendChild(seg);
 
       seg.addEventListener("mouseenter", () => {
-        wrapper
-          .querySelectorAll(`.${group}`)
-          .forEach((e) => e.classList.add("highlighted"));
+        wrapper.querySelectorAll(`.${group}`).forEach((e) => e.classList.add("highlighted"));
         showTooltip(seg);
       });
       seg.addEventListener("mouseleave", () => {
-        wrapper
-          .querySelectorAll(`.${group}`)
-          .forEach((e) => e.classList.remove("highlighted"));
+        wrapper.querySelectorAll(`.${group}`).forEach((e) => e.classList.remove("highlighted"));
         hideTooltip();
       });
 
@@ -273,19 +259,11 @@ function separator_as_timeline(card, hass) {
         iconEl.style.left = `${left + width / 2}%`;
         iconEl.style.color = resolveColor(getIconConfig("icon_color"));
         iconEl.style.border = `1px solid ${resolveColor(getIconConfig("icon_outline_color"))}`;
-        iconEl.style.background = resolveColor(
-          getIconConfig("icon_background_color"),
-        );
+        iconEl.style.background = resolveColor(getIconConfig("icon_background_color"));
         // TODO invalid values cause this to blow up, so we need it to default if icon size is not a px
         // value
-        iconEl.style.setProperty(
-          "--icon-size",
-          suffix(getIconConfig("icon_size"), "px"),
-        );
-        iconEl.style.setProperty(
-          "--mdc-icon-size",
-          suffix(getIconConfig("icon_image_size"), "px"),
-        );
+        iconEl.style.setProperty("--icon-size", suffix(getIconConfig("icon_size"), "px"));
+        iconEl.style.setProperty("--mdc-icon-size", suffix(getIconConfig("icon_image_size"), "px"));
 
         wrapper.style.setProperty(
           `--icon-${group}-active-color`,
@@ -295,15 +273,11 @@ function separator_as_timeline(card, hass) {
         wrapper.appendChild(iconEl);
 
         iconEl.addEventListener("mouseenter", () => {
-          wrapper
-            .querySelectorAll(`.${group}`)
-            .forEach((e) => e.classList.add("highlighted"));
+          wrapper.querySelectorAll(`.${group}`).forEach((e) => e.classList.add("highlighted"));
           showTooltip(seg);
         });
         iconEl.addEventListener("mouseleave", () => {
-          wrapper
-            .querySelectorAll(`.${group}`)
-            .forEach((e) => e.classList.remove("highlighted"));
+          wrapper.querySelectorAll(`.${group}`).forEach((e) => e.classList.remove("highlighted"));
           hideTooltip();
         });
       }
@@ -322,10 +296,7 @@ function separator_as_timeline(card, hass) {
   }
 
   // 5. ===== Time Ticks =====
-  if (
-    getConfig("show_time_ticks") &&
-    !wrapper.querySelector(".timeline-tick")
-  ) {
+  if (getConfig("show_time_ticks") && !wrapper.querySelector(".timeline-tick")) {
     [0, 6, 12, 18, 24].forEach((h) => {
       const tick = document.createElement("div");
       tick.className = "timeline-tick";
@@ -344,9 +315,6 @@ function separator_as_timeline(card, hass) {
       wrapper.appendChild(marker);
     }
     wrapper.style.setProperty("--timeline-marker-left", `${currentPct}%`);
-    wrapper.style.setProperty(
-      "--marker-color",
-      resolveColor(getConfig("marker_color")),
-    );
+    wrapper.style.setProperty("--marker-color", resolveColor(getConfig("marker_color")));
   }
 }

@@ -45,9 +45,7 @@ describe("checkAllConditions", () => {
     });
 
     it("returns false when any condition fails", () => {
-      hass.getState.mockImplementation((e) =>
-        e === "sensor.a" ? "on" : "off",
-      );
+      hass.getState.mockImplementation((e) => (e === "sensor.a" ? "on" : "off"));
       const conditions = [
         { condition: "state", entity: "sensor.a", state: "on" },
         { condition: "state", entity: "sensor.b", state: "on" },
@@ -58,43 +56,15 @@ describe("checkAllConditions", () => {
 
   describe("state condition", () => {
     test.each([
-      [
-        "sensor.test",
-        "on",
-        { condition: "state", entity: "sensor.test", state: "on" },
-        true,
-      ],
-      [
-        "sensor.test",
-        "off",
-        { condition: "state", entity: "sensor.test", state: "on" },
-        false,
-      ],
-      [
-        "sensor.test",
-        "on",
-        { condition: "state", entity: "sensor.test", state: ["on", "active"] },
-        true,
-      ],
-      [
-        "sensor.test",
-        "idle",
-        { condition: "state", entity: "sensor.test", state: ["on", "active"] },
-        false,
-      ],
-      [
-        "sensor.test",
-        undefined,
-        { condition: "state", entity: "sensor.test", state: "on" },
-        false,
-      ],
-    ])(
-      "returns %p when state is %p for %o",
-      (entity, mockValue, condition, expected) => {
-        hass.getState.mockReturnValue(mockValue);
-        expect(checkAllConditions(condition)).toBe(expected);
-      },
-    );
+      ["sensor.test", "on", { condition: "state", entity: "sensor.test", state: "on" }, true],
+      ["sensor.test", "off", { condition: "state", entity: "sensor.test", state: "on" }, false],
+      ["sensor.test", "on", { condition: "state", entity: "sensor.test", state: ["on", "active"] }, true],
+      ["sensor.test", "idle", { condition: "state", entity: "sensor.test", state: ["on", "active"] }, false],
+      ["sensor.test", undefined, { condition: "state", entity: "sensor.test", state: "on" }, false],
+    ])("returns %p when state is %p for %o", (entity, mockValue, condition, expected) => {
+      hass.getState.mockReturnValue(mockValue);
+      expect(checkAllConditions(condition)).toBe(expected);
+    });
   });
 
   describe("numeric_state condition", () => {
@@ -122,9 +92,7 @@ describe("checkAllConditions", () => {
           ...(above !== undefined && { above }),
           ...(below !== undefined && { below }),
         };
-        hass.getState
-          .mockReturnValueOnce(state)
-          .mockReturnValueOnce(above ?? undefined);
+        hass.getState.mockReturnValueOnce(state).mockReturnValueOnce(above ?? undefined);
         expect(checkAllConditions(condition)).toBe(expected);
         expect(hass.getState).toHaveBeenCalledTimes(2);
       });
@@ -139,24 +107,14 @@ describe("checkAllConditions", () => {
           ...(above !== undefined && { above }),
           ...(below !== undefined && { below }),
         };
-        hass.getState
-          .mockReturnValueOnce(state)
-          .mockReturnValueOnce(undefined)
-          .mockReturnValueOnce(below);
+        hass.getState.mockReturnValueOnce(state).mockReturnValueOnce(undefined).mockReturnValueOnce(below);
         expect(checkAllConditions(condition)).toBe(expected);
         expect(hass.getState).toHaveBeenCalledTimes(3);
       });
 
       test.each([
         ["value equals lower threshold → fail range check", 5, 5, 10, false, 2],
-        [
-          "value equals upper threshold → fail range check",
-          10,
-          5,
-          10,
-          false,
-          3,
-        ],
+        ["value equals upper threshold → fail range check", 10, 5, 10, false, 3],
         ["value between thresholds → pass range check", 6, 5, 10, true, 3],
       ])("%s", (_, state, above, below, expected, expectedCalls) => {
         const condition = {
@@ -165,10 +123,7 @@ describe("checkAllConditions", () => {
           above,
           below,
         };
-        hass.getState
-          .mockReturnValueOnce(state)
-          .mockReturnValueOnce(above)
-          .mockReturnValueOnce(below);
+        hass.getState.mockReturnValueOnce(state).mockReturnValueOnce(above).mockReturnValueOnce(below);
         expect(checkAllConditions(condition)).toBe(expected);
         expect(hass.getState).toHaveBeenCalledTimes(expectedCalls);
       });
@@ -207,15 +162,10 @@ describe("checkAllConditions", () => {
     test.each([
       ["sensor.found", 123, true],
       ["sensor.missing", undefined, false],
-    ])(
-      "returns %p if entity %s resolves to %p",
-      (entity, mockValue, expected) => {
-        hass.getState.mockReturnValue(mockValue);
-        expect(checkAllConditions({ condition: "exists", entity })).toBe(
-          expected,
-        );
-      },
-    );
+    ])("returns %p if entity %s resolves to %p", (entity, mockValue, expected) => {
+      hass.getState.mockReturnValue(mockValue);
+      expect(checkAllConditions({ condition: "exists", entity })).toBe(expected);
+    });
   });
 
   describe("and condition", () => {
@@ -247,9 +197,7 @@ describe("checkAllConditions", () => {
     });
 
     it("returns false when one nested condition is false", () => {
-      hass.getState.mockImplementation((e) =>
-        e === "sensor.a" ? "on" : "off",
-      );
+      hass.getState.mockImplementation((e) => (e === "sensor.a" ? "on" : "off"));
       const condition = {
         condition: "and",
         conditions: [

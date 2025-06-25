@@ -20,12 +20,9 @@ describe("suffix()", () => {
     expect(suffix(123, "px")).toBe("123px");
   });
 
-  test.each([[undefined], [null], [""], ["   "]])(
-    "handles null or empty input by returning empty string",
-    (input) => {
-      expect(suffix(input, "px")).toBe("");
-    },
-  );
+  test.each([[undefined], [null], [""], ["   "]])("handles null or empty input by returning empty string", (input) => {
+    expect(suffix(input, "px")).toBe("");
+  });
 
   it("handles empty suffix gracefully", () => {
     expect(suffix("test", "")).toBe("test");
@@ -45,12 +42,9 @@ describe("prefix()", () => {
     expect(prefix(42, "$")).toBe("$42");
   });
 
-  test.each([[undefined], [null], [""], ["   "]])(
-    "handles null or empty input by returning empty string",
-    (input) => {
-      expect(prefix(input, "px")).toBe("");
-    },
-  );
+  test.each([[undefined], [null], [""], ["   "]])("handles null or empty input by returning empty string", (input) => {
+    expect(prefix(input, "px")).toBe("");
+  });
 
   it("handles empty prefix gracefully", () => {
     expect(prefix("value", "")).toBe("value");

@@ -40,24 +40,12 @@ describe("applyEffects()", () => {
       effect2: { effect: "glow", condition: {} },
       effect3: { effect: "spin", condition: {} },
     };
-    condition.checkAllConditions
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
+    condition.checkAllConditions.mockReturnValueOnce(true).mockReturnValueOnce(false).mockReturnValueOnce(true);
 
     applyEffects(mockElement, effects);
-    expect(mockElement.classList.add).toHaveBeenCalledWith(
-      "progress-effect-pulse",
-      "has-effect",
-    );
-    expect(mockElement.classList.add).not.toHaveBeenCalledWith(
-      "progress-effect-glow",
-      "has-effect",
-    );
-    expect(mockElement.classList.add).toHaveBeenCalledWith(
-      "progress-effect-spin",
-      "has-effect",
-    );
+    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-pulse", "has-effect");
+    expect(mockElement.classList.add).not.toHaveBeenCalledWith("progress-effect-glow", "has-effect");
+    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-spin", "has-effect");
     expect(mockElement.classList.add).toHaveBeenCalledTimes(2);
   });
 
@@ -67,10 +55,7 @@ describe("applyEffects()", () => {
       pulseEffect: { effect: "pulse", condition: {} },
     };
     applyEffects(mockElement, effects);
-    expect(mockElement.classList.add).toHaveBeenCalledWith(
-      "progress-effect-pulse",
-      "has-effect",
-    );
+    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-pulse", "has-effect");
     expect(mockElement.classList.remove).not.toHaveBeenCalled();
   });
 
@@ -80,9 +65,7 @@ describe("applyEffects()", () => {
       pulseEffect: { effect: "pulse", condition: {} },
     };
     applyEffects(mockElement, effects);
-    expect(mockElement.classList.remove).toHaveBeenCalledWith(
-      "progress-effect-pulse",
-    );
+    expect(mockElement.classList.remove).toHaveBeenCalledWith("progress-effect-pulse");
     expect(mockElement.classList.add).not.toHaveBeenCalled();
   });
 });

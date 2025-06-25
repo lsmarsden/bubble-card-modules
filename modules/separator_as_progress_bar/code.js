@@ -20,9 +20,7 @@ function separator_as_progress_bar(card, hass) {
     return;
   }
 
-  let progressValue = config.override
-    ? config.override
-    : parseFloat(getState(config.source));
+  let progressValue = config.override ? config.override : parseFloat(getState(config.source));
 
   if (isNaN(progressValue) || progressValue < 0 || progressValue > 100) {
     progressValue = 0;
@@ -34,22 +32,12 @@ function separator_as_progress_bar(card, hass) {
   const progressStyle = config.progress_style;
   const interpolate = progressStyle.interpolate ?? true;
   const colorStops = progressStyle.color_stops || [];
-  const progressColor = resolveColorFromStops(
-    progressValue,
-    colorStops,
-    interpolate,
-  );
+  const progressColor = resolveColorFromStops(progressValue, colorStops, interpolate);
 
   const backgroundColorStops = progressStyle.background_color_stops || [];
-  const backgroundProgressColor = resolveColorFromStops(
-    progressValue,
-    backgroundColorStops,
-    interpolate,
-  );
+  const backgroundProgressColor = resolveColorFromStops(progressValue, backgroundColorStops, interpolate);
 
-  const bubbleBorderRadius = getComputedStyle(element).getPropertyValue(
-    "--bubble-icon-border-radius",
-  );
+  const bubbleBorderRadius = getComputedStyle(element).getPropertyValue("--bubble-icon-border-radius");
   if (bubbleBorderRadius && bubbleBorderRadius.trim() !== "") {
     element.classList.add("has-bubble-border-radius");
   } else {
@@ -71,37 +59,21 @@ function separator_as_progress_bar(card, hass) {
   }
 
   element.classList.add("bubble-line-progress");
-  wrapper.style.setProperty(
-    "--bubble-line-height",
-    suffix(progressStyle.height ?? "6", "px"),
-  );
+  wrapper.style.setProperty("--bubble-line-height", suffix(progressStyle.height ?? "6", "px"));
 
   // Delay setting the progress width until the element is visible and painted.
   // This allows the initial width to transition from zero when loading the page, otherwise it transitions from full width for some reason.
   // Still happens when switching views via tabs though.
   element.style.setProperty("--progress-width", "0cqw");
   requestAnimationFrame(() => {
-    element.style.setProperty(
-      "--progress-width",
-      `${config.invert ? 100 - progressValue : progressValue}cqw`,
-    );
+    element.style.setProperty("--progress-width", `${config.invert ? 100 - progressValue : progressValue}cqw`);
   });
   element.style.setProperty("--bubble-line-progress-color", progressColor);
-  element.style.setProperty(
-    "--bubble-line-progress-background-color",
-    backgroundProgressColor,
-  );
+  element.style.setProperty("--bubble-line-progress-background-color", backgroundProgressColor);
 
   const shineSettings = progressStyle.shine_settings;
-  if (
-    shineSettings &&
-    (shineSettings.show_shine ?? false) &&
-    checkAllConditions(shineSettings.condition)
-  ) {
-    const shineColor = resolveColor(
-      shineSettings.shine_color,
-      "rgba(255,255,255,0.4)",
-    );
+  if (shineSettings && (shineSettings.show_shine ?? false) && checkAllConditions(shineSettings.condition)) {
+    const shineColor = resolveColor(shineSettings.shine_color, "rgba(255,255,255,0.4)");
     const shineWidth = shineSettings.shine_width;
     const shineDelay = shineSettings.shine_delay;
     const shineAngle = shineSettings.shine_angle;
@@ -110,33 +82,21 @@ function separator_as_progress_bar(card, hass) {
       const shineElement = document.createElement("div");
       shineElement.className = "bubble-line-progress-shine";
       progressBarElement.appendChild(shineElement);
-      shineElement.style.setProperty(
-        "--bubble-line-progress-shine-color",
-        shineColor,
-      );
+      shineElement.style.setProperty("--bubble-line-progress-shine-color", shineColor);
       shineElement.style.setProperty(
         "--bubble-line-progress-shine-width",
-        shineWidth
-          ? suffix(shineWidth, "px")
-          : "calc(var(--progress-width) / 2)",
+        shineWidth ? suffix(shineWidth, "px") : "calc(var(--progress-width) / 2)",
       );
       shineElement.style.setProperty(
         "--bubble-line-progress-shine-angle",
         shineAngle ? suffix(shineAngle, "deg") : "0deg",
       );
-      shineElement.style.setProperty(
-        "animation-delay",
-        `${shineDelay ?? "0"}s`,
-      );
+      shineElement.style.setProperty("animation-delay", `${shineDelay ?? "0"}s`);
     }
   }
 
   const orbSettings = progressStyle.orb_settings;
-  if (
-    orbSettings &&
-    (orbSettings.show_orb ?? false) &&
-    checkAllConditions(orbSettings.condition)
-  ) {
+  if (orbSettings && (orbSettings.show_orb ?? false) && checkAllConditions(orbSettings.condition)) {
     const slowOrb = orbSettings.slow_orb ?? false;
     const orbColor = resolveColor(orbSettings.orb_color);
     const orbTrailColor = resolveColor(orbSettings.trail_color);
@@ -149,14 +109,8 @@ function separator_as_progress_bar(card, hass) {
         "animation",
         `orb-${slowOrb ? "slow 2s ease-in-out infinite" : "fast 2s linear infinite"}`,
       );
-      orbElement.style.setProperty(
-        "--bubble-line-progress-orb-color",
-        orbColor,
-      );
-      orbElement.style.setProperty(
-        "--bubble-line-progress-orb-trail-color",
-        orbTrailColor,
-      );
+      orbElement.style.setProperty("--bubble-line-progress-orb-color", orbColor);
+      orbElement.style.setProperty("--bubble-line-progress-orb-trail-color", orbTrailColor);
     }
   }
 

@@ -19,10 +19,7 @@ describe("resolveConfig()", () => {
   });
 
   it("returns default value if no source has a matching config", () => {
-    const sources = [
-      getSource("nonexistent.path", { something: "else" }),
-      getSource("also.missing", { test: true }),
-    ];
+    const sources = [getSource("nonexistent.path", { something: "else" }), getSource("also.missing", { test: true })];
     const result = resolveConfig(sources, "default");
     expect(result).toBe("default");
   });
@@ -92,9 +89,7 @@ describe("resolveConfig()", () => {
     );
     const result = resolveConfig([source]);
     expect(result).toBe("red");
-    expect(warnSpy).toHaveBeenCalledWith(
-      `[DEPRECATED] Config path "theme.color" used.`,
-    );
+    expect(warnSpy).toHaveBeenCalledWith(`[DEPRECATED] Config path "theme.color" used.`);
     warnSpy.mockRestore();
   });
 
