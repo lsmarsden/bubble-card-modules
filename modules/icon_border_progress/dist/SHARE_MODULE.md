@@ -1,6 +1,6 @@
 # Icon Border Progress
 
-**Version:** 1.1.0  
+**Version:** 1.1.1  
 **Creator:** lsmarsden
 
 > [!IMPORTANT]
@@ -29,7 +29,6 @@
             href="https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/icon_border_progress"
             target="_blank">GitHub repo</a>.
     </p>
-
 </div>
 
 ---
@@ -46,7 +45,7 @@
 ```yaml
 icon_border_progress:
   name: Icon Border Progress
-  version: v1.1.0
+  version: v1.1.1
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
   supported:
@@ -78,278 +77,335 @@ icon_border_progress:
      */
 
     function checkAllConditions(cProp) {
-        if (!cProp) return true;
-        if (Array.isArray(cProp)) {
-            return cProp.every(condition => evaluateSingleCondition(condition));
-        }
-        return evaluateSingleCondition(cProp);
+      if (!cProp) return true;
+      if (Array.isArray(cProp)) {
+        return cProp.every((condition) => evaluateSingleCondition(condition));
+      }
+      return evaluateSingleCondition(cProp);
     }
 
     function evaluateSingleCondition(condObj) {
-        if (!condObj || typeof condObj !== 'object') return false;
-        if (!condObj.condition) return false;
-        const t = condObj.condition;
-        switch (t) {
-            case 'state': {
-                const state = getState(condObj, false);
-                if (state === undefined) return false;
-                if (Array.isArray(condObj.state)) {
-                    return condObj.state.includes(state);
-                }
-                return state === condObj.state;
-            }
-            case 'numeric_state': {
-                const numVal = parseFloat(getState(condObj));
-                if (isNaN(numVal)) return false;
-
-                const aboveVal = parseFloat(getState(condObj.above));
-                if (!isNaN(aboveVal) && numVal <= aboveVal) {
-                    return false;
-                }
-
-                const belowVal = parseFloat(getState(condObj.below));
-                if (!isNaN(belowVal) && numVal >= belowVal) {
-                    return false;
-                }
-
-                return true;
-            }
-            case 'exists':
-                return getState(condObj) !== undefined;
-            case 'and':
-                if (!Array.isArray(condObj.conditions)) return false;
-                return condObj.conditions.every(sc => evaluateSingleCondition(sc));
-            case 'or':
-                if (!Array.isArray(condObj.conditions)) return false;
-                return condObj.conditions.some(sc => evaluateSingleCondition(sc));
-            case 'not':
-                if (Array.isArray(condObj.conditions) && condObj.conditions.length > 0) {
-                    return !evaluateSingleCondition(condObj.conditions[0]);
-                }
-                if (condObj.conditions) {
-                    return !evaluateSingleCondition(condObj.conditions);
-                }
-                return false;
-            default:
-                return false;
+      if (!condObj || typeof condObj !== "object") return false;
+      if (!condObj.condition) return false;
+      const t = condObj.condition;
+      switch (t) {
+        case "state": {
+          const state = getState(condObj, false);
+          if (state === undefined) return false;
+          if (Array.isArray(condObj.state)) {
+            return condObj.state.includes(state);
+          }
+          return state === condObj.state;
         }
+        case "numeric_state": {
+          const numVal = parseFloat(getState(condObj));
+          if (isNaN(numVal)) return false;
+
+          const aboveVal = parseFloat(getState(condObj.above));
+          if (!isNaN(aboveVal) && numVal <= aboveVal) {
+            return false;
+          }
+
+          const belowVal = parseFloat(getState(condObj.below));
+          if (!isNaN(belowVal) && numVal >= belowVal) {
+            return false;
+          }
+
+          return true;
+        }
+        case "exists":
+          return getState(condObj) !== undefined;
+        case "and":
+          if (!Array.isArray(condObj.conditions)) return false;
+          return condObj.conditions.every((sc) => evaluateSingleCondition(sc));
+        case "or":
+          if (!Array.isArray(condObj.conditions)) return false;
+          return condObj.conditions.some((sc) => evaluateSingleCondition(sc));
+        case "not":
+          if (Array.isArray(condObj.conditions) && condObj.conditions.length > 0) {
+            return !evaluateSingleCondition(condObj.conditions[0]);
+          }
+          if (condObj.conditions) {
+            return !evaluateSingleCondition(condObj.conditions);
+          }
+          return false;
+        default:
+          return false;
+      }
     }
 
     function resolveColor(color, defaultColor) {
-        let resolvedColor = getState(color);
-        if (!resolvedColor) return defaultColor ?? 'var(--primary-color)';
-        if (typeof resolvedColor !== 'string') return defaultColor ?? 'var(--primary-color)';
+      let resolvedColor = getState(color);
+      if (!resolvedColor) return defaultColor ?? "var(--primary-color)";
+      if (typeof resolvedColor !== "string") return defaultColor ?? "var(--primary-color)";
 
-        resolvedColor = resolvedColor.trim();
-        const validPrefixes = ['#', 'rgb', 'hsl'];
+      resolvedColor = resolvedColor.trim();
+      const validPrefixes = ["#", "rgb", "hsl"];
 
-        if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
-            return resolvedColor;
-        }
+      if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
+        return resolvedColor;
+      }
 
-        return `var(--${resolvedColor}-color)`;
+      return `var(--${resolvedColor}-color)`;
     }
 
     function resolveColorFromStops(progress, stops, interpolate) {
-        // handles the situation when HA reformats arrays into objects keyed by numbers.
-        if (!Array.isArray(stops) && typeof stops === 'object' && stops !== null) {
-            stops = Object.values(stops).sort((a, b) => a.percent - b.percent);
-        }
-        if (!Array.isArray(stops) || !stops || stops.length === 0) {
-            return 'var(--primary-color)';
-        }
-        // Sort stops in ascending order by percent
-        const sortedStops = stops.slice().sort((a, b) => a.percent - b.percent);
+      // handles the situation when HA reformats arrays into objects keyed by numbers.
+      if (!Array.isArray(stops) && typeof stops === "object" && stops !== null) {
+        stops = Object.values(stops).sort((a, b) => a.percent - b.percent);
+      }
+      if (!Array.isArray(stops) || !stops || stops.length === 0) {
+        return "var(--primary-color)";
+      }
+      // Sort stops in ascending order by percent
+      const sortedStops = stops.slice().sort((a, b) => a.percent - b.percent);
 
-        // Handle out-of-range progress values
-        if (progress <= sortedStops[0].percent) {
-            return resolveColor(sortedStops[0].color);
-        }
-        if (progress >= sortedStops[sortedStops.length - 1].percent) {
-            return resolveColor(sortedStops[sortedStops.length - 1].color);
-        }
+      // Handle out-of-range progress values
+      if (progress <= sortedStops[0].percent) {
+        return resolveColor(sortedStops[0].color);
+      }
+      if (progress >= sortedStops[sortedStops.length - 1].percent) {
+        return resolveColor(sortedStops[sortedStops.length - 1].color);
+      }
 
-        // Find the lower and upper bounds
-        const lower = [...sortedStops].reverse().find(s => s.percent <= progress);
-        const upper = sortedStops.find(s => s.percent >= progress);
+      // Find the lower and upper bounds
+      const lower = [...sortedStops].reverse().find((s) => s.percent <= progress);
+      const upper = sortedStops.find((s) => s.percent >= progress);
 
-        if (!interpolate || resolveColor(lower.color) === resolveColor(upper.color)) {
-            return resolveColor(lower.color);
-        }
+      if (!interpolate || resolveColor(lower.color) === resolveColor(upper.color)) {
+        return resolveColor(lower.color);
+      }
 
-        const range = upper.percent - lower.percent;
-        const frac = (progress - lower.percent) / range;
-        const format = v => parseFloat(v.toFixed(2));
+      const range = upper.percent - lower.percent;
+      const frac = (progress - lower.percent) / range;
+      const format = (v) => parseFloat(v.toFixed(2));
 
-        return `color-mix(in srgb, ${resolveColor(lower.color)} ${format((1 - frac) * 100)}%, ${resolveColor(upper.color)} ${format(frac * 100)}%)`;
+      return `color-mix(in srgb, ${resolveColor(lower.color)} ${format((1 - frac) * 100)}%, ${resolveColor(upper.color)} ${format(frac * 100)}%)`;
     }
 
     function applyEffects(element, effects) {
-        Object.values(effects).forEach((eff) => {
-            if (eff.effect) {
-                if (checkAllConditions(eff.condition)) {
-                    element.classList.add(`progress-effect-${eff.effect}`, 'has-effect');
-                } else {
-                    element.classList.remove(`progress-effect-${eff.effect}`);
-                }
-            }
-        });
+      Object.values(effects).forEach((eff) => {
+        if (eff.effect) {
+          if (checkAllConditions(eff.condition)) {
+            element.classList.add(`progress-effect-${eff.effect}`, "has-effect");
+          } else {
+            element.classList.remove(`progress-effect-${eff.effect}`);
+          }
+        }
+      });
     }
 
     const getState = (input, fallbackToRaw = true) => {
-        if (input == null) return undefined;
-        if (typeof input !== 'string' && typeof input !== 'object') return input;
+      if (input == null) return undefined;
+      if (typeof input !== "string" && typeof input !== "object") return input;
 
+      let entityId, attribute;
 
-        let entityId, attribute;
-
-        if (typeof input === 'object') {
-            entityId = input.entity_id || input.entity;
-            attribute = input.attribute || input.att;
+      if (typeof input === "object") {
+        entityId = input.entity_id || input.entity;
+        attribute = input.attribute || input.att;
+      } else {
+        // Pattern: entity_id[attribute]
+        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+        if (match) {
+          [, entityId, attribute] = match;
+        } else if (hass.states[input]) {
+          entityId = input;
         } else {
-            // Pattern: entity_id[attribute]
-            const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
-            if (match) {
-                [, entityId, attribute] = match;
-            } else if (hass.states[input]) {
-                entityId = input;
-            } else {
-                return fallbackToRaw ? input : undefined;
-            }
+          return fallbackToRaw ? input : undefined;
         }
+      }
 
-        const stateObj = hass.states[entityId];
-        if (!stateObj) return fallbackToRaw ? input : undefined;
+      const stateObj = hass.states[entityId];
+      if (!stateObj) return fallbackToRaw ? input : undefined;
 
-        return attribute ? stateObj.attributes[attribute] : stateObj.state;
+      return attribute ? stateObj.attributes[attribute] : stateObj.state;
     }
 
     function toArray(object) {
+      if (Array.isArray(object)) return object;
+      if (!object || typeof object !== "object") return [];
 
-        if (Array.isArray(object)) return object;
-        if (!object || typeof object !== 'object') return [];
-
-        return Object.values(object);
+      return Object.values(object);
     }
 
     const resolveConfig = (sources, defaultValue = undefined) => {
-        for (const source of sources) {
-            const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-            const value = getConfigValue(source.config, keys);
+      for (const source of sources) {
+        const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
+        const value = getConfigValue(source.config, keys);
 
-            if (value !== undefined && (!source.condition || source.condition(value, source.config))) {
-                const metadata = source.metadata || {};
-                if (metadata.deprecated) {
-                    console.warn(
-                        `[DEPRECATED] Config path "${source.path}" used.` +
-                        (metadata.replacedWith ? ` Use "${metadata.replacedWith}" instead.` : "") +
-                        (metadata.message ? ` ${metadata.message}` : "")
-                    );
-                }
-                return value;
-            }
+        if (value !== undefined && (!source.condition || source.condition(value, source.config))) {
+          const metadata = source.metadata || {};
+          if (metadata.deprecated) {
+            console.warn(
+              `[DEPRECATED] Config path "${source.path}" used.` +
+                (metadata.replacedWith ? ` Use "${metadata.replacedWith}" instead.` : "") +
+                (metadata.message ? ` ${metadata.message}` : ""),
+            );
+          }
+          return value;
         }
-        return defaultValue;
+      }
+      return defaultValue;
     }
 
     function getConfigValue(config, keys) {
-        let current = config;
-        for (const key of keys) {
-            if (current && key in current) {
-                current = current[key];
-            } else {
-                return undefined;
-            }
+      let current = config;
+      for (const key of keys) {
+        if (current && key in current) {
+          current = current[key];
+        } else {
+          return undefined;
         }
-        return current;
+      }
+      return current;
     }
 
     /**
      * ======== MAIN MODULE CODE =========
      */
 
-     // this allows IDEs to parse the file normally - will be removed automatically during build.
-        const {icon_border_progress: config} = this.config;
-        toArray(config).forEach((buttonConfig) => {
-            const button = buttonConfig.button;
-            if (!button) return;
 
-            let selector;
-            if (button === 'main-button' || button === 'main') {
-                selector = '.bubble-icon-container';
-            } else {
-                selector = `.bubble-${button}`;
-            }
+      // this allows IDEs to parse the file normally - will be removed automatically during build.
+      const { icon_border_progress: config } = this.config;
 
-            const element = card.querySelector(selector);
-            if (!element) return;
+      // Helper function to get element selector based on button type
+      function getElementSelector(button) {
+        if (button === "main-button" || button === "main") {
+          return ".bubble-icon-container";
+        } else {
+          return `.bubble-${button}`;
+        }
+      }
 
-            if (!checkAllConditions(buttonConfig.condition)) {
-                return;
-            }
+      // Helper function to store original background if not already stored
+      function storeOriginalBackground(element) {
+        if (element.dataset.originalBackground === undefined) {
+          element.dataset.originalBackground = element.style.background || "";
+        }
+      }
 
-            const progressSource = resolveConfig([
-                {
-                    config: buttonConfig,
-                    path: 'source'
-                },
-                {
-                    config: buttonConfig,
-                    path: 'entity',
-                    metadata: {deprecated: true, replacedWith: 'source'}
-                }
-            ]);
-            let progressValue = parseFloat(getState(progressSource));
-            let startValue = parseInt(getState(buttonConfig.start));
-            let endValue = parseInt(getState(buttonConfig.end));
+      // Helper function to clean up progress styling and restore original background
+      function cleanupProgressStyling(element) {
+        element.classList.remove("progress-border", "has-bubble-border-radius");
+        element.style.background = element.dataset.originalBackground;
+        element.style.removeProperty("--custom-background-color");
+        element.style.removeProperty("--progress");
+        element.style.removeProperty("--orb-angle");
+        element.style.removeProperty("--progress-color");
+        element.style.removeProperty("--remaining-progress-color");
+      }
 
-            startValue = isNaN(startValue) ? 0 : startValue;
-            endValue = isNaN(endValue) ? 100 : endValue;
+      // Helper function to calculate progress value with bounds checking
+      function calculateProgressValue(progressSource, buttonConfig) {
+        let progressValue = parseFloat(getState(progressSource));
+        let startValue = parseInt(getState(buttonConfig.start));
+        let endValue = parseInt(getState(buttonConfig.end));
 
-            if (isNaN(progressValue) || progressValue < startValue || progressValue > endValue) {
-                progressValue = startValue;
-            }
+        startValue = isNaN(startValue) ? 0 : startValue;
+        endValue = isNaN(endValue) ? 100 : endValue;
 
-            progressValue = (progressValue - startValue) / (endValue - startValue) * 100;
-            const colorStops = buttonConfig.color_stops || [];
-            const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors)
+        if (isNaN(progressValue) || progressValue < startValue) {
+          progressValue = startValue;
+        }
+        if (progressValue > endValue) {
+          progressValue = endValue;
+        }
 
+        return ((progressValue - startValue) / (endValue - startValue)) * 100;
+      }
 
-            const remainingColor = resolveConfig([
-                {config: buttonConfig, path: 'remaining_color'},
-                {
-                    config: buttonConfig,
-                    path: 'remainingcolor',
-                    metadata: {deprecated: true, replacedWith: 'remaining_color'}
-                },
-            ]);
-            const backColor = resolveConfig([
-                {config: buttonConfig, path: 'background_color'},
-                {
-                    config: buttonConfig,
-                    path: 'backcolor',
-                    metadata: {deprecated: true, replacedWith: 'background_color'}
-                },
-            ]);
-            const remainingProgressColor = resolveColor(remainingColor, 'var(--dark-grey-color)');
-            const backgroundColor = resolveColor(backColor, 'var(--bubble-icon-background-color)');
+      // Helper function to resolve color configurations with deprecated fallbacks
+      function resolveColorConfigs(buttonConfig) {
+        const remainingColor = resolveConfig([
+          { config: buttonConfig, path: "remaining_color" },
+          {
+            config: buttonConfig,
+            path: "remainingcolor",
+            metadata: { deprecated: true, replacedWith: "remaining_color" },
+          },
+        ]);
 
-            const bubbleBorderRadius = getComputedStyle(element).getPropertyValue('--bubble-icon-border-radius');
-            if (bubbleBorderRadius && bubbleBorderRadius.trim() !== '') {
-                element.classList.add('has-bubble-border-radius');
-            } else {
-                element.classList.remove('has-bubble-border-radius');
-            }
+        const backColor = resolveConfig([
+          { config: buttonConfig, path: "background_color" },
+          {
+            config: buttonConfig,
+            path: "backcolor",
+            metadata: { deprecated: true, replacedWith: "background_color" },
+          },
+        ]);
 
-            element.style.background = `${backgroundColor}`;
-            element.classList.add('progress-border');
-            element.style.setProperty('--custom-background-color', `${backgroundColor}`);
-            element.style.setProperty('--progress', `${progressValue}%`);
-            element.style.setProperty('--orb-angle', `${progressValue / 100 * 360}deg`);
-            element.style.setProperty('--progress-color', `${progressColor}`);
-            element.style.setProperty('--remaining-progress-color', `${remainingProgressColor}`);
-            applyEffects(element, buttonConfig.effects || []);
-        });
+        return {
+          remainingProgressColor: resolveColor(remainingColor, "var(--dark-grey-color)"),
+          backgroundColor: resolveColor(backColor, "var(--bubble-icon-background-color)"),
+        };
+      }
+
+      // Helper function to handle border radius styling
+      function handleBorderRadius(element) {
+        const bubbleBorderRadius = getComputedStyle(element).getPropertyValue("--bubble-icon-border-radius");
+        if (bubbleBorderRadius && bubbleBorderRadius.trim() !== "") {
+          element.classList.add("has-bubble-border-radius");
+        } else {
+          element.classList.remove("has-bubble-border-radius");
+        }
+      }
+
+      // Helper function to apply progress styling to element
+      function applyProgressStyling(element, progressValue, progressColor, colors) {
+        handleBorderRadius(element);
+
+        element.style.background = `${colors.backgroundColor}`;
+        element.classList.add("progress-border");
+        element.style.setProperty("--custom-background-color", `${colors.backgroundColor}`);
+        element.style.setProperty("--progress", `${progressValue}%`);
+        element.style.setProperty("--orb-angle", `${(progressValue / 100) * 360}deg`);
+        element.style.setProperty("--progress-color", `${progressColor}`);
+        element.style.setProperty("--remaining-progress-color", `${colors.remainingProgressColor}`);
+      }
+
+      // Main processing loop
+      toArray(config).forEach((buttonConfig) => {
+        const button = buttonConfig.button;
+        if (!button) return;
+
+        const selector = getElementSelector(button);
+        const element = card.querySelector(selector);
+        if (!element) return;
+
+        // Store original background if not already stored
+        storeOriginalBackground(element);
+
+        // Only apply styling if conditions are met
+        if (!checkAllConditions(buttonConfig.condition)) {
+          // Clean up only when condition is false
+          cleanupProgressStyling(element);
+          return;
+        }
+
+        // Resolve progress source with deprecated fallback
+        const progressSource = resolveConfig([
+          {
+            config: buttonConfig,
+            path: "source",
+          },
+          {
+            config: buttonConfig,
+            path: "entity",
+            metadata: { deprecated: true, replacedWith: "source" },
+          },
+        ]);
+
+        // Calculate progress value and colors
+        const progressValue = calculateProgressValue(progressSource, buttonConfig);
+        const colorStops = buttonConfig.color_stops || [];
+        const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors);
+        const colors = resolveColorConfigs(buttonConfig);
+
+        // Apply progress styling
+        applyProgressStyling(element, progressValue, progressColor, colors);
+        applyEffects(element, buttonConfig.effects || []);
+      });
     })()}
 
     .bubble-icon-container.has-bubble-border-radius:before {
@@ -397,7 +453,7 @@ icon_border_progress:
             value. Just enter the entity name. For attributes, use the format ENTITY[ATTRIBUTE], e.g.,
             sensor.my_phone[battery_level].
     - type: expandable
-      name: "0"
+      name: '0'
       title: Icon 1 settings (define more in YAML)
       schema:
         - name: button
@@ -440,7 +496,7 @@ icon_border_progress:
               schema:
                 - type: expandable
                   label: Color 1
-                  name: "0"
+                  name: '0'
                   schema:
                     - name: color
                       label: ✨Color
@@ -453,10 +509,10 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: "%"
+                          unit_of_measurement: '%'
                 - type: expandable
                   label: Color 2
-                  name: "1"
+                  name: '1'
                   schema:
                     - name: color
                       label: ✨Color
@@ -469,7 +525,7 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: "%"
+                          unit_of_measurement: '%'
         - name: background_color
           label: ✨Background colour of icon
           selector:
@@ -479,7 +535,7 @@ icon_border_progress:
           selector:
             ui_color: null
     - type: expandable
-      name: "1"
+      name: '1'
       title: Icon 2 settings (define more in YAML)
       schema:
         - name: button
@@ -522,7 +578,7 @@ icon_border_progress:
               schema:
                 - type: expandable
                   label: Color 1
-                  name: "0"
+                  name: '0'
                   schema:
                     - name: color
                       label: ✨Color
@@ -535,10 +591,10 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: "%"
+                          unit_of_measurement: '%'
                 - type: expandable
                   label: Color 2
-                  name: "1"
+                  name: '1'
                   schema:
                     - name: color
                       label: ✨Color
@@ -551,7 +607,7 @@ icon_border_progress:
                           min: 0
                           max: 100
                           step: 1
-                          unit_of_measurement: "%"
+                          unit_of_measurement: '%'
         - name: background_color
           label: ✨Background colour of icon
           selector:
