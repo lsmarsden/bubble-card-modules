@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Progress Border - Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 12px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            color: #ccc;
+            font-size: 12px;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        
+        .control-group input[type="color"] {
+            width: 40px;
+            height: 25px;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .value-display {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .demo-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .bubble-icon-container {
+            width: 64px;
+            height: 64px;
+            background: var(--background-color, #333);
+            border-radius: var(--bubble-icon-custom-border-radius, var(--bubble-icon-border-radius, var(--bubble-border-radius, 50%)));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 3px;
+            opacity: 0.9;
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            padding: 8px 12px;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .preset-btn:hover {
+            background: #555;
+        }
+        
+        .info {
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #ccc;
+        }
+    </style>
+    
+    <!-- Import the icon border progress CSS -->
+    <link rel="stylesheet" href="./modules/icon_border_progress/styles.css">
+</head>
+<body>
+    <h1>Progress Border Comparison Demo</h1>
+    <p style="color: #aaa; margin-bottom: 30px;">
+        Comparing SVG Mask vs Stroke-Dasharray approaches for animated progress borders.
+    </p>
+    
+    <div class="preset-buttons">
+        <button class="preset-btn" onclick="setPreset('circular')">Circular</button>
+        <button class="preset-btn" onclick="setPreset('rounded')">Rounded</button>
+        <button class="preset-btn" onclick="setPreset('square')">Square</button>
+        <button class="preset-btn" onclick="testInitialLoading()">Test Loading Animation</button>
+        <button class="preset-btn" onclick="animateProgress()">Animate Progress</button>
+        <button class="preset-btn" onclick="testLargeJumps()">Test Large Jumps</button>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="progress">Progress (%)</label>
+            <input type="range" id="progress" min="0" max="100" value="65" oninput="updateProgress()">
+            <span class="value-display" id="progressValue">65%</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="startAngle">Start Angle</label>
+            <input type="range" id="startAngle" min="-180" max="180" value="-90" oninput="updateProgress()">
+            <span class="value-display" id="startAngleValue">-90° (Top)</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="borderRadius">Border Radius</label>
+            <input type="range" id="borderRadius" min="0" max="24" value="24" oninput="updateProgress()">
+            <span class="value-display" id="borderRadiusValue">Circular</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="progressColor">Progress Color</label>
+            <input type="color" id="progressColor" value="#4CAF50" oninput="updateProgress()">
+        </div>
+        
+        <div class="control-group">
+            <label for="remainingColor">Background Color</label>
+            <input type="color" id="remainingColor" value="#555555" oninput="updateProgress()">
+        </div>
+    </div>
+    
+    <div class="demo-container">
+        <div class="demo-item">
+            <div class="bubble-icon-container" id="demoIconMask">
+                <div class="icon"></div>
+            </div>
+            <span style="font-size: 12px; color: #aaa;">SVG Mask Approach</span>
+        </div>
+        
+        <div class="demo-item">
+            <div class="bubble-icon-container" id="demoIconDash">
+                <div class="icon"></div>
+            </div>
+            <span style="font-size: 12px; color: #aaa;">Stroke-Dasharray</span>
+        </div>
+        
+        <div class="demo-item">
+            <div class="bubble-icon-container" id="demoIconAligned">
+                <div class="icon"></div>
+            </div>
+            <span style="font-size: 12px; color: #aaa;">Aligned Dasharray</span>
+        </div>
+    </div>
+    
+    <div class="info">
+        <strong>Comparison:</strong><br>
+        • <strong>SVG Mask:</strong> Complex mask calculations, potential transition artifacts on large jumps<br>
+        • <strong>Stroke-Dasharray:</strong> Simple calculations, smooth CSS transitions, but start point varies by shape<br>
+        • <strong>Aligned Dasharray:</strong> Smart offset calculation for consistent start points across all border radius values<br>
+        <br>
+        <strong>Features:</strong><br>
+        • Perfect start point alignment for any border radius<br>
+        • Smooth initial loading animation from 0% to target<br>
+        • Works with circular, rounded rectangle, and square shapes<br>
+        • Parameterized and ready for integration<br>
+        <br>
+        <strong>Browser Support:</strong><br>
+        <span id="browserSupport"></span>
+    </div>
+
+    <script type="module">
+        // Import all three progress border implementations
+        import { createAnimatedProgressBorder, removeAnimatedProgressBorder } from './modules/helpers/animatedProgressBorder.js';
+        import { createStrokeDashProgressBorder, removeStrokeDashProgressBorder } from './modules/helpers/strokeDashProgressBorder.js';
+        import { createStrokeDashProgressBorderAligned, removeStrokeDashProgressBorderAligned } from './modules/helpers/strokeDashProgressBorderAligned.js';
+
+        function updateProgress() {
+            const progress = document.getElementById('progress').value;
+            const startAngle = document.getElementById('startAngle').value;
+            const borderRadius = document.getElementById('borderRadius').value;
+            const progressColor = document.getElementById('progressColor').value;
+            const remainingColor = document.getElementById('remainingColor').value;
+            
+            // Update value displays
+            document.getElementById('progressValue').textContent = `${progress}%`;
+            document.getElementById('startAngleValue').textContent = `${startAngle}° ${getAngleDescription(startAngle)}`;
+            document.getElementById('borderRadiusValue').textContent = borderRadius == 24 ? 'Circular' : `${borderRadius}px`;
+            
+            // Update both demo icons
+            const iconMask = document.getElementById('demoIconMask');
+            const iconDash = document.getElementById('demoIconDash');
+            const iconAligned = document.getElementById('demoIconAligned');
+            
+            const borderRadiusValue = borderRadius == 24 ? '50%' : `${borderRadius}px`;
+            iconMask.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            iconDash.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            iconAligned.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            
+            // Create/update all three progress border implementations
+            createAnimatedProgressBorder(
+                iconMask, 
+                parseInt(progress), 
+                progressColor, 
+                remainingColor, 
+                parseInt(startAngle),
+                {
+                    strokeWidth: 3,
+                    animationDuration: 800
+                }
+            );
+            
+            // Determine if we should force rectangular mode for testing
+            const isCircularBorderRadius = borderRadius == 24;
+            
+            createStrokeDashProgressBorder(
+                iconDash, 
+                parseInt(progress), 
+                progressColor, 
+                remainingColor, 
+                parseInt(startAngle),
+                {
+                    strokeWidth: 3,
+                    animationDuration: 800,
+                    forceCircular: isCircularBorderRadius,
+                    forceRectangular: !isCircularBorderRadius
+                }
+            );
+            
+            createStrokeDashProgressBorderAligned(
+                iconAligned, 
+                parseInt(progress), 
+                progressColor, 
+                remainingColor, 
+                parseInt(startAngle),
+                {
+                    strokeWidth: 3,
+                    animationDuration: 800,
+                    forceCircular: isCircularBorderRadius,
+                    forceRectangular: !isCircularBorderRadius,
+                    testBorderRadius: parseInt(borderRadius)
+                }
+            );
+        }
+
+        function getAngleDescription(angle) {
+            angle = parseInt(angle);
+            if (angle === -90) return '(Top)';
+            if (angle === 0) return '(Right)';
+            if (angle === 90) return '(Bottom)';
+            if (angle === 180 || angle === -180) return '(Left)';
+            return '';
+        }
+
+        function setPreset(preset) {
+            switch(preset) {
+                case 'circular':
+                    document.getElementById('borderRadius').value = 24;
+                    document.getElementById('progress').value = 75;
+                    document.getElementById('startAngle').value = -90;
+                    break;
+                case 'rounded':
+                    document.getElementById('borderRadius').value = 12;
+                    document.getElementById('progress').value = 60;
+                    document.getElementById('startAngle').value = -90;
+                    break;
+                case 'square':
+                    document.getElementById('borderRadius').value = 0;
+                    document.getElementById('progress').value = 80;
+                    document.getElementById('startAngle').value = -90;
+                    break;
+            }
+            updateProgress();
+        }
+
+        function animateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 3;
+                document.getElementById('progress').value = progress;
+                updateProgress();
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                }
+            }, 80);
+        }
+
+        function testLargeJumps() {
+            // Test large progress jumps to compare transition quality
+            const jumps = [10, 80, 25, 90, 5, 65];
+            let jumpIndex = 0;
+            
+            const interval = setInterval(() => {
+                document.getElementById('progress').value = jumps[jumpIndex];
+                updateProgress();
+                jumpIndex++;
+                
+                if (jumpIndex >= jumps.length) {
+                    clearInterval(interval);
+                }
+            }, 1500);
+        }
+
+        function testInitialLoading() {
+            // Remove existing progress borders to test initial loading
+            const iconMask = document.getElementById('demoIconMask');
+            const iconDash = document.getElementById('demoIconDash');
+            const iconAligned = document.getElementById('demoIconAligned');
+            removeAnimatedProgressBorder(iconMask);
+            removeStrokeDashProgressBorder(iconDash);
+            removeStrokeDashProgressBorderAligned(iconAligned);
+            
+            // Set a random target progress
+            const targetProgress = Math.random() * 70 + 30; // 30-100%
+            document.getElementById('progress').value = Math.round(targetProgress);
+            
+            // Create with initial loading animation enabled
+            const startAngle = document.getElementById('startAngle').value;
+            const borderRadius = document.getElementById('borderRadius').value;
+            const progressColor = document.getElementById('progressColor').value;
+            const remainingColor = document.getElementById('remainingColor').value;
+            
+            const borderRadiusValue = borderRadius == 24 ? '50%' : `${borderRadius}px`;
+            iconMask.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            iconDash.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            iconAligned.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            iconMapping.style.setProperty('--bubble-icon-custom-border-radius', borderRadiusValue);
+            
+            // Test all implementations with initial loading
+            setTimeout(() => {
+                createAnimatedProgressBorder(
+                    iconMask, 
+                    parseInt(targetProgress), 
+                    progressColor, 
+                    remainingColor, 
+                    parseInt(startAngle),
+                    {
+                        strokeWidth: 3,
+                        animationDuration: 1200
+                    }
+                );
+            }, 100);
+            
+            setTimeout(() => {
+                createStrokeDashProgressBorder(
+                    iconDash, 
+                    parseInt(targetProgress), 
+                    progressColor, 
+                    remainingColor, 
+                    parseInt(startAngle),
+                    {
+                        strokeWidth: 3,
+                        animationDuration: 1200
+                    }
+                );
+            }, 100);
+            
+            setTimeout(() => {
+                createStrokeDashProgressBorderAligned(
+                    iconAligned, 
+                    parseInt(targetProgress), 
+                    progressColor, 
+                    remainingColor, 
+                    parseInt(startAngle),
+                    {
+                        strokeWidth: 3,
+                        animationDuration: 1200
+                    }
+                );
+            }, 100);
+            
+            // Update displays
+            updateProgress();
+        }
+
+        // Make functions available globally for onclick handlers
+        window.setPreset = setPreset;
+        window.animateProgress = animateProgress;
+        window.testLargeJumps = testLargeJumps;
+        window.testInitialLoading = testInitialLoading;
+        window.updateProgress = updateProgress;
+
+        // Check browser support for CSS transitions
+        function checkBrowserSupport() {
+            const testElement = document.createElement('div');
+            testElement.style.transition = 'd 0.3s ease';
+            const supportsSVGPathTransition = testElement.style.transition !== '';
+            
+            const supportInfo = document.getElementById('browserSupport');
+            if (supportsSVGPathTransition) {
+                supportInfo.innerHTML = '✅ SVG path transitions supported (optimal performance)';
+                supportInfo.style.color = '#4CAF50';
+            } else {
+                supportInfo.innerHTML = '⚠️ Using fallback animations (still smooth)';
+                supportInfo.style.color = '#FF9800';
+            }
+        }
+
+        // Initialize
+        updateProgress();
+        checkBrowserSupport();
+    </script>
+</body>
+</html>
+</body>
+</html>

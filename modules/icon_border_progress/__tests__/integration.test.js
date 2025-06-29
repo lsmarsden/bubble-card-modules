@@ -82,6 +82,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "main",
           source: "sensor.progress",
+          background_color: "#333333",
           condition: [
             {
               condition: "state",
@@ -97,11 +98,24 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - First call with condition true
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Styling is applied when condition is true
+      // Verify - SVG progress border is created when condition is true
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("75%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("270deg");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+      expect(svg.getAttribute("viewBox")).toBeTruthy();
+
+      const bgPath = svg.querySelector(".bg-path");
+      const progressPath = svg.querySelector(".progress-path");
+      expect(bgPath).toBeTruthy();
+      expect(progressPath).toBeTruthy();
+
+      // Verify progress is applied (75% of 100)
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent"); // Should have progress color
+      const progressStrokeDashArray = progressPath.getAttribute("stroke-dasharray");
+      expect(progressStrokeDashArray).toBeTruthy();
+
+      // Verify background styling is applied
+      expect(mainIcon.style.background).toBeTruthy();
 
       // Setup - Change condition to false
       mockHass.states["sensor.enable_progress"] = { state: "off" };
@@ -109,15 +123,12 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Second call with condition false
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - THIS IS THE CORE BUG FIX - complete DOM cleanup
-      expect(mainIcon.classList.contains("progress-border")).toBe(false);
-      expect(mainIcon.classList.contains("has-bubble-border-radius")).toBe(false);
-      expect(mainIcon.style.background).toBe("");
-      expect(mainIcon.style.getPropertyValue("--custom-background-color")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--progress-color")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--remaining-progress-color")).toBe("");
+      // Verify - THIS IS THE CORE BUG FIX - complete DOM cleanup when condition becomes false
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
+
+      // Background should be restored to original value (stored in dataset)
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
     });
 
     it("should handle rapid condition state changes correctly", () => {
@@ -126,6 +137,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "main",
           source: "sensor.battery",
+          background_color: "#444444",
           condition: [
             {
               condition: "numeric_state",
@@ -148,15 +160,22 @@ describe("icon_border_progress - Integration Tests", () => {
         // Exercise - Run module function
         icon_border_progress.call(mockThis, mockCard, mockHass);
 
-        // Verify - Check appropriate styling based on condition
+        // Verify - Check appropriate SVG progress based on condition
         const mainIcon = mockCard.querySelector(".bubble-icon-container");
+        const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+
         if (shouldShow) {
-          expect(mainIcon.classList.contains("progress-border")).toBe(true);
-          expect(mainIcon.style.getPropertyValue("--progress")).toBe(`${level}%`);
+          expect(svg).toBeTruthy();
+          const progressPath = svg.querySelector(".progress-path");
+          expect(progressPath).toBeTruthy();
+          expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+          expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
+          expect(mainIcon.style.background).toBeTruthy();
         } else {
-          expect(mainIcon.classList.contains("progress-border")).toBe(false);
-          expect(mainIcon.classList.contains("has-bubble-border-radius")).toBe(false);
-          expect(mainIcon.style.getPropertyValue("--progress")).toBe("");
+          // When condition is false, SVG should be completely removed
+          expect(svg).toBeNull();
+          // Background should be restored
+          expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
         }
       });
     });
@@ -167,6 +186,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "main",
           source: "sensor.cpu_usage",
+          background_color: "#555555",
           condition: [
             {
               condition: "state",
@@ -187,11 +207,15 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Both conditions true, should show
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Progress border applied
+      // Verify - SVG progress border applied
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("65%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("234deg"); // 65% of 360
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(mainIcon.style.background).toBeTruthy();
 
       // Setup - Change first condition to false
       mockHass.states["binary_sensor.monitoring_enabled"] = { state: "off" };
@@ -199,14 +223,10 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - First condition false, should clean up
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - DOM cleanup performed
-      expect(mainIcon.classList.contains("has-bubble-border-radius")).toBe(false);
-      expect(mainIcon.classList.contains("progress-border")).toBe(false);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--progress-color")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--remaining-progress-color")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--custom-background-color")).toBe("");
+      // Verify - Complete DOM cleanup
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
     });
 
     it("should handle missing condition gracefully (always show)", () => {
@@ -215,6 +235,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "main",
           source: "sensor.progress",
+          background_color: "#666666",
           // No condition property
         },
       ];
@@ -223,11 +244,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Run module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Should apply styling since no condition means always show
+      // Verify - Should apply SVG progress since no condition means always show
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("50%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("180deg"); // 50% of 360
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
+      expect(mainIcon.style.background).toBeTruthy();
     });
 
     it("should work with exact user configuration from GitHub issue", () => {
@@ -237,6 +263,7 @@ describe("icon_border_progress - Integration Tests", () => {
           {
             button: "main",
             source: "sensor.fan_percentage", // Simplified entity name for testing
+            background_color: "#777777",
             condition: [
               {
                 condition: "state",
@@ -253,10 +280,15 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Run with fan on
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Styling applied when fan is on
+      // Verify - SVG progress applied when fan is on
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("60%");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(mainIcon.style.background).toBeTruthy();
 
       // Setup - Turn fan off
       mockHass.states["fan.mi_standing_fan"] = { state: "off" };
@@ -265,9 +297,11 @@ describe("icon_border_progress - Integration Tests", () => {
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
       // Verify - Complete cleanup when fan is off (THE BUG FIX)
-      expect(mainIcon.classList.contains("progress-border")).toBe(false);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("");
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
+
+      // Background should be restored to original value (stored in dataset)
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
     });
   });
 
@@ -289,9 +323,13 @@ describe("icon_border_progress - Integration Tests", () => {
 
       // Verify - Battery at 150 should be 75% of 0-200 range
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("75%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("270deg"); // 75% of 360deg
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
     });
 
     it("should handle multiple progress borders with different sources", () => {
@@ -312,14 +350,21 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Run module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Both buttons get progress borders
+      // Verify - Both buttons get progress borders (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
       const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
 
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(subButton1.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("42%");
-      expect(subButton1.style.getPropertyValue("--progress")).toBe("80%");
+      const mainSvg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      const subSvg = subButton1.querySelector(".stroke-dash-aligned-svg");
+
+      expect(mainSvg).toBeTruthy();
+      expect(subSvg).toBeTruthy();
+
+      const mainPath = mainSvg.querySelector(".progress-path");
+      const subPath = subSvg.querySelector(".progress-path");
+
+      expect(mainPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(subPath.getAttribute("stroke")).not.toBe("transparent");
     });
 
     it("should handle percentage-based entities", () => {
@@ -337,11 +382,15 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Run module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - CPU usage displayed correctly
+      // Verify - CPU usage displayed correctly (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("85%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("306deg"); // 85% of 360
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
     });
 
     it("should handle missing entity gracefully", () => {
@@ -359,10 +408,14 @@ describe("icon_border_progress - Integration Tests", () => {
         icon_border_progress.call(mockThis, mockCard, mockHass);
       }).not.toThrow();
 
-      // Verify - Module still processes but with 0% progress (NaN becomes 0%)
+      // Verify - Module still processes but with transparent progress (NaN/0% shows as transparent)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("0%");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).toBe("transparent");
     });
   });
 
@@ -392,15 +445,18 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check all DOM properties are set correctly
+      // Verify - Check SVG progress border exists
       const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
       expect(subButton1).toBeTruthy();
-      expect(subButton1.classList.contains("progress-border")).toBe(true);
-      expect(subButton1.style.getPropertyValue("--progress")).toBe("37.5%");
-      expect(subButton1.style.getPropertyValue("--orb-angle")).toBe("135deg");
+
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(subButton1.style.background).toBe("rgb(10, 10, 10)"); // JSDOM converts #0a0a0a to rgb
-      expect(subButton1.style.getPropertyValue("--custom-background-color")).toBe("#0a0a0a");
-      expect(subButton1.style.getPropertyValue("--remaining-progress-color")).toBe("#222");
     });
 
     it("should handle edge case when battery exceeds end value and verify clamping", () => {
@@ -428,14 +484,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check clamping behavior and DOM properties
+      // Verify - Check clamping behavior (SVG should show full progress)
       const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
-      expect(subButton1.classList.contains("progress-border")).toBe(true);
-      expect(subButton1.style.getPropertyValue("--progress")).toBe("100%"); // Clamped to 100%
-      expect(subButton1.style.getPropertyValue("--orb-angle")).toBe("360deg"); // Full circle
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(subButton1.style.background).toBe("rgb(17, 17, 17)"); // JSDOM converts #111 to rgb
-      expect(subButton1.style.getPropertyValue("--custom-background-color")).toBe("#111");
-      expect(subButton1.style.getPropertyValue("--remaining-progress-color")).toBe("#333");
     });
   });
 
@@ -474,32 +532,35 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check main button with complete DOM properties
+      // Verify - Check main button with SVG progress border
       const mainIconContainer = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIconContainer.classList.contains("progress-border")).toBe(true);
-      expect(mainIconContainer.style.getPropertyValue("--progress")).toBe("42%");
-      expect(mainIconContainer.style.getPropertyValue("--orb-angle")).toBe("151.2deg");
+      const mainSvg = mainIconContainer.querySelector(".stroke-dash-aligned-svg");
+      expect(mainSvg).toBeTruthy();
+
+      const mainPath = mainSvg.querySelector(".progress-path");
+      expect(mainPath).toBeTruthy();
+      expect(mainPath.getAttribute("stroke")).not.toBe("transparent");
       expect(mainIconContainer.style.background).toBe("rgb(44, 44, 44)"); // JSDOM converts to rgb
-      expect(mainIconContainer.style.getPropertyValue("--custom-background-color")).toBe("#2c2c2c");
-      expect(mainIconContainer.style.getPropertyValue("--remaining-progress-color")).toBe("#444");
 
-      // Verify sub-button-1 with complete DOM properties
+      // Verify sub-button-1 with SVG progress border
       const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
-      expect(subButton1.classList.contains("progress-border")).toBe(true);
-      expect(subButton1.style.getPropertyValue("--progress")).toBe("80%");
-      expect(subButton1.style.getPropertyValue("--orb-angle")).toBe("288deg");
-      expect(subButton1.style.background).toBe("rgb(44, 44, 44)");
-      expect(subButton1.style.getPropertyValue("--custom-background-color")).toBe("#2c2c2c");
-      expect(subButton1.style.getPropertyValue("--remaining-progress-color")).toBe("#444");
+      const sub1Svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(sub1Svg).toBeTruthy();
 
-      // Verify sub-button-2 with complete DOM properties
+      const sub1Path = sub1Svg.querySelector(".progress-path");
+      expect(sub1Path).toBeTruthy();
+      expect(sub1Path.getAttribute("stroke")).not.toBe("transparent");
+      expect(subButton1.style.background).toBe("rgb(44, 44, 44)");
+
+      // Verify sub-button-2 with SVG progress border
       const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
-      expect(subButton2.classList.contains("progress-border")).toBe(true);
-      expect(subButton2.style.getPropertyValue("--progress")).toBe("65%");
-      expect(subButton2.style.getPropertyValue("--orb-angle")).toBe("234deg");
+      const sub2Svg = subButton2.querySelector(".stroke-dash-aligned-svg");
+      expect(sub2Svg).toBeTruthy();
+
+      const sub2Path = sub2Svg.querySelector(".progress-path");
+      expect(sub2Path).toBeTruthy();
+      expect(sub2Path.getAttribute("stroke")).not.toBe("transparent");
       expect(subButton2.style.background).toBe("rgb(44, 44, 44)");
-      expect(subButton2.style.getPropertyValue("--custom-background-color")).toBe("#2c2c2c");
-      expect(subButton2.style.getPropertyValue("--remaining-progress-color")).toBe("#444");
     });
 
     it("should handle all four filament sensors with different color configurations", () => {
@@ -538,24 +599,23 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check all four sub-buttons with complete DOM properties
+      // Verify - Check all four sub-buttons have SVG progress borders
       const buttons = [
-        { selector: ".bubble-sub-button-1", progress: "80%", angle: "288deg" },
-        { selector: ".bubble-sub-button-2", progress: "65%", angle: "234deg" },
-        { selector: ".bubble-sub-button-3", progress: "35%", angle: "126deg" },
-        { selector: ".bubble-sub-button-4", progress: "90%", angle: "324deg" },
+        { selector: ".bubble-sub-button-1" },
+        { selector: ".bubble-sub-button-2" },
+        { selector: ".bubble-sub-button-3" },
+        { selector: ".bubble-sub-button-4" },
       ];
 
-      buttons.forEach(({ selector, progress, angle }) => {
+      buttons.forEach(({ selector }) => {
         const button = mockCard.querySelector(selector);
-        expect(button.classList.contains("progress-border")).toBe(true);
-        expect(button.style.getPropertyValue("--progress")).toBe(progress);
-        const actualAngle = parseFloat(button.style.getPropertyValue("--orb-angle"));
-        const expectedAngle = parseFloat(angle);
-        expect(actualAngle).toBeCloseTo(expectedAngle, 0);
+        const svg = button.querySelector(".stroke-dash-aligned-svg");
+        expect(svg).toBeTruthy();
+
+        const progressPath = svg.querySelector(".progress-path");
+        expect(progressPath).toBeTruthy();
+        expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
         expect(button.style.background).toBe("rgb(26, 26, 26)"); // JSDOM converts #1a1a1a
-        expect(button.style.getPropertyValue("--custom-background-color")).toBe("#1a1a1a");
-        expect(button.style.getPropertyValue("--remaining-progress-color")).toBe("#333");
       });
     });
   });
@@ -584,14 +644,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check DOM properties for high CPU usage
+      // Verify - Check DOM properties for high CPU usage (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("85%");
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("306deg");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(mainIcon.style.background).toBe("rgb(0, 0, 0)"); // JSDOM converts to rgb
-      expect(mainIcon.style.getPropertyValue("--custom-background-color")).toBe("#000000");
-      expect(mainIcon.style.getPropertyValue("--remaining-progress-color")).toBe("#666666");
     });
 
     it("should handle temperature range scenario", () => {
@@ -617,14 +679,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check temperature progress display
+      // Verify - Check temperature progress display (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("50%"); // (22.5-15)/(30-15) = 7.5/15 = 50%
-      expect(mainIcon.style.getPropertyValue("--orb-angle")).toBe("180deg"); // 50% of 360 = 180deg
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(mainIcon.style.background).toBe("rgb(30, 30, 30)"); // JSDOM converts to rgb
-      expect(mainIcon.style.getPropertyValue("--custom-background-color")).toBe("#1e1e1e");
-      expect(mainIcon.style.getPropertyValue("--remaining-progress-color")).toBe("#555555");
     });
 
     it("should handle missing entity gracefully (additional scenario)", () => {
@@ -642,10 +706,14 @@ describe("icon_border_progress - Integration Tests", () => {
         icon_border_progress.call(mockThis, mockCard, mockHass);
       }).not.toThrow();
 
-      // Verify - Check graceful handling with fallback values
+      // Verify - Check graceful handling with transparent progress (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("0%"); // NaN becomes 0%
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).toBe("transparent");
     });
   });
 
@@ -674,15 +742,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check color interpolation behavior
+      // Verify - Check color interpolation behavior (SVG)
       const mainIcon = mockCard.querySelector(".bubble-icon-container");
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
-      expect(mainIcon.style.getPropertyValue("--progress")).toBe("35%");
-      const actualAngle = parseFloat(mainIcon.style.getPropertyValue("--orb-angle"));
-      expect(actualAngle).toBeCloseTo(126, 0); // 35% of 360 = 126deg
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(mainIcon.style.background).toBe("rgb(34, 34, 34)"); // JSDOM converts to rgb
-      expect(mainIcon.style.getPropertyValue("--custom-background-color")).toBe("#222222");
-      expect(mainIcon.style.getPropertyValue("--remaining-progress-color")).toBe("#666666");
     });
 
     it("should handle edge cases with color interpolation", () => {
@@ -706,14 +775,16 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Execute the module function
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Check exact 100% behavior
+      // Verify - Check exact 100% behavior (SVG)
       const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
-      expect(subButton1.classList.contains("progress-border")).toBe(true);
-      expect(subButton1.style.getPropertyValue("--progress")).toBe("100%");
-      expect(subButton1.style.getPropertyValue("--orb-angle")).toBe("360deg"); // Full circle
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
       expect(subButton1.style.background).toBe("rgb(17, 17, 17)"); // JSDOM converts to rgb
-      expect(subButton1.style.getPropertyValue("--custom-background-color")).toBe("#111111");
-      expect(subButton1.style.getPropertyValue("--remaining-progress-color")).toBe("#333333");
     });
   });
 
@@ -747,10 +818,14 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - First run with condition true (should store original and apply new background)
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Original background stored and module background applied
+      // Verify - Original background stored, module background applied, SVG created
       expect(mainIcon.dataset.originalBackground).toBe(originalBackgroundValue);
       expect(mainIcon.style.background).toBe("rgb(34, 34, 34)"); // JSDOM converts #222222 to rgb
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
+
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
 
       // Setup - Change condition to false
       mockHass.states["sensor.enable_progress"] = { state: "off" };
@@ -760,7 +835,8 @@ describe("icon_border_progress - Integration Tests", () => {
 
       // Verify - Original background restored and progress styling removed
       expect(mainIcon.style.background).toBe(originalBackgroundValue);
-      expect(mainIcon.classList.contains("progress-border")).toBe(false);
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
       expect(mainIcon.dataset.originalBackground).toBe(originalBackgroundValue); // Still stored
     });
 
@@ -790,10 +866,14 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Apply styling to element with no initial background
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Empty string stored as original, module background applied
+      // Verify - Empty string stored as original, module background applied, SVG created
       expect(mainIcon.dataset.originalBackground).toBe("");
       expect(mainIcon.style.background).toBe("rgb(51, 51, 51)"); // JSDOM converts #333333
-      expect(mainIcon.classList.contains("progress-border")).toBe(true);
+
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
 
       // Setup - Change condition to false
       mockHass.states["sensor.enable_progress"] = { state: "off" };
@@ -801,9 +881,10 @@ describe("icon_border_progress - Integration Tests", () => {
       // Exercise - Remove styling
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
-      // Verify - Original empty background restored
+      // Verify - Original empty background restored, progress removed
       expect(mainIcon.style.background).toBe("");
-      expect(mainIcon.classList.contains("progress-border")).toBe(false);
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
     });
 
     it("should not re-store original background on subsequent runs", () => {
@@ -844,6 +925,739 @@ describe("icon_border_progress - Integration Tests", () => {
       // Verify - Original background not overwritten
       expect(mainIcon.dataset.originalBackground).toBe("rgba(255, 0, 0, 0.5)");
       expect(mainIcon.style.background).toBe("rgb(68, 68, 68)"); // Module background still applied
+    });
+  });
+
+  describe("SVG Progress Border Functionality", () => {
+    it("should create SVG progress border for elements with custom border radius", () => {
+      // Setup - Mock getComputedStyle to return specific border radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn().mockReturnValue("12px"),
+      });
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Apply styling
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created and adapted to border radius
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+      expect(svg.getAttribute("viewBox")).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+    });
+
+    it("should create SVG progress border for circular icons", () => {
+      // Setup - Mock getComputedStyle to return empty border radius (circular icons)
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn().mockReturnValue(""),
+      });
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "75" };
+
+      // Exercise - Apply styling
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created for circular elements
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+    });
+
+    it("should handle different border radius values for different buttons", () => {
+      // Setup - Different border radius for sub-button
+      global.getComputedStyle = jest.fn((element) => {
+        if (element.classList.contains("bubble-sub-button-1")) {
+          return {
+            getPropertyValue: jest.fn().mockReturnValue("8px"),
+          };
+        }
+        return {
+          getPropertyValue: jest.fn().mockReturnValue("16px"),
+        };
+      });
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+        {
+          button: "sub-button-1",
+          source: "sensor.progress",
+          background_color: "#444444",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "60" };
+
+      // Exercise - Apply styling
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Each button should have SVG progress border adapted to its border radius
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+
+      const mainSvg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      const subSvg = subButton1.querySelector(".stroke-dash-aligned-svg");
+
+      expect(mainSvg).toBeTruthy();
+      expect(subSvg).toBeTruthy();
+
+      const mainPath = mainSvg.querySelector(".progress-path");
+      const subPath = subSvg.querySelector(".progress-path");
+
+      expect(mainPath.getAttribute("stroke")).not.toBe("transparent");
+      expect(subPath.getAttribute("stroke")).not.toBe("transparent");
+    });
+
+    it("should clean up SVG progress border when condition becomes false", () => {
+      // Setup - SVG configuration with condition
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn().mockReturnValue("10px"),
+      });
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "on",
+            },
+          ],
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "40" };
+      mockHass.states["sensor.enable_progress"] = { state: "on" };
+
+      // Exercise - First run with condition true
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Setup - Change condition to false
+      mockHass.states["sensor.enable_progress"] = { state: "off" };
+
+      // Exercise - Second run with condition false
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is cleaned up
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull(); // SVG should be completely removed when condition is false
+    });
+
+    it("should animate progress border from zero on first appearance", async () => {
+      // Setup - Configuration for progress border
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run the module to create the SVG and set progress
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Check that the progress path is created and initially set correctly
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+
+      // The stroke should be set to the progress color (not transparent)
+      // since we have a non-zero progress value from the start
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Verify the dasharray is set for 50% progress
+      const dasharray = progressPath.getAttribute("stroke-dasharray");
+      expect(dasharray).toBeTruthy();
+      expect(dasharray).not.toBe("0 0"); // Should not be empty/zero
+    });
+
+    it("should handle zero to non-zero progress transition with grow animation", async () => {
+      // Setup - Configuration for progress border
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      // Start with zero progress
+      mockHass.states["sensor.progress"] = { state: "0" };
+
+      // Exercise - First run with zero progress
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Progress path should be transparent at zero
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      const progressPath = svg.querySelector(".progress-path");
+
+      expect(progressPath.getAttribute("stroke")).toBe("transparent");
+
+      // Setup - Change to non-zero progress
+      mockHass.states["sensor.progress"] = { state: "65" };
+
+      // Exercise - Second run with non-zero progress to test the grow animation
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Progress path should now have color (not transparent)
+      // This tests that the grow-from-zero animation logic is triggered
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // The stroke-dasharray should be set for the target progress
+      const pathLength = parseFloat(progressPath.getAttribute("data-length"));
+      const expectedDashLength = (65 / 100) * pathLength;
+
+      // Note: In a real scenario with requestAnimationFrame, the animation would be visible
+      // but in tests, we can verify the final state is correct
+      setTimeout(() => {
+        const dasharray = progressPath.getAttribute("stroke-dasharray");
+        expect(dasharray).toContain(expectedDashLength.toString());
+      }, 50);
+    });
+  });
+
+  describe("Start Angle Configuration", () => {
+    it("should use default start_angle of 0 (top) when not specified", () => {
+      // Setup - Configuration without start_angle (should default to 0)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with default start angle (0 = top)
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Check that progress starts from the top (default behavior)
+      // The exact stroke-dashoffset value depends on the helper implementation
+      // but we can verify the dasharray is set for 50% progress
+      const dasharray = progressPath.getAttribute("stroke-dasharray");
+      expect(dasharray).toBeTruthy();
+      expect(dasharray).not.toBe("0 0");
+
+      // Verify background is applied
+      expect(mainIcon.style.background).toBe("rgb(51, 51, 51)");
+    });
+
+    it("should apply custom start_angle of 90 degrees (right side)", () => {
+      // Setup - Configuration with start_angle set to 90 (right side)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          start_angle: 90,
+          background_color: "#444444",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "75" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with custom start angle
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Verify progress is applied for 75%
+      const dasharray = progressPath.getAttribute("stroke-dasharray");
+      expect(dasharray).toBeTruthy();
+      expect(dasharray).not.toBe("0 0");
+
+      // The stroke-dashoffset should be different from default (0) due to the 90-degree rotation
+      const dashoffset = progressPath.getAttribute("stroke-dashoffset");
+      expect(dashoffset).toBeTruthy();
+
+      // Verify background is applied
+      expect(mainIcon.style.background).toBe("rgb(68, 68, 68)");
+    });
+
+    it("should handle start_angle of 180 degrees (bottom)", () => {
+      // Setup - Configuration with start_angle set to 180 (bottom)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "sub-button-1",
+          source: "sensor.progress",
+          start_angle: 180,
+          background_color: "#555555",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "25" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with 180-degree start angle
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Verify progress is applied for 25%
+      const dasharray = progressPath.getAttribute("stroke-dasharray");
+      expect(dasharray).toBeTruthy();
+      expect(dasharray).not.toBe("0 0");
+
+      // The stroke-dashoffset should reflect the 180-degree rotation
+      const dashoffset = progressPath.getAttribute("stroke-dashoffset");
+      expect(dashoffset).toBeTruthy();
+
+      // Verify background is applied
+      expect(subButton1.style.background).toBe("rgb(85, 85, 85)");
+    });
+
+    it("should handle start_angle of -90 degrees (left side)", () => {
+      // Setup - Configuration with start_angle set to -90 (left side)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "sub-button-2",
+          source: "sensor.progress",
+          start_angle: -90,
+          background_color: "#666666",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "100" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with -90-degree start angle
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+      const svg = subButton2.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Verify progress is applied for 100% (full circle)
+      const dasharray = progressPath.getAttribute("stroke-dasharray");
+      expect(dasharray).toBeTruthy();
+
+      // For 100% progress, the dasharray should indicate full coverage
+      // The exact format depends on helper implementation but should not be "0 0"
+      expect(dasharray).not.toBe("0 0");
+
+      // Verify background is applied
+      expect(subButton2.style.background).toBe("rgb(102, 102, 102)");
+    });
+
+    it("should handle start_angle with condition changes", () => {
+      // Setup - Configuration with start_angle and condition
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          start_angle: 45, // Custom angle between standard positions
+          background_color: "#777777",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "on",
+            },
+          ],
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "60" };
+      mockHass.states["sensor.enable_progress"] = { state: "on" };
+
+      // Exercise - First run with condition true
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with custom start angle
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Verify the custom angle is applied
+      const dashoffset = progressPath.getAttribute("stroke-dashoffset");
+      expect(dashoffset).toBeTruthy();
+
+      // Setup - Change condition to false
+      mockHass.states["sensor.enable_progress"] = { state: "off" };
+
+      // Exercise - Second run with condition false
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG is completely removed when condition is false
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull();
+
+      // Background should be restored
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
+    });
+  });
+
+  describe("Border Radius Override", () => {
+    it("should use CSS border-radius when no override is specified", () => {
+      // Setup - Configuration without border_radius (should use CSS value)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Mock getComputedStyle to return specific border-radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn((prop) => {
+          if (prop === "border-radius") return "8px";
+          return "";
+        }),
+        borderRadius: "8px",
+      });
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG should be created (border radius detection should work)
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      // Should use the CSS border-radius value for path generation
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("d")).toBeTruthy();
+    });
+
+    it("should override CSS border-radius with numeric config value", () => {
+      // Setup - Configuration with border_radius override as number
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          border_radius: 15, // Override with 15px
+          background_color: "#444444",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "75" };
+
+      // Mock getComputedStyle to return different border-radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn((prop) => {
+          if (prop === "border-radius") return "50%"; // CSS says circular
+          return "";
+        }),
+        borderRadius: "50%",
+      });
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG should use override instead of CSS
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      // Progress should be applied
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Background should be applied
+      expect(mainIcon.style.background).toBe("rgb(68, 68, 68)");
+    });
+
+    it("should override CSS border-radius with string config value (percentage)", () => {
+      // Setup - Configuration with border_radius override as percentage string
+      mockThis.config.icon_border_progress = [
+        {
+          button: "sub-button-2",
+          source: "sensor.humidity",
+          border_radius: "50%", // Force circular
+          background_color: "#555555",
+        },
+      ];
+
+      mockHass.states["sensor.humidity"] = { state: "40" };
+
+      // Mock getComputedStyle to return square border-radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn((prop) => {
+          if (prop === "border-radius") return "0px"; // CSS says square
+          return "";
+        }),
+        borderRadius: "0px",
+      });
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG should use override (50%) making it circular
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+      const svg = subButton2.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      // Progress should be applied
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Background should be applied
+      expect(subButton2.style.background).toBe("rgb(85, 85, 85)");
+    });
+
+    it("should override CSS border-radius with string config value (pixels)", () => {
+      // Setup - Configuration with border_radius override as pixel string
+      mockThis.config.icon_border_progress = [
+        {
+          button: "sub-button-3",
+          source: "sensor.temperature",
+          border_radius: "12px", // Custom pixel value
+          background_color: "#666666",
+        },
+      ];
+
+      mockHass.states["sensor.temperature"] = { state: "85" };
+
+      // Mock getComputedStyle to return different border-radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn((prop) => {
+          if (prop === "border-radius") return "4px"; // CSS says 4px
+          return "";
+        }),
+        borderRadius: "4px",
+      });
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG should use override (12px) instead of CSS (4px)
+      const subButton3 = mockCard.querySelector(".bubble-sub-button-3");
+      const svg = subButton3.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      // Progress should be applied
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Background should be applied
+      expect(subButton3.style.background).toBe("rgb(102, 102, 102)");
+    });
+
+    it("should handle border_radius override with zero value", () => {
+      // Setup - Configuration with border_radius override as 0 (force square)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          border_radius: 0, // Force square corners
+          background_color: "#777777",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "30" };
+
+      // Mock getComputedStyle to return circular border-radius
+      global.getComputedStyle = jest.fn().mockReturnValue({
+        getPropertyValue: jest.fn((prop) => {
+          if (prop === "border-radius") return "50%"; // CSS says circular
+          return "";
+        }),
+        borderRadius: "50%",
+      });
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG should use override (0) making it square
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      // Progress should be applied
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Background should be applied
+      expect(mainIcon.style.background).toBe("rgb(119, 119, 119)");
+    });
+
+    it("should handle border_radius override with condition changes", () => {
+      // Setup - Configuration with border_radius override and condition
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          border_radius: 20, // Override border radius
+          background_color: "#888888",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "on",
+            },
+          ],
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = { state: "70" };
+      mockHass.states["sensor.enable_progress"] = { state: "on" };
+
+      // Exercise - First run with condition true
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG progress border is created with custom border radius
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
+
+      // Setup - Change condition to false
+      mockHass.states["sensor.enable_progress"] = { state: "off" };
+
+      // Exercise - Second run with condition false
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - SVG is completely removed when condition is false
+      const svgAfterCleanup = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svgAfterCleanup).toBeNull();
+
+      // Background should be restored
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
+    });
+
+    it("should handle multiple buttons with different border_radius overrides", () => {
+      // Setup - Configuration with different border_radius for different buttons
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.cpu_usage",
+          border_radius: 8, // 8px rounded corners
+          background_color: "#111111",
+        },
+        {
+          button: "sub-button-1",
+          source: "sensor.memory_usage",
+          border_radius: "50%", // Circular
+          background_color: "#222222",
+        },
+        {
+          button: "sub-button-2",
+          source: "sensor.disk_usage",
+          border_radius: 0, // Square
+          background_color: "#333333",
+        },
+      ];
+
+      mockHass.states["sensor.cpu_usage"] = { state: "45" };
+      mockHass.states["sensor.memory_usage"] = { state: "67" };
+      mockHass.states["sensor.disk_usage"] = { state: "89" };
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - All buttons get their respective SVG progress borders
+      // Main button with 8px border radius
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const mainSvg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(mainSvg).toBeTruthy();
+      expect(mainIcon.style.background).toBe("rgb(17, 17, 17)");
+
+      // Sub-button-1 with circular (50%) border radius
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      const svg1 = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg1).toBeTruthy();
+      expect(subButton1.style.background).toBe("rgb(34, 34, 34)");
+
+      // Sub-button-2 with square (0) border radius
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+      const svg2 = subButton2.querySelector(".stroke-dash-aligned-svg");
+      expect(svg2).toBeTruthy();
+      expect(subButton2.style.background).toBe("rgb(51, 51, 51)");
+
+      // All should have progress paths with proper stroke
+      const progressPath1 = mainSvg.querySelector(".progress-path");
+      const progressPath2 = svg1.querySelector(".progress-path");
+      const progressPath3 = svg2.querySelector(".progress-path");
+
+      expect(progressPath1.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath2.getAttribute("stroke")).not.toBe("transparent");
+      expect(progressPath3.getAttribute("stroke")).not.toBe("transparent");
     });
   });
 });

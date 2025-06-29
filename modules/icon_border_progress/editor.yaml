@@ -39,6 +39,19 @@ editor:
             selector:
               number:
                 default: 100
+      - name: start_angle
+        label: "Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)"
+        selector:
+          number:
+            min: -180
+            max: 180
+            step: 1
+            unit_of_measurement: "°"
+            default: 0
+      - name: border_radius
+        label: "Border radius override (e.g., 10 for 10px, or '50%' for circular)"
+        selector:
+          text:
       - type: expandable
         label: "Color settings"
         schema:
@@ -121,6 +134,19 @@ editor:
             selector:
               number:
                 default: 100
+      - name: start_angle
+        label: "Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)"
+        selector:
+          number:
+            min: -180
+            max: 180
+            step: 1
+            unit_of_measurement: "°"
+            default: 0
+      - name: border_radius
+        label: "Border radius override (e.g., 10 for 10px, or '50%' for circular)"
+        selector:
+          text:
       - type: expandable
         label: "Color settings"
         schema:

@@ -1,6 +1,6 @@
 icon_border_progress:
   name: Icon Border Progress
-  version: v1.1.1
+  version: v1.2.0
   creator: lsmarsden
   link: https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
   supported:
@@ -30,6 +30,33 @@ icon_border_progress:
     /**
      * ======== IMPORTED HELPER FUNCTIONS =========
      */
+
+    const getState = (input, fallbackToRaw = true) => {
+      if (input == null) return undefined;
+      if (typeof input !== "string" && typeof input !== "object") return input;
+
+      let entityId, attribute;
+
+      if (typeof input === "object") {
+        entityId = input.entity_id || input.entity;
+        attribute = input.attribute || input.att;
+      } else {
+        // Pattern: entity_id[attribute]
+        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
+        if (match) {
+          [, entityId, attribute] = match;
+        } else if (hass.states[input]) {
+          entityId = input;
+        } else {
+          return fallbackToRaw ? input : undefined;
+        }
+      }
+
+      const stateObj = hass.states[entityId];
+      if (!stateObj) return fallbackToRaw ? input : undefined;
+
+      return attribute ? stateObj.attributes[attribute] : stateObj.state;
+    }
 
     function checkAllConditions(cProp) {
       if (!cProp) return true;
@@ -150,33 +177,6 @@ icon_border_progress:
       });
     }
 
-    const getState = (input, fallbackToRaw = true) => {
-      if (input == null) return undefined;
-      if (typeof input !== "string" && typeof input !== "object") return input;
-
-      let entityId, attribute;
-
-      if (typeof input === "object") {
-        entityId = input.entity_id || input.entity;
-        attribute = input.attribute || input.att;
-      } else {
-        // Pattern: entity_id[attribute]
-        const match = input.match(/^([A-z0-9_.]+)\[([A-z0-9_]+)]$/);
-        if (match) {
-          [, entityId, attribute] = match;
-        } else if (hass.states[input]) {
-          entityId = input;
-        } else {
-          return fallbackToRaw ? input : undefined;
-        }
-      }
-
-      const stateObj = hass.states[entityId];
-      if (!stateObj) return fallbackToRaw ? input : undefined;
-
-      return attribute ? stateObj.attributes[attribute] : stateObj.state;
-    }
-
     function toArray(object) {
       if (Array.isArray(object)) return object;
       if (!object || typeof object !== "object") return [];
@@ -216,6 +216,222 @@ icon_border_progress:
       return current;
     }
 
+    function angleToOffset(angle, pathLength, visualOffset = 0) {
+      const normalizedAngle = normalizeAngle(angle);
+      const angleOffset = (normalizedAngle / 360) * pathLength;
+      return angleOffset + visualOffset;
+    }
+
+    function normalizeAngle(angle) {
+      return ((angle % 360) + 360) % 360;
+    }
+
+    function detectElementShape(element, elementSize, borderRadiusOverride) {
+      // Priority: config override > computed CSS > default
+      let borderRadiusStyle;
+
+      if (borderRadiusOverride !== undefined && borderRadiusOverride !== null) {
+        // Convert number to px string, or use string as-is
+        borderRadiusStyle =
+          typeof borderRadiusOverride === "number" ? `${borderRadiusOverride}px` : String(borderRadiusOverride);
+      } else {
+        // Fall back to computed CSS
+        borderRadiusStyle = getBorderRadiusStyle(element);
+      }
+
+      return detectShapeFromBorderRadius(borderRadiusStyle, elementSize);
+    }
+
+    function detectShapeFromBorderRadius(borderRadiusStyle, elementSize) {
+      const elementRadius = elementSize / 2;
+      let borderRadius = 0;
+      let isCircular = false;
+
+      if (!borderRadiusStyle) {
+        return { isCircular: false, borderRadius: 0 };
+      }
+
+      if (borderRadiusStyle.includes("%")) {
+        const percent = parseInt(borderRadiusStyle) || 0;
+        isCircular = percent >= 50;
+      } else if (borderRadiusStyle.includes("50")) {
+        // Special case: any border-radius containing "50" is treated as circular
+        isCircular = true;
+      } else {
+        borderRadius = parseInt(borderRadiusStyle) || 0;
+        // If border-radius >= element radius, CSS would make it circular
+        isCircular = borderRadius >= elementRadius;
+      }
+
+      // For circular shapes, we don't need the borderRadius value for path calculation
+      if (isCircular) {
+        borderRadius = 0;
+      }
+
+      return { isCircular, borderRadius };
+    }
+
+    function getBorderRadiusStyle(element) {
+      if (typeof getComputedStyle === "undefined") {
+        return "";
+      }
+
+      const computedStyle = getComputedStyle(element);
+      return computedStyle.borderRadius || "";
+    }
+
+    function createProgressBorder(element, progressValue, progressColor, remainingColor, startAngle, options) {
+      const { strokeWidth = 3, animationDuration = 800, borderRadiusOverride } = options;
+      progressValue = Math.max(0, Math.min(100, progressValue || 0));
+
+      let svg = element.querySelector(".stroke-dash-aligned-svg");
+
+      if (!svg) {
+        const computedStyle = typeof getComputedStyle !== "undefined" ? getComputedStyle(element) : {};
+        if (computedStyle.position === "static") {
+          element.style.position = "relative";
+        }
+
+        svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "stroke-dash-aligned-svg");
+        svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none";
+        element.appendChild(svg);
+      }
+
+      const size = getEffectiveSize(element);
+      svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+
+      // Detect shape from border-radius CSS property using helper
+      const { isCircular, borderRadius } = detectElementShape(element, size, borderRadiusOverride);
+
+      // Check if SVG needs rebuilding
+      const existingPath = svg.querySelector(".progress-path");
+      const currentData = `${isCircular}-${borderRadius}-${size}`;
+      const storedData = svg.getAttribute("data-config");
+
+      if (!existingPath || currentData !== storedData) {
+        // Rebuild SVG
+        svg.innerHTML = "";
+        svg.setAttribute("data-config", currentData);
+
+        // Create path data
+        const radius = (size - strokeWidth) / 2;
+        const center = size / 2;
+        let pathData;
+
+        if (isCircular) {
+          pathData = `M ${center} ${strokeWidth / 2} A ${radius} ${radius} 0 1 1 ${center - 0.01} ${strokeWidth / 2}`;
+        } else {
+          const r = Math.min(borderRadius, radius);
+          const x = strokeWidth / 2;
+          const y = strokeWidth / 2;
+          const w = size - strokeWidth;
+
+          if (r > 0) {
+            pathData = `M ${x + r} ${y} L ${x + w - r} ${y} Q ${x + w} ${y} ${x + w} ${y + r} L ${x + w} ${y + w - r} Q ${x + w} ${y + w} ${x + w - r} ${y + w} L ${x + r} ${y + w} Q ${x} ${y + w} ${x} ${y + w - r} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} Z`;
+          } else {
+            pathData = `M ${x} ${y} L ${x + w} ${y} L ${x + w} ${y + w} L ${x} ${y + w} Z`;
+          }
+        }
+
+        // Create background and progress paths
+        ["bg-path", "progress-path"].forEach((className, index) => {
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("class", className);
+          path.setAttribute("d", pathData);
+          path.setAttribute("stroke", index ? "transparent" : remainingColor); // Start progress path as transparent
+          path.setAttribute("stroke-width", strokeWidth);
+          path.setAttribute("fill", "none");
+
+          if (index) {
+            // progress path
+            path.setAttribute("stroke-linecap", "round");
+            path.style.transition = `all ${animationDuration}ms ease-out`;
+          }
+
+          svg.appendChild(path);
+        });
+
+        // Calculate path metrics
+        const progressPath = svg.querySelector(".progress-path");
+        const pathLength = progressPath.getTotalLength ? progressPath.getTotalLength() : 300; // Fallback for environments without getTotalLength
+        const visualOffset = calculateVisualOffset(isCircular, borderRadius, pathLength);
+
+        progressPath.setAttribute("data-length", pathLength);
+        progressPath.setAttribute("data-offset", visualOffset);
+      }
+
+      // Update progress
+      const bgPath = svg.querySelector(".bg-path");
+      const progressPath = svg.querySelector(".progress-path");
+
+      bgPath.setAttribute("stroke", remainingColor);
+
+      // Apply progress
+      const pathLength = parseFloat(progressPath.getAttribute("data-length"));
+      const visualOffset = parseFloat(progressPath.getAttribute("data-offset"));
+
+      const dashLength = (progressValue / 100) * pathLength;
+      const totalOffset = angleToOffset(startAngle, pathLength, visualOffset);
+
+      // Check if this is the first time setting a non-zero progress value
+      const wasTransparent = progressPath.getAttribute("stroke") === "transparent";
+      const isFirstPositiveProgress = wasTransparent && progressValue > 0;
+
+      if (progressValue <= 0) {
+        // Make progress invisible when 0 or less - keeps transitions working
+        progressPath.setAttribute("stroke", "transparent");
+        progressPath.setAttribute("stroke-dasharray", `0 ${pathLength}`);
+        progressPath.setAttribute("stroke-dashoffset", "0");
+      } else {
+        // Show progress path with proper color
+        progressPath.setAttribute("stroke", progressColor);
+        progressPath.setAttribute("stroke-dashoffset", totalOffset);
+
+        const getDashArray = () => {
+          return progressValue >= 100 ? `${pathLength} 0` : `${dashLength} ${pathLength - dashLength}`;
+        };
+
+        if (isFirstPositiveProgress) {
+          // Start from 0 and animate to target on first appearance
+          progressPath.setAttribute("stroke-dasharray", `0 ${pathLength}`);
+          progressPath.getBoundingClientRect();
+          requestAnimationFrame(() => {
+            progressPath.setAttribute("stroke-dasharray", getDashArray());
+          });
+        } else {
+          progressPath.setAttribute("stroke-dasharray", getDashArray());
+        }
+      }
+    }
+
+    function getEffectiveSize(element) {
+      const rect = element.getBoundingClientRect();
+      return Math.min(rect.width, rect.height) || 38;
+    }
+
+    function calculateVisualOffset(isCircular, borderRadius, pathLength) {
+      if (isCircular || borderRadius === 0) {
+        return isCircular ? 0 : pathLength * -0.125; // Circle: no offset, Square: jump to top-center
+      }
+
+      // Rounded rectangle: interpolate between square (-12.5%) and circle (0%)
+      const maxRadius = pathLength / 8;
+      const ratio = Math.min(borderRadius / maxRadius, 1);
+      return pathLength * -0.125 * (1 - ratio);
+    }
+
+    const getDashArray = () => {
+          return progressValue >= 100 ? `${pathLength} 0` : `${dashLength} ${pathLength - dashLength}`;
+        }
+
+    function removeProgressBorder(element) {
+      const svg = element.querySelector(".stroke-dash-aligned-svg");
+      if (svg) {
+        svg.remove();
+      }
+    }
+
     /**
      * ======== MAIN MODULE CODE =========
      */
@@ -224,7 +440,6 @@ icon_border_progress:
       // this allows IDEs to parse the file normally - will be removed automatically during build.
       const { icon_border_progress: config } = this.config;
 
-      // Helper function to get element selector based on button type
       function getElementSelector(button) {
         if (button === "main-button" || button === "main") {
           return ".bubble-icon-container";
@@ -233,25 +448,18 @@ icon_border_progress:
         }
       }
 
-      // Helper function to store original background if not already stored
       function storeOriginalBackground(element) {
         if (element.dataset.originalBackground === undefined) {
           element.dataset.originalBackground = element.style.background || "";
         }
       }
 
-      // Helper function to clean up progress styling and restore original background
       function cleanupProgressStyling(element) {
-        element.classList.remove("progress-border", "has-bubble-border-radius");
         element.style.background = element.dataset.originalBackground;
-        element.style.removeProperty("--custom-background-color");
-        element.style.removeProperty("--progress");
-        element.style.removeProperty("--orb-angle");
-        element.style.removeProperty("--progress-color");
-        element.style.removeProperty("--remaining-progress-color");
+
+        removeProgressBorder(element);
       }
 
-      // Helper function to calculate progress value with bounds checking
       function calculateProgressValue(progressSource, buttonConfig) {
         let progressValue = parseFloat(getState(progressSource));
         let startValue = parseInt(getState(buttonConfig.start));
@@ -270,7 +478,6 @@ icon_border_progress:
         return ((progressValue - startValue) / (endValue - startValue)) * 100;
       }
 
-      // Helper function to resolve color configurations with deprecated fallbacks
       function resolveColorConfigs(buttonConfig) {
         const remainingColor = resolveConfig([
           { config: buttonConfig, path: "remaining_color" },
@@ -296,27 +503,17 @@ icon_border_progress:
         };
       }
 
-      // Helper function to handle border radius styling
-      function handleBorderRadius(element) {
-        const bubbleBorderRadius = getComputedStyle(element).getPropertyValue("--bubble-icon-border-radius");
-        if (bubbleBorderRadius && bubbleBorderRadius.trim() !== "") {
-          element.classList.add("has-bubble-border-radius");
-        } else {
-          element.classList.remove("has-bubble-border-radius");
-        }
-      }
-
-      // Helper function to apply progress styling to element
-      function applyProgressStyling(element, progressValue, progressColor, colors) {
-        handleBorderRadius(element);
-
+      function applyProgressStyling(element, progressValue, progressColor, colors, buttonConfig) {
         element.style.background = `${colors.backgroundColor}`;
-        element.classList.add("progress-border");
-        element.style.setProperty("--custom-background-color", `${colors.backgroundColor}`);
-        element.style.setProperty("--progress", `${progressValue}%`);
-        element.style.setProperty("--orb-angle", `${(progressValue / 100) * 360}deg`);
-        element.style.setProperty("--progress-color", `${progressColor}`);
-        element.style.setProperty("--remaining-progress-color", `${colors.remainingProgressColor}`);
+        element.style.position = "relative"; // Ensure element can contain absolutely positioned SVG
+
+        const startAngle = -1 * (buttonConfig?.start_angle ?? -0); // Default to 0 (top)
+
+        createProgressBorder(element, progressValue, progressColor, colors.remainingProgressColor, startAngle, {
+          strokeWidth: 3,
+          animationDuration: 800,
+          borderRadiusOverride: buttonConfig?.border_radius,
+        });
       }
 
       // Main processing loop
@@ -328,17 +525,13 @@ icon_border_progress:
         const element = card.querySelector(selector);
         if (!element) return;
 
-        // Store original background if not already stored
         storeOriginalBackground(element);
 
-        // Only apply styling if conditions are met
         if (!checkAllConditions(buttonConfig.condition)) {
-          // Clean up only when condition is false
           cleanupProgressStyling(element);
           return;
         }
 
-        // Resolve progress source with deprecated fallback
         const progressSource = resolveConfig([
           {
             config: buttonConfig,
@@ -351,50 +544,57 @@ icon_border_progress:
           },
         ]);
 
-        // Calculate progress value and colors
         const progressValue = calculateProgressValue(progressSource, buttonConfig);
         const colorStops = buttonConfig.color_stops || [];
         const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors);
         const colors = resolveColorConfigs(buttonConfig);
 
-        // Apply progress styling
-        applyProgressStyling(element, progressValue, progressColor, colors);
+        applyProgressStyling(element, progressValue, progressColor, colors, buttonConfig);
         applyEffects(element, buttonConfig.effects || []);
       });
     })()}
 
-    .bubble-icon-container.has-bubble-border-radius:before {
-        position: absolute;
-        content: "";
-        margin-top: 2px !important;
-        margin-left: 2px !important;
-        margin-bottom: 2px !important;
-        height: calc(100% - 4px) !important;
-        width: calc(100% - 4px) !important;
-        border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
-        opacity: 1 !important;
+    :root {
+        --animated-progress-stroke-width: 3;
+        --animated-progress-transition-duration: 0.3s;
+        --bubble-border-inset: 2px;
     }
 
-    .bubble-sub-button.has-bubble-border-radius:before {
-        position: absolute;
-        content: "";
-        margin-top: 2px !important;
-        margin-left: 2px !important;
-        margin-bottom: 2px !important;
-        height: calc(100% - 4px) !important;
-        width: calc(100% - 4px) !important;
-        border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
-        opacity: 1 !important;
+    .bubble-icon-container {
+        container-type: size;
     }
 
-    .progress-border::before {
-        background: radial-gradient(var(--custom-background-color) 60%, transparent 0%), conic-gradient(var(--progress-color, green) var(--progress, 70%), var(--remaining-progress-color, transparent) 0%);
-        opacity: 1;
+    .progress-border {
+        position: relative;
+    }
+
+    .animated-mask-svg {
         position: absolute;
-        inset: 0;
-        content: '';
-        border-radius: 50%;
-        transition: --progress 500ms;
+        top: 0;
+        left: 0;
+        width: 100cqw;
+        height: 100cqw;
+        pointer-events: none;
+        
+        /* Performance optimizations */
+        contain: layout style paint;
+        transform: translateZ(0); /* Force hardware acceleration */
+    }
+
+    .mask-sector {
+        fill: black;
+        transition: d var(--animated-progress-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: d;
+        contain: layout style paint;
+    }
+
+    .bg-path,
+    .progress-path {
+        fill: none;
+        stroke-width: var(--animated-progress-stroke-width, 3);
+        stroke-linecap: round;
+        transition: all var(--animated-progress-transition-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: stroke;
     }
   editor:
     - type: expandable
@@ -438,6 +638,19 @@ icon_border_progress:
               selector:
                 number:
                   default: 100
+        - name: start_angle
+          label: Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)
+          selector:
+            number:
+              min: -180
+              max: 180
+              step: 1
+              unit_of_measurement: °
+              default: 0
+        - name: border_radius
+          label: Border radius override (e.g., 10 for 10px, or '50%' for circular)
+          selector:
+            text: null
         - type: expandable
           label: Color settings
           schema:
@@ -520,6 +733,19 @@ icon_border_progress:
               selector:
                 number:
                   default: 100
+        - name: start_angle
+          label: Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)
+          selector:
+            number:
+              min: -180
+              max: 180
+              step: 1
+              unit_of_measurement: °
+              default: 0
+        - name: border_radius
+          label: Border radius override (e.g., 10 for 10px, or '50%' for circular)
+          selector:
+            text: null
         - type: expandable
           label: Color settings
           schema:

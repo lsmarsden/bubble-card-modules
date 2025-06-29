@@ -1,33 +1,42 @@
-.bubble-icon-container.has-bubble-border-radius:before {
-    position: absolute;
-    content: "";
-    margin-top: 2px !important;
-    margin-left: 2px !important;
-    margin-bottom: 2px !important;
-    height: calc(100% - 4px) !important;
-    width: calc(100% - 4px) !important;
-    border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
-    opacity: 1 !important;
+:root {
+    --animated-progress-stroke-width: 3;
+    --animated-progress-transition-duration: 0.3s;
+    --bubble-border-inset: 2px;
 }
 
-.bubble-sub-button.has-bubble-border-radius:before {
-    position: absolute;
-    content: "";
-    margin-top: 2px !important;
-    margin-left: 2px !important;
-    margin-bottom: 2px !important;
-    height: calc(100% - 4px) !important;
-    width: calc(100% - 4px) !important;
-    border-radius: calc(var(--bubble-icon-border-radius) - 2px) !important;
-    opacity: 1 !important;
+.bubble-icon-container {
+    container-type: size;
 }
 
-.progress-border::before {
-    background: radial-gradient(var(--custom-background-color) 60%, transparent 0%), conic-gradient(var(--progress-color, green) var(--progress, 70%), var(--remaining-progress-color, transparent) 0%);
-    opacity: 1;
+.progress-border {
+    position: relative;
+}
+
+.animated-mask-svg {
     position: absolute;
-    inset: 0;
-    content: '';
-    border-radius: 50%;
-    transition: --progress 500ms;
+    top: 0;
+    left: 0;
+    width: 100cqw;
+    height: 100cqw;
+    pointer-events: none;
+    
+    /* Performance optimizations */
+    contain: layout style paint;
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.mask-sector {
+    fill: black;
+    transition: d var(--animated-progress-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: d;
+    contain: layout style paint;
+}
+
+.bg-path,
+.progress-path {
+    fill: none;
+    stroke-width: var(--animated-progress-stroke-width, 3);
+    stroke-linecap: round;
+    transition: all var(--animated-progress-transition-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: stroke;
 }

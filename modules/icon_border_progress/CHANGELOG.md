@@ -1,5 +1,15 @@
 # Changelog
 
+### v1.2.0
+
+<details><summary>See Changes</summary>
+
+- Added automatic border radius matching based on CSS variables (`--bubble-icon-border-radius`, `--bubble-border-radius`)
+- Added support for custom border radius per button using `border_radius` configuration option
+- Added support for custom start angle per button using `start_angle` configuration option
+
+</details>
+
 ### v1.1.0
 
 <details><summary>See Changes</summary>

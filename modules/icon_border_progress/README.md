@@ -29,6 +29,7 @@ This module adds the ability to show progress of entities via icon and sub-butto
 ---
 
 - Show progress as a circular or rounded border around an icon.
+- **Automatic border radius matching**: Progress border automatically matches your icon's border radius for visual consistency.
 - Works with any icon: main or sub-buttons.
 - Define custom start and end values (e.g. progress from 1 to 20).
 - Supports color stops to change the border color based on progress.
@@ -36,6 +37,16 @@ This module adds the ability to show progress of entities via icon and sub-butto
 - Fully supports Dynamic Entity Resolution (DER):
 - Use entity values, attributes, or raw strings for any color or threshold.
 - Only show the border when conditions are met using condition.
+
+### Border Radius Behavior
+
+The progress border automatically adapts to match your icon's border radius:
+
+- **Circular icons** (default): Uses circular progress border (`border-radius: 50%`)
+- **Rounded rectangle icons**: Automatically matches the icon's `--bubble-icon-border-radius` value
+- **Custom border radius**: Works seamlessly with any `bubble-border-radius` setting
+
+This ensures the progress border always visually aligns with your icon styling, whether you're using the default circular icons or custom rounded rectangles.
 
 ### Configuration Options
 
@@ -74,6 +85,87 @@ icon_border_progress:
     remaining_color: "#222"
     background_color: "#0a0a0a"
 ```
+
+  </details>
+
+  <details>
+    <summary><strong>Custom start angle for progress direction</strong></summary>
+
+```yaml
+icon_border_progress:
+  - button: main
+    source: media_player.lg_tv[volume_level]
+    color_stops:
+      - color: "#4fc8f0"
+        percent: 0
+    start: 0
+    end: 1
+    start_angle: 180
+```
+
+![Custom start angle](assets/custom_start_angle.png)
+
+**Start angle options:**
+
+- `0` (default): Progress starts from top (12 o'clock)
+- `90`: Progress starts from right side (3 o'clock)
+- `180`: Progress starts from bottom (6 o'clock)
+- `-90`: Progress starts from left side (9 o'clock)
+- Any value between -180 and 180 degrees
+
+  </details>
+
+  <details>
+    <summary><strong>Custom border radius override</strong></summary>
+
+```yaml
+icon_border_progress:
+  - button: sub-button-1
+    entity: sensor.filament_pla_level
+    border_radius: 0
+    color_stops:
+      "0":
+        percent: 0
+        color: "red"
+    background_color: "#2c2c2c"
+    remaining_color: "#444"
+  - button: sub-button-2
+    entity: sensor.filament_abs_level
+    border_radius: 7
+    color_stops:
+      "0":
+        percent: 0
+        color: "orange"
+    background_color: "#2c2c2c"
+    remaining_color: "#444"
+    interpolate_colors: true
+  - button: sub-button-3
+    entity: sensor.filament_petg_level
+    border_radius: 12
+    interpolate_colors: true
+    color_stops:
+      - percent: 0
+        color: "blue"
+    backcolor: rgba(20,20,20,0.4)
+    remaining_color: purple
+  - button: sub-button-4
+    entity: sensor.filament_cf_level
+    border_radius: 19
+    color_stops:
+      - percent: 0
+        color: "white"
+    background_color: "#2c2c2c"
+    remaining_color: "#444"
+```
+
+![Icon border radius](assets/icon_border_radius.png)
+
+The `border_radius` option allows you to override the CSS border-radius for individual icons:
+
+- **Number values**: Interpreted as pixels (e.g., `8` = `8px`)
+- **String values**: CSS values like `"10px"`, `"50%"`, `"1rem"`
+- **Priority**: Config override > CSS computed value > default
+- **Use cases**: Make specific icons circular, apply custom rounding, maintain consistency across different card designs
 
   </details>
 
