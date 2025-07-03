@@ -2,8 +2,9 @@ import { resolveColor } from "../helpers/color";
 import { resolveConfig } from "../helpers/config";
 import { suffix } from "../helpers/strings";
 import { getState } from "../helpers/hass";
+import { timeToPercent, parseTimeString, formatTime } from "../helpers/timeUtils";
 
-function separator_as_timeline(card, hass) {
+export function separator_as_timeline(card, hass) {
   const config = this.config.separator_as_timeline;
   if (!config) return;
 
@@ -37,38 +38,7 @@ function separator_as_timeline(card, hass) {
 
   const getConfig = (key) => config[key] ?? defaults[key];
 
-  // 2. ===== Helpers =====
-  const timeToPercent = (h, m) => ((h * 60 + m) / 1440) * 100;
-
-  const parseTimeString = (str) => {
-    if (!str) return [0, 0];
-    try {
-      // Handle ISO format: 2025-04-23T10:12:23+00:00
-      if (str.includes("T")) {
-        const date = new Date(str);
-        if (!isNaN(date)) {
-          return [date.getHours(), date.getMinutes()];
-        }
-      }
-
-      // Handle HH:MM format
-      if (str.includes(":")) {
-        const [h, m] = str.split(":").map(Number);
-        return [h || 0, m || 0];
-      }
-
-      // Handle numeric time formats (minutes since midnight)
-      if (!isNaN(str)) {
-        const totalMinutes = parseInt(str);
-        return [Math.floor(totalMinutes / 60), totalMinutes % 60];
-      }
-
-      return [0, 0];
-    } catch {
-      return [0, 0];
-    }
-  };
-
+  // 2. ===== Helpers (using timeUtils helper) =====
   const getTimeFormatProperty = (overrideSection, property) =>
     resolveConfig(
       [
@@ -93,23 +63,15 @@ function separator_as_timeline(card, hass) {
       defaults.time_format.global_settings[property],
     );
 
-  const formatTime = (h, m, section) => {
-    const use_24_hour = getTimeFormatProperty(section, "use_24_hour");
-    const append_suffix = getTimeFormatProperty(section, "append_suffix");
-    const pad_hours = getTimeFormatProperty(section, "pad_hours");
-    const show_minutes = getTimeFormatProperty(section, "show_minutes");
+  const formattedTime = (h, m, section) => {
+    const options = {
+      use_24_hour: getTimeFormatProperty(section, "use_24_hour"),
+      append_suffix: getTimeFormatProperty(section, "append_suffix"),
+      pad_hours: getTimeFormatProperty(section, "pad_hours"),
+      show_minutes: getTimeFormatProperty(section, "show_minutes"),
+    };
 
-    let hour = h;
-    const suffix = hour >= 12 ? "PM" : "AM";
-
-    if (!use_24_hour) {
-      hour = hour % 12;
-      if (hour === 0) hour = 12;
-    }
-
-    let hourStr = pad_hours ? pad(hour) : hour;
-
-    return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
+    return formatTime(h, m, options);
   };
 
   // 3. ===== Init wrapper =====
@@ -157,7 +119,7 @@ function separator_as_timeline(card, hass) {
       //TODO - replace with a single start field.
       // this will be a breaking change, so we need to
       // implement auto-migration first
-      startTimeValue = getState(`${r.start_entity}${r.start_attribute ? "[${r.start_attribute}]" : ""}`, false);
+      startTimeValue = getState(`${r.start_entity}${r.start_attribute ? `[${r.start_attribute}]` : ""}`, false);
     } else {
       startTimeValue = r.start;
     }
@@ -165,7 +127,7 @@ function separator_as_timeline(card, hass) {
     // Get end time (from entity if provided, otherwise from direct value)
     let endTimeValue;
     if (r.end_entity) {
-      endTimeValue = getState(`${r.end_entity}${r.end_attribute ? "[${r.end_attribute}]" : ""}`, false);
+      endTimeValue = getState(`${r.end_entity}${r.end_attribute ? `[${r.end_attribute}]` : ""}`, false);
     } else {
       endTimeValue = r.end;
     }
@@ -192,8 +154,8 @@ function separator_as_timeline(card, hass) {
       seg.className = `timeline-segment ${group}`;
       seg.style.left = `${left}%`;
       seg.style.width = `${width}%`;
-      seg.style.background = resolveColor(r.color) || "var(--primary-color)";
-      seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formatTime(startH, startM, "tooltip")} → ${formatTime(endH, endM, "tooltip")}`;
+      seg.style.background = resolveColor(r.color);
+      seg.dataset.tooltip = `${r.label ? r.label + ": " : ""}${formattedTime(startH, startM, "tooltip")} → ${formattedTime(endH, endM, "tooltip")}`;
       if (r.source_entities) {
         seg.dataset.tooltip += `\nSources: ${r.source_entities}`;
       }
@@ -301,7 +263,7 @@ function separator_as_timeline(card, hass) {
       const tick = document.createElement("div");
       tick.className = "timeline-tick";
       tick.style.left = `${(h / 24) * 100}%`;
-      tick.innerText = `${formatTime(h % 24, 0, "timeline")}`;
+      tick.innerText = `${formattedTime(h % 24, 0, "timeline")}`;
       wrapper.appendChild(tick);
     });
   }
