@@ -8,4 +8,5 @@ reports/
 node_modules/
 venv/
 
+**/dist/
 **/*/todo.md
