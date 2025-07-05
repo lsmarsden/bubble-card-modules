@@ -13,8 +13,6 @@ Please select the module this feature request is for:
 - [ ] icon_border_progress
 - [ ] separator_as_progress_bar
 - [ ] separator_as_timeline
-- [ ] circular_progress_bar
-- [ ] helpers (shared functions)
 - [ ] new module (please specify name)
 
 ## Feature Description

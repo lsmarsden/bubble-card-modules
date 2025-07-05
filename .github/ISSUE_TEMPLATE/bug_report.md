@@ -13,7 +13,6 @@ Please select the module this bug report is about:
 - [ ] icon_border_progress
 - [ ] separator_as_progress_bar
 - [ ] separator_as_timeline
-- [ ] circular_progress_bar
 - [ ] helpers (shared functions)
 - [ ] other (please specify)
 

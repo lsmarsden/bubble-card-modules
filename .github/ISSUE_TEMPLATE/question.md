@@ -13,7 +13,6 @@ Please select the module your question is about:
 - [ ] icon_border_progress
 - [ ] separator_as_progress_bar
 - [ ] separator_as_timeline
-- [ ] circular_progress_bar
 - [ ] helpers (shared functions)
 - [ ] general usage
 - [ ] installation

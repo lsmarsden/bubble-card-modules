@@ -14,7 +14,6 @@ Please specify which documentation needs attention:
   - [ ] icon_border_progress
   - [ ] separator_as_progress_bar
   - [ ] separator_as_timeline
-  - [ ] circular_progress_bar
 - [ ] Main repository README
 - [ ] Installation instructions
 - [ ] Configuration examples
