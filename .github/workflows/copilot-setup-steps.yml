@@ -1,0 +1,49 @@
+name: "Copilot Setup Steps"
+
+# Auto-run when setup steps change for validation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # MUST be called `copilot-setup-steps`
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read # Required for checkout
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Node.js (primary requirement)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # Install Node.js dependencies
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      # Set up Python 3 (for documentation generation)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Install Python dependencies
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # Optional: Run build to ensure everything works
+      - name: Build modules
+        run: npm run build
