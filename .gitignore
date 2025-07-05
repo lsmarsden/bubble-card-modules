@@ -10,3 +10,5 @@ venv/
 
 **/dist/
 **/*/todo.md
+
+.github/agent_context.md
