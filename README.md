@@ -22,10 +22,11 @@ Each module is organized inside its own folder in the `modules` directory.
 ### Manual Installation
 
 <details><summary>Instructions</summary>
-Built modules are available in the <code>modules/module_id/dist</code> folder for manual installation.
+Built modules are available via release assets for manual installation.
 
-Import the module yaml in the module store by using the 'Import from YAML' option, and paste the built
-module inside.
+1. Download the module YAML
+2. Go to Bubble Card module store
+3. Using the 'Import from YAML' option, paste the built module's YAML file.
 
 </details>
 
