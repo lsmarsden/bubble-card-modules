@@ -1,0 +1,126 @@
+name: "Recurring Progress Checks for Assigned Items"
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  first-progress-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9.1.0
+        with:
+          include-only-assigned: true
+          days-before-stale: 7
+          days-before-close: -1
+
+          stale-issue-label: "needs-update-7d"
+          stale-pr-label: "needs-update-7d"
+
+          stale-issue-message: |
+            📊 **7-Day Progress Check**
+
+            This assigned issue has been inactive for 7 days. Could you provide a status update on:
+
+            - Current progress
+            - Any blockers or challenges
+            - Expected timeline for completion
+
+            If you're no longer working on this, please unassign yourself so others can contribute.
+
+          stale-pr-message: |
+            📊 **7-Day Progress Check**
+
+            This assigned pull request has been inactive for 7 days. Could you provide a status update on:
+
+            - Current progress
+            - Any blockers or challenges  
+            - Expected timeline for completion
+
+            If you're no longer working on this, please unassign yourself so others can contribute.
+
+          remove-stale-when-updated: true
+          labels-to-remove-when-unstale: "needs-update-7d,needs-update-14d,needs-update-21d"
+          operations-per-run: 15
+
+  second-progress-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9.1.0
+        with:
+          include-only-assigned: true
+          only-issue-labels: "needs-update-7d"
+          only-pr-labels: "needs-update-7d"
+
+          days-before-stale: 7
+          days-before-close: -1
+
+          stale-issue-label: "needs-update-14d"
+          stale-pr-label: "needs-update-14d"
+
+          labels-to-remove-when-stale: "needs-update-7d"
+
+          stale-issue-message: |
+            📊 **14-Day Progress Check** 
+
+            This assigned issue has been inactive for 14 days total. This is a follow-up progress check.
+
+            Please provide an update or consider unassigning yourself if you're unable to continue.
+
+          stale-pr-message: |
+            📊 **14-Day Progress Check**
+
+            This assigned pull request has been inactive for 14 days total. This is a follow-up progress check.
+
+            Please provide an update or consider unassigning yourself if you're unable to continue.
+
+          remove-stale-when-updated: true
+          labels-to-remove-when-unstale: "needs-update-7d,needs-update-14d,needs-update-21d"
+          operations-per-run: 15
+
+  third-progress-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9.1.0
+        with:
+          include-only-assigned: true
+          only-issue-labels: "needs-update-14d"
+          only-pr-labels: "needs-update-14d"
+
+          days-before-stale: 7
+          days-before-close: -1
+
+          stale-issue-label: "needs-update-21d"
+          stale-pr-label: "needs-update-21d"
+
+          labels-to-remove-when-stale: "needs-update-14d"
+
+          stale-issue-message: |
+            📊 **21-Day Progress Check - Final Notice**
+
+            This assigned issue has been inactive for 21 days. Please either:
+
+            1. Provide a status update and continue working
+            2. Unassign yourself so others can contribute
+
+            This item may be unassigned automatically if no response is received.
+
+          stale-pr-message: |
+            📊 **21-Day Progress Check - Final Notice** 
+
+            This assigned pull request has been inactive for 21 days. Please either:
+
+            1. Provide a status update and continue working
+            2. Unassign yourself so others can contribute
+
+            This item may be unassigned automatically if no response is received.
+
+          remove-stale-when-updated: true
+          labels-to-remove-when-unstale: "needs-update-7d,needs-update-14d,needs-update-21d"
+          operations-per-run: 15

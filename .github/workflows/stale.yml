@@ -1,0 +1,50 @@
+name: "Manage Stale Issues and PRs"
+
+on:
+  schedule:
+    # Run every day at 2:30 AM UTC
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9.1.0
+        with:
+          days-before-stale: 7
+          days-before-close: 14
+
+          stale-issue-label: "status:stale"
+          stale-pr-label: "status:stale"
+
+          # Exempt all assigned items (assigned = in progress)
+          exempt-all-assignees: true
+
+          # Also exempt by specific labels for special cases
+          exempt-issue-labels: "status:blocked,priority:high,priority:critical"
+          exempt-pr-labels: "status:blocked,priority:high,priority:critical"
+
+          stale-issue-message: |
+            This issue has been automatically marked as stale due to inactivity. 
+            Please add a comment if you're still working on this or if it's still relevant.
+
+          stale-pr-message: |
+            This pull request has been automatically marked as stale due to inactivity. 
+            Please add a comment if you're still working on this or if it's still relevant.
+
+          close-issue-message: |
+            This issue has been automatically closed due to inactivity. 
+            If you'd like to continue working on this, please reopen the issue or create a new one.
+
+          close-pr-message: |
+            This pull request has been automatically closed due to inactivity. 
+            If you'd like to continue working on this, please reopen the pull request or create a new one.
+
+          remove-stale-when-updated: true
+          operations-per-run: 30
+          enable-statistics: true
