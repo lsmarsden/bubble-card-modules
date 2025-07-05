@@ -3,7 +3,7 @@ import { renderTextTemplate, suffix } from "../helpers/strings.js";
 import { resolveColor, resolveColorFromStops } from "../helpers/color.js";
 import { getState } from "../helpers/hass.js";
 
-function separator_as_progress_bar(card, hass) {
+export function separator_as_progress_bar(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
   const config = this.config.separator_as_progress_bar;
   const element = card.querySelector(".bubble-line");
@@ -17,7 +17,21 @@ function separator_as_progress_bar(card, hass) {
   }
 
   if (!checkAllConditions(config.condition)) {
+    // Clean up progress bar elements when overall condition is false
+    element.classList.remove("bubble-line-progress");
+    element.style.removeProperty("--progress-width");
+    element.style.removeProperty("--bubble-line-progress-color");
+    element.style.removeProperty("--bubble-line-progress-background-color");
+    element.style.removeProperty("--bubble-line-progress-outline");
+    wrapper.style.removeProperty("--bubble-line-height");
     return;
+  }
+
+  function cleanupElement(parent, selector) {
+    const existingElement = parent.querySelector(selector);
+    if (existingElement) {
+      existingElement.remove();
+    }
   }
 
   let progressValue = config.override ? config.override : parseFloat(getState(config.source));
@@ -31,10 +45,10 @@ function separator_as_progress_bar(card, hass) {
   }
   const progressStyle = config.progress_style;
   const interpolate = progressStyle.interpolate ?? true;
-  const colorStops = progressStyle.color_stops || [];
+  const colorStops = progressStyle.color_stops;
   const progressColor = resolveColorFromStops(progressValue, colorStops, interpolate);
 
-  const backgroundColorStops = progressStyle.background_color_stops || [];
+  const backgroundColorStops = progressStyle.background_color_stops;
   const backgroundProgressColor = resolveColorFromStops(progressValue, backgroundColorStops, interpolate);
 
   const bubbleBorderRadius = getComputedStyle(element).getPropertyValue("--bubble-icon-border-radius");
@@ -93,6 +107,8 @@ function separator_as_progress_bar(card, hass) {
       );
       shineElement.style.setProperty("animation-delay", `${shineDelay ?? "0"}s`);
     }
+  } else {
+    cleanupElement(element, ".bubble-line-progress-shine");
   }
 
   const orbSettings = progressStyle.orb_settings;
@@ -112,6 +128,8 @@ function separator_as_progress_bar(card, hass) {
       orbElement.style.setProperty("--bubble-line-progress-orb-color", orbColor);
       orbElement.style.setProperty("--bubble-line-progress-orb-trail-color", orbTrailColor);
     }
+  } else {
+    cleanupElement(element, ".bubble-line-progress-orb");
   }
 
   const outlineSettings = progressStyle.outline;
@@ -128,9 +146,7 @@ function separator_as_progress_bar(card, hass) {
     if (textConfig) {
       let textEl = wrapper.querySelector(`.bubble-line-text.${textClass}`);
       if (!checkAllConditions(textConfig.condition)) {
-        if (textEl) {
-          textEl.remove();
-        }
+        cleanupElement(wrapper, `.bubble-line-text.${textClass}`);
         return;
       }
 
