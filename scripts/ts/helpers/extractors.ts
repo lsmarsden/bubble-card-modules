@@ -161,20 +161,69 @@ function extractFunctionBody(code: string, functionName: string, includeDeclarat
   return func;
 }
 
-function extractFunctionCode(startIndex: number, code: string, includeDeclaration: boolean) {
-  let braceIndex = code.indexOf("{", startIndex);
-  let depth = 0;
-  for (let i = braceIndex; i < code.length; i++) {
+export function extractFunctionCode(startIndex: number, code: string, includeDeclaration: boolean) {
+  // Find the opening parenthesis of the function parameters
+  let parenIndex = code.indexOf("(", startIndex);
+  if (parenIndex === -1) {
+    throw new Error("Function signature not found - missing opening parenthesis");
+  }
+
+  // Skip over the complete parameter list to find the function body brace
+  let parenDepth = 0;
+  let i = parenIndex;
+
+  // Traverse through the parameter list to find the matching closing parenthesis
+  for (; i < code.length; i++) {
     const char = code[i];
+    if (char === "(") {
+      parenDepth++;
+    } else if (char === ")") {
+      parenDepth--;
+      if (parenDepth === 0) {
+        // Found the end of the parameter list
+        break;
+      }
+    }
+  }
+
+  if (parenDepth !== 0) {
+    throw new Error("Unbalanced parentheses in function signature");
+  }
+
+  // Now find the opening brace of the function body (after the parameter list)
+  let braceIndex = code.indexOf("{", i);
+  if (braceIndex === -1) {
+    throw new Error("Function body opening brace not found");
+  }
+
+  // Now extract the function body using brace matching
+  let depth = 0;
+  for (let j = braceIndex; j < code.length; j++) {
+    const char = code[j];
     if (char === "{") {
       depth++;
     } else if (char === "}") {
       depth--;
       if (depth === 0) {
         if (includeDeclaration) {
-          return code.substring(startIndex, i + 1);
+          // Check if this is an arrow function that needs a trailing semicolon
+          let endIndex = j + 1;
+
+          // For arrow functions, look for the trailing semicolon
+          if (code.substring(startIndex).includes("=>")) {
+            // Skip whitespace after the closing brace
+            while (endIndex < code.length && /\s/.test(code[endIndex])) {
+              endIndex++;
+            }
+            // Include the semicolon if it's there
+            if (endIndex < code.length && code[endIndex] === ";") {
+              endIndex++;
+            }
+          }
+
+          return code.substring(startIndex, endIndex);
         } else {
-          return code.substring(braceIndex + 1, i);
+          return code.substring(braceIndex + 1, j);
         }
       }
     }
@@ -183,7 +232,7 @@ function extractFunctionCode(startIndex: number, code: string, includeDeclaratio
   throw new Error("Unbalanced braces in function body, please check the function code");
 }
 
-function extractFunctionBodies(
+export function extractFunctionBodies(
   code: string,
   functionNames: string[],
   includeDeclaration: boolean,
