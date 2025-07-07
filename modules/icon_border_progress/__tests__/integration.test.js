@@ -1660,4 +1660,188 @@ describe("icon_border_progress - Integration Tests", () => {
       expect(progressPath3.getAttribute("stroke")).not.toBe("transparent");
     });
   });
+
+  describe("Conditional Background Color Setting", () => {
+    it("should set background color when background_color is configured", () => {
+      // Setup - Configuration with background_color
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#ff0000",
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background color should be set
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.style.background).toBe("rgb(255, 0, 0)"); // Browser normalizes to rgb
+    });
+
+    it("should set background color when backcolor is configured (deprecated)", () => {
+      // Setup - Configuration with deprecated backcolor
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          backcolor: "#00ff00",
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background color should be set even with deprecated property
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.style.background).toBe("rgb(0, 255, 0)"); // Browser normalizes to rgb
+    });
+
+    it("should prefer background_color over backcolor when both are configured", () => {
+      // Setup - Configuration with both properties
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#ff0000", // Should take precedence
+          backcolor: "#00ff00", // Should be ignored
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Should use background_color (red), not backcolor (green)
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.style.background).toBe("rgb(255, 0, 0)"); // Red, not green
+    });
+
+    it("should NOT set background color when neither background_color nor backcolor is configured", () => {
+      // Setup
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      mainIcon.style.background = "rgb(128, 128, 128)"; // Simulate existing background
+
+      // Spy on the style.background setter to detect if it's called
+      const backgroundSetter = jest.spyOn(mainIcon.style, "background", "set");
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          // No background_color or backcolor configured
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background setter should NOT have been called since no background color is configured
+      expect(backgroundSetter).not.toHaveBeenCalled();
+
+      // Cleanup
+      backgroundSetter.mockRestore();
+    });
+
+    it("should handle invalid color values gracefully", () => {
+      // Setup - Configuration with invalid color
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "invalid-color",
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+
+      // Exercise - Run module function (should not throw)
+      expect(() => {
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+      }).not.toThrow();
+
+      // Verify - Invalid CSS variables result in empty background (correct browser behavior)
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.style.background).toBe(""); // CSS variable doesn't exist, so it resolves to empty
+    });
+
+    it("should handle different background color configurations for multiple buttons", () => {
+      // Setup - Configuration with mixed background settings
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress1",
+          background_color: "#ff0000", // Has background color
+        },
+        {
+          button: "sub-button-1",
+          source: "sensor.progress2",
+          // No background color configured
+        },
+        {
+          button: "sub-button-2",
+          source: "sensor.progress3",
+          backcolor: "#0000ff", // Has deprecated background color
+        },
+      ];
+      mockHass.states["sensor.progress1"] = { state: "50" };
+      mockHass.states["sensor.progress2"] = { state: "60" };
+      mockHass.states["sensor.progress3"] = { state: "70" };
+
+      // Set initial backgrounds to test preservation
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+      subButton1.style.background = "rgb(200, 200, 200)"; // Should be preserved
+
+      // Exercise - Run module function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Each button handled according to its configuration
+      expect(mainIcon.style.background).toBe("rgb(255, 0, 0)"); // Red from background_color
+      expect(subButton1.style.background).toBe("rgb(200, 200, 200)"); // Preserved original
+      expect(subButton2.style.background).toBe("rgb(0, 0, 255)"); // Blue from backcolor
+    });
+
+    it("should restore original background when condition becomes false", () => {
+      // Setup - Configuration with condition and background color
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      mainIcon.style.background = "rgb(128, 128, 128)"; // Original background
+
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "#ff0000",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable",
+              state: "on",
+            },
+          ],
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "50" };
+      mockHass.states["sensor.enable"] = { state: "on" };
+
+      // Exercise - First run with condition true
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background should be set to configured color
+      expect(mainIcon.style.background).toBe("rgb(255, 0, 0)");
+
+      // Setup - Change condition to false
+      mockHass.states["sensor.enable"] = { state: "off" };
+
+      // Exercise - Second run with condition false
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background should be restored to original
+      expect(mainIcon.style.background).toBe("rgb(128, 128, 128)");
+    });
+  });
 });

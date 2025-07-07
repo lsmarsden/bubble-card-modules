@@ -990,4 +990,87 @@ describe("icon_border_progress", () => {
       );
     });
   });
+
+  describe("Background Color Setting Logic", () => {
+    it("should NOT set background when neither background_color nor backcolor is configured", () => {
+      // Setup - Configuration without any background color properties
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main-button",
+          source: "sensor.progress",
+          // Intentionally no background_color or backcolor
+        },
+      ];
+
+      // Spy on the background style setter
+      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
+
+      // Exercise - Run the function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background setter should NOT have been called
+      expect(backgroundSetter).not.toHaveBeenCalled();
+
+      // Cleanup
+      backgroundSetter.mockRestore();
+    });
+
+    it("should set background when background_color is configured", () => {
+      // Setup - Configuration with background_color
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main-button",
+          source: "sensor.progress",
+          background_color: "#ff0000",
+        },
+      ];
+
+      // Override color resolution for this test
+      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
+        if (colorValue === "#ff0000") return "rgb(255, 0, 0)";
+        return defaultColor;
+      });
+
+      // Spy on the background style setter
+      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
+
+      // Exercise - Run the function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background setter SHOULD have been called with the resolved color
+      expect(backgroundSetter).toHaveBeenCalledWith("rgb(255, 0, 0)");
+
+      // Cleanup
+      backgroundSetter.mockRestore();
+    });
+
+    it("should set background when backcolor is configured (deprecated)", () => {
+      // Setup - Configuration with deprecated backcolor
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main-button",
+          source: "sensor.progress",
+          backcolor: "#00ff00",
+        },
+      ];
+
+      // Override color resolution for this test
+      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
+        if (colorValue === "#00ff00") return "rgb(0, 255, 0)";
+        return defaultColor;
+      });
+
+      // Spy on the background style setter
+      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
+
+      // Exercise - Run the function
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Background setter SHOULD have been called with the resolved color
+      expect(backgroundSetter).toHaveBeenCalledWith("rgb(0, 255, 0)");
+
+      // Cleanup
+      backgroundSetter.mockRestore();
+    });
+  });
 });

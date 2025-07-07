@@ -70,11 +70,17 @@ export function icon_border_progress(card, hass) {
     return {
       remainingProgressColor: resolveColor(remainingColor, "var(--dark-grey-color)"),
       backgroundColor: resolveColor(backColor, "var(--bubble-icon-background-color)"),
+      hasBackgroundColor: backColor !== undefined && backColor !== null,
     };
   }
 
   function applyProgressStyling(element, progressValue, progressColor, colors, buttonConfig) {
-    element.style.background = `${colors.backgroundColor}`;
+    // Only set background if one was configured
+    // This allows us to pass-through colours that Bubble Card sets automatically
+    // e.g. colours based on the light entity
+    if (colors.hasBackgroundColor) {
+      element.style.background = `${colors.backgroundColor}`;
+    }
     element.style.position = "relative"; // Ensure element can contain absolutely positioned SVG
 
     createProgressBorder(element, progressValue, progressColor, colors.remainingProgressColor, {
