@@ -39,15 +39,6 @@ editor:
             selector:
               number:
                 default: 100
-      - name: start_angle
-        label: "Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)"
-        selector:
-          number:
-            min: -180
-            max: 180
-            step: 1
-            unit_of_measurement: "°"
-            default: 0
       - name: border_radius
         label: "Border radius override (e.g., 10 for 10px, or '50%' for circular)"
         selector:
@@ -95,14 +86,14 @@ editor:
                         max: 100
                         step: 1
                         unit_of_measurement: "%"
-      - name: background_color
-        label: "✨Background colour of icon"
-        selector:
-          ui_color: null
-      - name: remaining_color
-        label: "✨Color of remaining progress section"
-        selector:
-          ui_color: null
+          - name: background_color
+            label: "✨Background colour of icon"
+            selector:
+              ui_color: null
+          - name: remaining_color
+            label: "✨Color of remaining progress section"
+            selector:
+              ui_color: null
   - type: expandable
     name: "1"
     title: Icon 2 settings (define more in YAML)
@@ -134,15 +125,6 @@ editor:
             selector:
               number:
                 default: 100
-      - name: start_angle
-        label: "Starting angle for progress (0=top, 90=right, 180=bottom, -90=left)"
-        selector:
-          number:
-            min: -180
-            max: 180
-            step: 1
-            unit_of_measurement: "°"
-            default: 0
       - name: border_radius
         label: "Border radius override (e.g., 10 for 10px, or '50%' for circular)"
         selector:
@@ -190,11 +172,11 @@ editor:
                         max: 100
                         step: 1
                         unit_of_measurement: "%"
-      - name: background_color
-        label: "✨Background colour of icon"
-        selector:
-          ui_color: null
-      - name: remaining_color
-        label: "✨Color of remaining progress section"
-        selector:
-          ui_color: null
+          - name: background_color
+            label: "✨Background colour of icon"
+            selector:
+              ui_color: null
+          - name: remaining_color
+            label: "✨Color of remaining progress section"
+            selector:
+              ui_color: null

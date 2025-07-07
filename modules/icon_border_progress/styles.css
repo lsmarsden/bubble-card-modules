@@ -16,13 +16,12 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 100cqw;
-    height: 100cqw;
     pointer-events: none;
-    
+
     /* Performance optimizations */
     contain: layout style paint;
-    transform: translateZ(0); /* Force hardware acceleration */
+    transform: translateZ(0);
+    /* Force hardware acceleration */
 }
 
 .mask-sector {

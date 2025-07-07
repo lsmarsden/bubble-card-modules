@@ -1,32 +1,20 @@
-import { angleToOffset } from "./angleUtils.js";
 import { detectElementShape } from "./borderRadiusDetection.js";
 
 /**
- * Get the effective size for an element
+ * Get the effective dimensions for an element - NEW API for pill/rectangle support
  * @param {HTMLElement} element - The element to measure
- * @returns {number} The size (width and height should be equal for icons)
+ * @returns {{width: number, height: number}} The actual width and height dimensions
  */
-function getEffectiveSize(element) {
-  const rect = element.getBoundingClientRect();
-  return Math.min(rect.width, rect.height) || 38;
-}
-
-/**
- * Calculate the visual "top-center" offset for consistent start positioning
- * @param {boolean} isCircular - Whether the shape is circular
- * @param {number} borderRadius - The border radius in pixels (for non-circular)
- * @param {number} pathLength - Total length of the path
- * @returns {number} The offset to apply
- */
-function calculateVisualOffset(isCircular, borderRadius, pathLength) {
-  if (isCircular || borderRadius === 0) {
-    return isCircular ? 0 : pathLength * -0.125; // Circle: no offset, Square: jump to top-center
+export function getEffectiveDimensions(element) {
+  if (!element || !element.getBoundingClientRect) {
+    return { width: 38, height: 38 };
   }
 
-  // Rounded rectangle: interpolate between square (-12.5%) and circle (0%)
-  const maxRadius = pathLength / 8;
-  const ratio = Math.min(borderRadius / maxRadius, 1);
-  return pathLength * -0.125 * (1 - ratio);
+  const rect = element.getBoundingClientRect();
+  const width = rect.width || 38;
+  const height = rect.height || 38;
+
+  return { width, height };
 }
 
 /**
@@ -35,15 +23,17 @@ function calculateVisualOffset(isCircular, borderRadius, pathLength) {
  * @param {number} progressValue - Progress percentage (0-100)
  * @param {string} progressColor - Color for the progress portion
  * @param {string} remainingColor - Color for the remaining portion
- * @param {number} startAngle - Starting angle in degrees (0 = top, 90 = right, 180/-180 = bottom, -90 = left)
+ * @param {number} startAngle - Starting angle in degrees (deprecated, kept for compatibility)
  * @param {Object} options - Additional options
  * @param {number} options.strokeWidth - Width of the progress border (default: 3)
  * @param {number} options.animationDuration - Duration of transitions in ms (default: 800)
  * @param {string|number} options.borderRadiusOverride - Optional border radius override from config
+ * @param {number} options.offsetPercent - Starting position as percentage along path (0-100, where 0 = top center, default: 0)
  */
-export function createProgressBorder(element, progressValue, progressColor, remainingColor, startAngle, options) {
-  const { strokeWidth = 3, animationDuration = 800, borderRadiusOverride } = options;
+export function createProgressBorder(element, progressValue, progressColor, remainingColor, options) {
+  const { strokeWidth = 3, animationDuration = 800, borderRadiusOverride, offsetPercent = 0 } = options;
   progressValue = Math.max(0, Math.min(100, progressValue || 0));
+  const clampedOffsetPercent = Math.max(0, Math.min(100, offsetPercent));
 
   let svg = element.querySelector(".stroke-dash-aligned-svg");
 
@@ -59,15 +49,17 @@ export function createProgressBorder(element, progressValue, progressColor, rema
     element.appendChild(svg);
   }
 
-  const size = getEffectiveSize(element);
-  svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+  const dimensions = getEffectiveDimensions(element);
+  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+  svg.style.width = `${dimensions.width}px`;
+  svg.style.height = `${dimensions.height}px`;
 
   // Detect shape from border-radius CSS property using helper
-  const { isCircular, borderRadius } = detectElementShape(element, size, borderRadiusOverride);
+  const { isCircular, borderRadius } = detectElementShape(element, dimensions, borderRadiusOverride);
 
   // Check if SVG needs rebuilding
   const existingPath = svg.querySelector(".progress-path");
-  const currentData = `${isCircular}-${borderRadius}-${size}`;
+  const currentData = `${isCircular}-${borderRadius}-${dimensions.width}-${dimensions.height}`;
   const storedData = svg.getAttribute("data-config");
 
   if (!existingPath || currentData !== storedData) {
@@ -75,23 +67,39 @@ export function createProgressBorder(element, progressValue, progressColor, rema
     svg.innerHTML = "";
     svg.setAttribute("data-config", currentData);
 
-    // Create path data
-    const radius = (size - strokeWidth) / 2;
-    const center = size / 2;
+    // Create path data using actual dimensions
+    const { width, height } = dimensions;
     let pathData;
 
     if (isCircular) {
-      pathData = `M ${center} ${strokeWidth / 2} A ${radius} ${radius} 0 1 1 ${center - 0.01} ${strokeWidth / 2}`;
+      // For circles, use the smaller dimension as radius - start at top center
+      const radius = (Math.min(width, height) - strokeWidth) / 2;
+      const centerX = width / 2;
+      pathData = `M ${centerX} ${strokeWidth / 2} A ${radius} ${radius} 0 1 1 ${centerX - 0.01} ${strokeWidth / 2}`;
     } else {
-      const r = Math.min(borderRadius, radius);
+      const r = Math.min(borderRadius, (Math.min(width, height) - strokeWidth) / 2);
       const x = strokeWidth / 2;
       const y = strokeWidth / 2;
-      const w = size - strokeWidth;
+      const w = width - strokeWidth;
+      const h = height - strokeWidth;
 
       if (r > 0) {
-        pathData = `M ${x + r} ${y} L ${x + w - r} ${y} Q ${x + w} ${y} ${x + w} ${y + r} L ${x + w} ${y + w - r} Q ${x + w} ${y + w} ${x + w - r} ${y + w} L ${x + r} ${y + w} Q ${x} ${y + w} ${x} ${y + w - r} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} Z`;
+        // Rounded rectangle - start from top center
+        const startX = width / 2;
+        pathData = `M ${startX} ${y} 
+                    L ${x + w - r} ${y} 
+                    Q ${x + w} ${y} ${x + w} ${y + r} 
+                    L ${x + w} ${y + h - r} 
+                    Q ${x + w} ${y + h} ${x + w - r} ${y + h} 
+                    L ${x + r} ${y + h} 
+                    Q ${x} ${y + h} ${x} ${y + h - r} 
+                    L ${x} ${y + r} 
+                    Q ${x} ${y} ${x + r} ${y} 
+                    L ${startX} ${y}`;
       } else {
-        pathData = `M ${x} ${y} L ${x + w} ${y} L ${x + w} ${y + w} L ${x} ${y + w} Z`;
+        // Sharp rectangle - start from top center
+        const startX = width / 2;
+        pathData = `M ${startX} ${y} L ${x + w} ${y} L ${x + w} ${y + h} L ${x} ${y + h} L ${x} ${y} Z`;
       }
     }
 
@@ -116,10 +124,8 @@ export function createProgressBorder(element, progressValue, progressColor, rema
     // Calculate path metrics
     const progressPath = svg.querySelector(".progress-path");
     const pathLength = progressPath.getTotalLength ? progressPath.getTotalLength() : 300; // Fallback for environments without getTotalLength
-    const visualOffset = calculateVisualOffset(isCircular, borderRadius, pathLength);
 
     progressPath.setAttribute("data-length", pathLength);
-    progressPath.setAttribute("data-offset", visualOffset);
   }
 
   // Update progress
@@ -130,10 +136,8 @@ export function createProgressBorder(element, progressValue, progressColor, rema
 
   // Apply progress
   const pathLength = parseFloat(progressPath.getAttribute("data-length"));
-  const visualOffset = parseFloat(progressPath.getAttribute("data-offset"));
-
-  const dashLength = (progressValue / 100) * pathLength;
-  const totalOffset = angleToOffset(startAngle, pathLength, visualOffset);
+  const progressLength = (progressValue / 100) * pathLength;
+  const offsetLength = (clampedOffsetPercent / 100) * pathLength;
 
   // Check if this is the first time setting a non-zero progress value
   const wasTransparent = progressPath.getAttribute("stroke") === "transparent";
@@ -147,15 +151,29 @@ export function createProgressBorder(element, progressValue, progressColor, rema
   } else {
     // Show progress path with proper color
     progressPath.setAttribute("stroke", progressColor);
-    progressPath.setAttribute("stroke-dashoffset", totalOffset);
+    progressPath.setAttribute("stroke-dashoffset", "0"); // Always 0 with new offset approach
 
     const getDashArray = () => {
-      return progressValue >= 100 ? `${pathLength} 0` : `${dashLength} ${pathLength - dashLength}`;
+      if (progressValue >= 100) {
+        return `${pathLength} 0`;
+      } else if (progressLength === 0) {
+        return `0 ${pathLength}`;
+      } else if (offsetLength + progressLength <= pathLength) {
+        // No wrap-around needed
+        // Pattern: [transparent offset] [progress] [remaining transparent]
+        return `0 ${offsetLength} ${progressLength} ${pathLength - offsetLength - progressLength}`;
+      } else {
+        // Wrap-around needed
+        const endProgress = pathLength - offsetLength;
+        const wrapProgress = progressLength - endProgress;
+        // Pattern: [wrap progress] [gap] [main progress] [remaining]
+        return `${wrapProgress} ${offsetLength - wrapProgress} ${endProgress} 0`;
+      }
     };
 
     if (isFirstPositiveProgress) {
       // Start from 0 and animate to target on first appearance
-      progressPath.setAttribute("stroke-dasharray", `0 ${pathLength}`);
+      progressPath.setAttribute("stroke-dasharray", `0 ${offsetLength} 0 ${pathLength - offsetLength}`);
       progressPath.getBoundingClientRect();
       requestAnimationFrame(() => {
         progressPath.setAttribute("stroke-dasharray", getDashArray());

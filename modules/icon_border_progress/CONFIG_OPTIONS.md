@@ -64,10 +64,9 @@
       - [1.12.2.1. condition](#11221-condition)
   - [1.13. Property `effects`](#113-property-effects)
     - [1.13.1. effects items](#1131-effects-items)
-  - [1.14. Property `start_angle`](#114-property-start_angle)
-  - [1.15. Property `border_radius`](#115-property-border_radius)
-    - [1.15.1. Property `item 0`](#1151-property-item-0)
-    - [1.15.2. Property `item 1`](#1152-property-item-1)
+  - [1.14. Property `border_radius`](#114-property-border_radius)
+    - [1.14.1. Property `item 0`](#1141-property-item-0)
+    - [1.14.2. Property `item 1`](#1142-property-item-1)
 
 **Title:** `icon_border_progress`
 
@@ -110,7 +109,6 @@
 | - [remainingcolor](#items_remainingcolor)         | string          | -       | [DEPRECATED] Use 'remaining_color' instead                                                                                              |
 | - [condition](#items_condition)                   | object          | -       | Conditions to show the progress border                                                                                                  |
 | - [effects](#items_effects)                       | array of object | -       | Array of visual effects to apply                                                                                                        |
-| - [start_angle](#items_start_angle)               | number          | 0       | Starting angle for progress border in degrees (0 = top, 90 = right, 180 = bottom, -90 = left)                                           |
 | - [border_radius](#items_border_radius)           | object          | -       | Custom border radius for the progress border (overrides CSS border-radius). Can be a number (pixels) or CSS value (e.g., '10px', '50%') |
 
 ### 1.1. Property `button`
@@ -713,20 +711,7 @@ Specific value: `"not"`
 | -------- | ----------- | --------------- |
 | object   | -           | -               |
 
-### 1.14. Property `start_angle`
-
-| **Type** | **Default** | **Description**                                                                               |
-| -------- | ----------- | --------------------------------------------------------------------------------------------- |
-| number   | 0           | Starting angle for progress border in degrees (0 = top, 90 = right, 180 = bottom, -90 = left) |
-
-**Description:** Starting angle for progress border in degrees (0 = top, 90 = right, 180 = bottom, -90 = left)
-
-| Restrictions |           |
-| ------------ | --------- |
-| **Minimum**  | &ge; -180 |
-| **Maximum**  | &le; 180  |
-
-### 1.15. Property `border_radius`
+### 1.14. Property `border_radius`
 
 | **Type** | **Default** | **Description**                                                                                                                         |
 | -------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -739,7 +724,7 @@ Specific value: `"not"`
 | [item 0](#items_border_radius_oneOf_i0) |
 | [item 1](#items_border_radius_oneOf_i1) |
 
-#### 1.15.1. Property `item 0`
+#### 1.14.1. Property `item 0`
 
 | **Type** | **Default** | **Description** |
 | -------- | ----------- | --------------- |
@@ -749,7 +734,7 @@ Specific value: `"not"`
 | ------------ | ------ |
 | **Minimum**  | &ge; 0 |
 
-#### 1.15.2. Property `item 1`
+#### 1.14.2. Property `item 1`
 
 | **Type** | **Default** | **Description** |
 | -------- | ----------- | --------------- |

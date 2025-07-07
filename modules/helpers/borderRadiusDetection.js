@@ -6,34 +6,28 @@
 /**
  * Detect if an element's border-radius would make it circular
  * @param {string} borderRadiusStyle - The border-radius CSS value
- * @param {number} elementSize - The size of the element
+ * @param {Object} dimensions - Element dimensions object {width, height}
  * @returns {Object} Detection result with isCircular and borderRadius properties
  */
-export function detectShapeFromBorderRadius(borderRadiusStyle, elementSize) {
-  const elementRadius = elementSize / 2;
+export function detectShapeFromBorderRadius(borderRadiusStyle, dimensions) {
+  const { width, height } = dimensions;
   let borderRadius = 0;
-  let isCircular = false;
 
   if (!borderRadiusStyle) {
     return { isCircular: false, borderRadius: 0 };
   }
 
+  // Parse border radius value to pixels
   if (borderRadiusStyle.includes("%")) {
     const percent = parseInt(borderRadiusStyle) || 0;
-    isCircular = percent >= 50;
-  } else if (borderRadiusStyle.includes("50")) {
-    // Special case: any border-radius containing "50" is treated as circular
-    isCircular = true;
+    // For percentages, calculate actual pixel value
+    // 50% of a 40px element = 20px border radius
+    borderRadius = (percent / 100) * Math.min(width, height);
   } else {
+    // For pixel values, just parse the number
     borderRadius = parseInt(borderRadiusStyle) || 0;
-    // If border-radius >= element radius, CSS would make it circular
-    isCircular = borderRadius >= elementRadius;
   }
-
-  // For circular shapes, we don't need the borderRadius value for path calculation
-  if (isCircular) {
-    borderRadius = 0;
-  }
+  const isCircular = width === height && borderRadius >= width / 2;
 
   return { isCircular, borderRadius };
 }
@@ -55,11 +49,11 @@ export function getBorderRadiusStyle(element) {
 /**
  * Detect shape characteristics from an element
  * @param {HTMLElement} element - The element to analyze
- * @param {number} elementSize - The size of the element
+ * @param {Object} dimensions - Element dimensions object {width, height}
  * @param {string|number} borderRadiusOverride - Optional border radius override from config
  * @returns {Object} Detection result with isCircular and borderRadius properties
  */
-export function detectElementShape(element, elementSize, borderRadiusOverride) {
+export function detectElementShape(element, dimensions, borderRadiusOverride) {
   // Priority: config override > computed CSS > default
   let borderRadiusStyle;
 
@@ -72,5 +66,5 @@ export function detectElementShape(element, elementSize, borderRadiusOverride) {
     borderRadiusStyle = getBorderRadiusStyle(element);
   }
 
-  return detectShapeFromBorderRadius(borderRadiusStyle, elementSize);
+  return detectShapeFromBorderRadius(borderRadiusStyle, dimensions);
 }

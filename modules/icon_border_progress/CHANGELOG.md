@@ -1,5 +1,14 @@
 # Changelog
 
+### v1.3.0
+
+<details><summary>See Changes</summary>
+
+- Removed `start_angle` configuration option, as it no longer makes sense with varying sizes.
+  This will be superseded by a new option to offset the starting point in the future.
+- Fixed border shape for buttons that are not always square/circular.
+</details>
+
 ### v1.2.0
 
 <details><summary>See Changes</summary>

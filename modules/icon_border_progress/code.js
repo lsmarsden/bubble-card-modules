@@ -77,12 +77,11 @@ export function icon_border_progress(card, hass) {
     element.style.background = `${colors.backgroundColor}`;
     element.style.position = "relative"; // Ensure element can contain absolutely positioned SVG
 
-    const startAngle = -1 * (buttonConfig?.start_angle ?? -0); // Default to 0 (top)
-
-    createProgressBorder(element, progressValue, progressColor, colors.remainingProgressColor, startAngle, {
+    createProgressBorder(element, progressValue, progressColor, colors.remainingProgressColor, {
       strokeWidth: 3,
       animationDuration: 800,
       borderRadiusOverride: buttonConfig?.border_radius,
+      offsetPercent: buttonConfig?.offset_percent || 0,
     });
   }
 

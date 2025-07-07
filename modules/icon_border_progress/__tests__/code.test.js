@@ -145,10 +145,12 @@ describe("icon_border_progress", () => {
         50, // progress value (50%)
         "rgb(255, 255, 0)", // progress color from resolveColorFromStops mock
         "white", // remaining color resolved from sensor.background
-        0, // start angle (default)
+
         {
           strokeWidth: 3,
           animationDuration: 800,
+          borderRadiusOverride: undefined,
+          offsetPercent: 0,
         },
       );
       // Verify background color is set to resolved background color from sensor.background
@@ -166,10 +168,12 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // progress color
         "white", // remaining color resolved from sensor.background
-        0, // start angle
+
         {
           strokeWidth: 3,
           animationDuration: 800,
+          borderRadiusOverride: undefined,
+          offsetPercent: 0,
         },
       );
     });
@@ -186,10 +190,12 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // progress color
         "white", // remaining color resolved from sensor.background
-        0, // start angle
+
         {
           strokeWidth: 3,
           animationDuration: 800,
+          borderRadiusOverride: undefined,
+          offsetPercent: 0,
         },
       );
     });
@@ -216,10 +222,11 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // progress color
         "white", // remaining color resolved from sensor.background
-        -90, // start angle
         {
           strokeWidth: 3,
           animationDuration: 800,
+          borderRadiusOverride: undefined,
+          offsetPercent: 0,
         },
       );
     });
@@ -234,8 +241,8 @@ describe("icon_border_progress", () => {
         50,
         "rgb(255, 255, 0)",
         "white", // remaining color resolved from sensor.background
-        0, // default start angle
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
   });
@@ -252,8 +259,8 @@ describe("icon_border_progress", () => {
         75, // 75% progress
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -270,8 +277,8 @@ describe("icon_border_progress", () => {
         50, // (150-100)/(200-100) * 100 = 50%
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -286,8 +293,8 @@ describe("icon_border_progress", () => {
         0, // clamped to 0%
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -302,8 +309,8 @@ describe("icon_border_progress", () => {
         100, // clamped to 100%
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -318,8 +325,8 @@ describe("icon_border_progress", () => {
         0, // NaN becomes 0%
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -336,8 +343,8 @@ describe("icon_border_progress", () => {
         50, // 50% with default 0-100 range
         "rgb(255, 255, 0)",
         "white",
-        0,
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
   });
@@ -354,8 +361,8 @@ describe("icon_border_progress", () => {
         25, // 25% progress
         "rgb(255, 255, 0)", // Color from resolveColorFromStops mock
         "white", // Remaining color from mock
-        0, // Default start angle
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -398,8 +405,8 @@ describe("icon_border_progress", () => {
         50, // Progress value (50%)
         "rgb(255, 255, 0)", // Progress color from mock
         "rgba(100,100,100,0.5)", // Remaining color resolved from entity
-        0, // Default start angle
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -442,8 +449,8 @@ describe("icon_border_progress", () => {
         50, // Progress value (50%)
         "rgb(255, 255, 0)", // Progress color from mock
         "var(--dark-grey-color)", // Default remaining color (since we only set background_color)
-        0, // Default start angle
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -497,8 +504,7 @@ describe("icon_border_progress", () => {
         50, // progress from deprecated entity
         "rgb(255, 255, 0)", // color from stops
         expect.any(String), // remaining color (default)
-        0, // start angle
-        expect.any(Object),
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -543,8 +549,8 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // color from stops
         "red", // remaining color from deprecated config
-        0, // start angle
-        expect.any(Object),
+
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
 
@@ -629,8 +635,7 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // color from stops
         expect.any(String), // remaining color
-        0, // start angle
-        expect.any(Object),
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
       );
     });
   });
@@ -681,7 +686,6 @@ describe("icon_border_progress", () => {
         expect.any(Number),
         expect.any(String),
         expect.any(String),
-        expect.any(Number),
         expect.any(Object),
       );
       expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
@@ -689,7 +693,6 @@ describe("icon_border_progress", () => {
         expect.any(Number),
         expect.any(String),
         expect.any(String),
-        expect.any(Number),
         expect.any(Object),
       );
     });
@@ -779,10 +782,10 @@ describe("icon_border_progress", () => {
         50, // progress value
         "rgb(255, 255, 0)", // progress color
         "var(--dark-grey-color)", // remaining color
-        0, // start angle (default)
         expect.objectContaining({
           strokeWidth: 3,
           animationDuration: 800,
+          offsetPercent: 0,
           borderRadiusOverride: 15, // Should pass the override
         }),
       );
@@ -809,10 +812,10 @@ describe("icon_border_progress", () => {
         75, // progress value
         "rgb(255, 255, 0)", // progress color
         "var(--dark-grey-color)", // remaining color
-        0, // start angle (default)
         expect.objectContaining({
           strokeWidth: 3,
           animationDuration: 800,
+          offsetPercent: 0,
           borderRadiusOverride: "50%", // Should pass the string override
         }),
       );
@@ -838,10 +841,10 @@ describe("icon_border_progress", () => {
         25, // progress value
         "rgb(255, 255, 0)", // progress color
         "var(--dark-grey-color)", // remaining color
-        0, // start angle (default)
         expect.objectContaining({
           strokeWidth: 3,
           animationDuration: 800,
+          offsetPercent: 0,
           borderRadiusOverride: undefined, // Should be undefined
         }),
       );
@@ -868,10 +871,10 @@ describe("icon_border_progress", () => {
         90, // progress value
         "rgb(255, 255, 0)", // progress color
         "var(--dark-grey-color)", // remaining color
-        0, // start angle (default)
         expect.objectContaining({
           strokeWidth: 3,
           animationDuration: 800,
+          offsetPercent: 0,
           borderRadiusOverride: 0, // Should pass 0 explicitly
         }),
       );
@@ -899,10 +902,10 @@ describe("icon_border_progress", () => {
         60, // progress value
         "rgb(255, 255, 0)", // progress color
         "var(--dark-grey-color)", // remaining color
-        -90, // start angle override
         expect.objectContaining({
           strokeWidth: 3,
           animationDuration: 800,
+          offsetPercent: 0,
           borderRadiusOverride: 12, // Should pass border radius override
         }),
       );
@@ -956,7 +959,6 @@ describe("icon_border_progress", () => {
         30,
         "rgb(255, 255, 0)",
         "var(--dark-grey-color)",
-        0,
         expect.objectContaining({
           borderRadiusOverride: 8,
         }),
@@ -969,7 +971,7 @@ describe("icon_border_progress", () => {
         70,
         "rgb(255, 255, 0)",
         "var(--dark-grey-color)",
-        0,
+
         expect.objectContaining({
           borderRadiusOverride: "50%",
         }),
@@ -982,7 +984,6 @@ describe("icon_border_progress", () => {
         85,
         "rgb(255, 255, 0)",
         "var(--dark-grey-color)",
-        0,
         expect.objectContaining({
           borderRadiusOverride: undefined,
         }),
