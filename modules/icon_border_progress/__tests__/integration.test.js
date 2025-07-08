@@ -56,6 +56,26 @@ describe("icon_border_progress - Integration Tests", () => {
         "sensor.filament_abs_level": { state: "65" },
         "sensor.filament_petg_level": { state: "35" },
         "sensor.filament_cf_level": { state: "90" },
+        // New entities for UI attribute testing
+        "sensor.device_status": {
+          state: "online",
+          attributes: {
+            battery_level: 85,
+            signal_strength: 95,
+            temperature: 23.5,
+          },
+        },
+        "sensor.system_monitor": {
+          state: "running",
+          attributes: {
+            cpu_usage: 45,
+            memory_usage: 60,
+            disk_usage: 75,
+          },
+        },
+        // Default start/end values for progress calculation
+        "sensor.start_value": { state: "0" },
+        "sensor.end_value": { state: "100" },
       },
     };
 
@@ -1842,6 +1862,185 @@ describe("icon_border_progress - Integration Tests", () => {
 
       // Verify - Background should be restored to original
       expect(mainIcon.style.background).toBe("rgb(128, 128, 128)");
+    });
+  });
+
+  describe("UI Editor Attribute Support", () => {
+    it("should use separate entity and attribute fields from UI editor", () => {
+      const config = [
+        {
+          button: "sub-button-1",
+          source: "sensor.device_status",
+          source_attribute: "battery_level",
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+          remaining_color: "#333",
+          background_color: "#111",
+        },
+      ];
+
+      mockThis.config = { icon_border_progress: config };
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      expect(subButton1).toBeTruthy();
+
+      // Should create SVG progress border based on battery_level attribute (85)
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+    });
+
+    it("should prioritize DER syntax over separate attribute field", () => {
+      const config = [
+        {
+          button: "sub-button-2",
+          source: "sensor.device_status[signal_strength]", // DER syntax for signal_strength
+          source_attribute: "battery_level", // Separate attribute field
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+          remaining_color: "#333",
+          background_color: "#111",
+        },
+      ];
+
+      mockThis.config = { icon_border_progress: config };
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+      expect(subButton2).toBeTruthy();
+
+      // Should create SVG progress border based on signal_strength (95) from DER, not battery_level (85)
+      const svg = subButton2.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+    });
+
+    it("should handle missing attribute gracefully with UI fields", () => {
+      const config = [
+        {
+          button: "main",
+          source: "sensor.device_status",
+          source_attribute: "missing_attribute",
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+          remaining_color: "#333",
+          background_color: "#111",
+        },
+      ];
+
+      mockThis.config = { icon_border_progress: config };
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      // Should set background color due to missing attribute (NaN progress → 0% → background color treatment)
+      expect(mainIcon.style.background).toBe("rgb(17, 17, 17)");
+    });
+
+    it("should work with just entity field (no attribute) from UI", () => {
+      const config = [
+        {
+          button: "sub-button-3",
+          source: "sensor.saros_10_battery", // Just entity, no attribute
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+          remaining_color: "#333",
+          background_color: "#111",
+        },
+      ];
+
+      mockThis.config = { icon_border_progress: config };
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const subButton3 = mockCard.querySelector(".bubble-sub-button-3");
+      expect(subButton3).toBeTruthy();
+
+      // Should create SVG progress border based on entity state value (75)
+      const svg = subButton3.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+    });
+
+    it("should maintain backward compatibility with YAML DER syntax", () => {
+      const config = [
+        {
+          button: "sub-button-4",
+          source: "sensor.system_monitor[cpu_usage]", // YAML DER syntax
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+          remaining_color: "#333",
+          background_color: "#111",
+        },
+      ];
+
+      mockThis.config = { icon_border_progress: config };
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const subButton4 = mockCard.querySelector(".bubble-sub-button-4");
+      expect(subButton4).toBeTruthy();
+
+      // Should create SVG progress border based on cpu_usage attribute value (45)
+      const svg = subButton4.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
     });
   });
 });

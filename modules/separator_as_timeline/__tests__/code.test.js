@@ -283,7 +283,13 @@ describe("separator_as_timeline - Unit Tests", () => {
       separator_as_timeline.call(mockThis, mockCard, mockHass);
 
       // Verify
-      expect(getState).toHaveBeenCalledWith("sensor.work_start", false);
+      expect(getState).toHaveBeenCalledWith(
+        {
+          entity: "sensor.work_start",
+          attribute: undefined,
+        },
+        false,
+      );
       expect(mockWrapper.appendChild).toHaveBeenCalled();
     });
 
@@ -305,7 +311,13 @@ describe("separator_as_timeline - Unit Tests", () => {
       separator_as_timeline.call(mockThis, mockCard, mockHass);
 
       // Verify - Check that entity with attribute is queried correctly
-      expect(getState).toHaveBeenCalledWith("sensor.work_schedule[end_time]", false);
+      expect(getState).toHaveBeenCalledWith(
+        {
+          entity: "sensor.work_schedule",
+          attribute: "end_time",
+        },
+        false,
+      );
       expect(mockWrapper.appendChild).toHaveBeenCalled();
     });
   });
@@ -682,8 +694,20 @@ describe("separator_as_timeline - Unit Tests", () => {
       separator_as_timeline.call(mockThis, mockCard, mockHass);
 
       // Verify - Both entity queries should be made
-      expect(getState).toHaveBeenCalledWith("sensor.work_start", false);
-      expect(getState).toHaveBeenCalledWith("sensor.sleep_time[bedtime]", false);
+      expect(getState).toHaveBeenCalledWith(
+        {
+          entity: "sensor.work_start",
+          attribute: undefined,
+        },
+        false,
+      );
+      expect(getState).toHaveBeenCalledWith(
+        {
+          entity: "sensor.sleep_time",
+          attribute: "bedtime",
+        },
+        false,
+      );
       expect(mockWrapper.appendChild).toHaveBeenCalled();
     });
 

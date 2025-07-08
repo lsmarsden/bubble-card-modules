@@ -34,7 +34,14 @@ export function separator_as_progress_bar(card, hass) {
     }
   }
 
-  let progressValue = config.override ? config.override : parseFloat(getState(config.source));
+  let progressValue = config.override
+    ? config.override
+    : parseFloat(
+        getState({
+          entity: config.source,
+          attribute: config.source_attribute,
+        }),
+      );
 
   if (isNaN(progressValue) || progressValue < 0 || progressValue > 100) {
     progressValue = 0;

@@ -28,6 +28,22 @@ describe("separator_as_progress_bar - Integration Tests", () => {
         "sensor.saros_10_cleaning_progress": { state: "80" },
         "sensor.saros_10_current_room": { state: "Living Room" },
         "sensor.saros_10_status": { state: "cleaning" },
+        // New entities for UI attribute testing
+        "sensor.battery_device": {
+          state: "charging",
+          attributes: {
+            battery_level: 45,
+            temperature: 25.5,
+            voltage: 3.7,
+          },
+        },
+        "sensor.solar_system": {
+          state: "generating",
+          attributes: {
+            current_power: 85,
+            daily_energy: 12.5,
+          },
+        },
         // Edge case entities
         "sensor.invalid_progress": { state: "invalid" },
         "sensor.negative_progress": { state: "-10" },
@@ -1863,6 +1879,136 @@ describe("separator_as_progress_bar - Integration Tests", () => {
       expect(progressBar.querySelector(".bubble-line-progress-orb")).toBeTruthy();
       expect(wrapper.querySelector(".bubble-line-text.above-text")).toBeTruthy();
       expect(wrapper.querySelector(".bubble-line-text.below-text")).toBeTruthy(); // Should exist again
+    });
+  });
+
+  describe("UI Editor Attribute Support", () => {
+    it("should use separate entity and attribute fields from UI editor", () => {
+      const config = {
+        source: "sensor.battery_device",
+        source_attribute: "battery_level",
+        progress_style: {
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+        },
+      };
+
+      mockThis.config = { separator_as_progress_bar: config };
+      separator_as_progress_bar.call(mockThis, mockCard, mockHass);
+
+      const element = mockCard.querySelector(".bubble-line");
+      expect(element.classList.contains("bubble-line-progress")).toBe(true);
+      expect(element.style.getPropertyValue("--progress-width")).toBe("45cqw"); // battery_level attribute value
+    });
+
+    it("should prioritize DER syntax over separate attribute field", () => {
+      const config = {
+        source: "sensor.battery_device[voltage]", // DER syntax for voltage
+        source_attribute: "battery_level", // Separate attribute field
+        progress_style: {
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+        },
+      };
+
+      mockThis.config = { separator_as_progress_bar: config };
+      separator_as_progress_bar.call(mockThis, mockCard, mockHass);
+
+      const element = mockCard.querySelector(".bubble-line");
+      expect(element.classList.contains("bubble-line-progress")).toBe(true);
+      expect(element.style.getPropertyValue("--progress-width")).toBe("3.7cqw"); // voltage from DER, not battery_level
+    });
+
+    it("should handle missing attribute gracefully with UI fields", () => {
+      const config = {
+        source: "sensor.battery_device",
+        source_attribute: "missing_attribute",
+        progress_style: {
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+        },
+      };
+
+      mockThis.config = { separator_as_progress_bar: config };
+      separator_as_progress_bar.call(mockThis, mockCard, mockHass);
+
+      const element = mockCard.querySelector(".bubble-line");
+      expect(element.classList.contains("bubble-line-progress")).toBe(true);
+      expect(element.style.getPropertyValue("--progress-width")).toBe("0cqw"); // Should default to 0 for NaN
+    });
+
+    it("should work with just entity field (no attribute) from UI", () => {
+      const config = {
+        source: "sensor.task_progress", // Just entity, no attribute
+        progress_style: {
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+        },
+      };
+
+      mockThis.config = { separator_as_progress_bar: config };
+      separator_as_progress_bar.call(mockThis, mockCard, mockHass);
+
+      const element = mockCard.querySelector(".bubble-line");
+      expect(element.classList.contains("bubble-line-progress")).toBe(true);
+      expect(element.style.getPropertyValue("--progress-width")).toBe("75cqw"); // entity state value
+    });
+
+    it("should maintain backward compatibility with YAML DER syntax", () => {
+      const config = {
+        source: "sensor.solar_system[current_power]", // YAML DER syntax
+        progress_style: {
+          color_stops: [
+            {
+              color: "red",
+              percent: 0,
+            },
+            {
+              color: "green",
+              percent: 100,
+            },
+          ],
+        },
+      };
+
+      mockThis.config = { separator_as_progress_bar: config };
+      separator_as_progress_bar.call(mockThis, mockCard, mockHass);
+
+      const element = mockCard.querySelector(".bubble-line");
+      expect(element.classList.contains("bubble-line-progress")).toBe(true);
+      expect(element.style.getPropertyValue("--progress-width")).toBe("85cqw"); // current_power attribute value
     });
   });
 });

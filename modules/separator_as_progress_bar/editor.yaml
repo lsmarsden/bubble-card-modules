@@ -12,6 +12,10 @@ editor:
     label: "✨Source entity"
     selector:
       entity: {}
+  - name: source_attribute
+    label: "Source entity attribute (optional)"
+    selector:
+      attribute: {}
   - name: invert
     label: "Invert progress (bar decreases as progress completes)"
     default: false
