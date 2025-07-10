@@ -50,6 +50,11 @@ describe("resolveColor()", () => {
     expect(resolveColor("sensor.hsl")).toBe("hsl(120, 100%, 50%)");
   });
 
+  it("returns var() function value as-is", () => {
+    hass.getState.mockReturnValue("var(--my-custom-color)");
+    expect(resolveColor("sensor.var")).toBe("var(--my-custom-color)");
+  });
+
   it("wraps other values in CSS var() syntax", () => {
     hass.getState.mockReturnValue("energy-high");
     expect(resolveColor("sensor.name")).toBe("var(--energy-high-color)");

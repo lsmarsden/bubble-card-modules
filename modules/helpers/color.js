@@ -14,7 +14,7 @@ export function resolveColor(color, defaultColor) {
   if (typeof resolvedColor !== "string") return defaultColor ?? "var(--primary-color)";
 
   resolvedColor = resolvedColor.trim();
-  const validPrefixes = ["#", "rgb", "hsl"];
+  const validPrefixes = ["#", "rgb", "hsl", "var(--"];
 
   if (validPrefixes.some((prefix) => resolvedColor.startsWith(prefix))) {
     return resolvedColor;
