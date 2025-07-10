@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.5.0
+
+<details><summary>See Changes</summary>
+
+- Added support for colours to be resolved using `var(--my-custom-variable)` in all ✨DER colour fields.
+
+</details>
+
 ### v1.4.0
 
 <details><summary>See Changes</summary>
