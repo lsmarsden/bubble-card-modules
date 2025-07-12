@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.4.1
+
+<details><summary>See Changes</summary>
+
+- Fixed issue where `start` and `end` values were not working with float values.
+
+</details>
+
 ### v1.4.0
 
 <details><summary>See Changes</summary>
