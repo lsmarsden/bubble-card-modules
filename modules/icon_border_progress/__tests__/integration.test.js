@@ -10,6 +10,17 @@
 import { jest } from "@jest/globals";
 import { icon_border_progress } from "../code.js";
 
+function verifyStrokeDashArray(progressPath, ...values) {
+  expect(progressPath).toBeTruthy();
+  const strokeDashArray = progressPath.getAttribute("stroke-dasharray");
+  expect(strokeDashArray).toBeTruthy();
+  const dashArrayValues = strokeDashArray.split(" ").map(Number);
+  expect(dashArrayValues.length).toBe(values.length);
+  // verify all values match expected using toBeCloseTo for floats
+  values.forEach((value, index) => {
+    expect(dashArrayValues[index]).toBeCloseTo(value); // 2 d.p. default
+  });
+}
 describe("icon_border_progress - Integration Tests", () => {
   let mockCard, mockThis, mockHass;
 
@@ -442,7 +453,8 @@ describe("icon_border_progress - Integration Tests", () => {
       mockHass.states["sensor.start_value"] = { state: "0" };
       mockHass.states["sensor.end_value"] = { state: "200" };
 
-      // Exercise - Execute the module function
+      // Exercise - Execute the module function twice to verify progress after initial load
+      icon_border_progress.call(mockThis, mockCard, mockHass);
       icon_border_progress.call(mockThis, mockCard, mockHass);
 
       // Verify - Check SVG progress border exists
@@ -455,7 +467,46 @@ describe("icon_border_progress - Integration Tests", () => {
       const progressPath = svg.querySelector(".progress-path");
       expect(progressPath).toBeTruthy();
       expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
-      expect(progressPath.getAttribute("stroke-dasharray")).toBeTruthy();
+      verifyStrokeDashArray(progressPath, 0, 0, 112.5, 187.5);
+      expect(subButton1.style.background).toBe("rgb(10, 10, 10)"); // JSDOM converts #0a0a0a to rgb
+    });
+
+    it("should render progress with custom float ranges", () => {
+      mockThis.config.icon_border_progress = [
+        {
+          button: "sub-button-1",
+          source: "sensor.saros_10_battery",
+          start: "sensor.start_value",
+          end: "sensor.end_value",
+          color_stops: [
+            { percent: 0, color: "#424242" },
+            { percent: 100, color: "#eeeeee" },
+          ],
+          remaining_color: "#222",
+          background_color: "#0a0a0a",
+        },
+      ];
+
+      // Battery is at 0.7, with start=0.2 and end=1.2, progress should be 50%
+      mockHass.states["sensor.saros_10_battery"].state = "0.7";
+      mockHass.states["sensor.start_value"] = { state: "0.2" };
+      mockHass.states["sensor.end_value"] = { state: "1.2" };
+
+      // Exercise - Execute the module function twice to verify progress after initial load
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Check SVG progress border exists
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      expect(subButton1).toBeTruthy();
+
+      const svg = subButton1.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+
+      const progressPath = svg.querySelector(".progress-path");
+      expect(progressPath).toBeTruthy();
+      expect(progressPath.getAttribute("stroke")).toBe("#424242");
+      verifyStrokeDashArray(progressPath, 0, 0, 150, 150); // 50% of 300px path length
       expect(subButton1.style.background).toBe("rgb(10, 10, 10)"); // JSDOM converts #0a0a0a to rgb
     });
 

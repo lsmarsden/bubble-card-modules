@@ -32,8 +32,8 @@ export function icon_border_progress(card, hass) {
 
   function calculateProgressValue(progressSource, buttonConfig) {
     let progressValue = parseFloat(getState(progressSource));
-    let startValue = parseInt(getState(buttonConfig.start));
-    let endValue = parseInt(getState(buttonConfig.end));
+    let startValue = parseFloat(getState(buttonConfig.start));
+    let endValue = parseFloat(getState(buttonConfig.end));
 
     startValue = isNaN(startValue) ? 0 : startValue;
     endValue = isNaN(endValue) ? 100 : endValue;
