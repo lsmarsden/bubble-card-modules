@@ -119,7 +119,13 @@ export function separator_as_timeline(card, hass) {
       //TODO - replace with a single start field.
       // this will be a breaking change, so we need to
       // implement auto-migration first
-      startTimeValue = getState(`${r.start_entity}${r.start_attribute ? `[${r.start_attribute}]` : ""}`, false);
+      startTimeValue = getState(
+        {
+          entity: r.start_entity,
+          attribute: r.start_attribute,
+        },
+        false,
+      );
     } else {
       startTimeValue = r.start;
     }
@@ -127,7 +133,13 @@ export function separator_as_timeline(card, hass) {
     // Get end time (from entity if provided, otherwise from direct value)
     let endTimeValue;
     if (r.end_entity) {
-      endTimeValue = getState(`${r.end_entity}${r.end_attribute ? `[${r.end_attribute}]` : ""}`, false);
+      endTimeValue = getState(
+        {
+          entity: r.end_entity,
+          attribute: r.end_attribute,
+        },
+        false,
+      );
     } else {
       endTimeValue = r.end;
     }

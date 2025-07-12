@@ -8,6 +8,9 @@ properties:
     type: string
     description: The entity or attribute source.
     format: entity[attribute]
+  source_attribute:
+    type: string
+    description: "Attribute name to use from the source entity (optional - can also use entity[attribute] syntax)"
   invert:
     type: boolean
     description: Invert the progress bar (bar decreases as progress completes)

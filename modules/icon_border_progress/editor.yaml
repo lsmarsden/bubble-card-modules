@@ -20,6 +20,10 @@ editor:
         label: "✨Source entity"
         selector:
           entity: {}
+      - name: source_attribute
+        label: "Source entity attribute (optional)"
+        selector:
+          attribute: {}
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:
@@ -106,6 +110,10 @@ editor:
         label: "✨Source entity"
         selector:
           entity: {}
+      - name: source_attribute
+        label: "Source entity attribute (optional)"
+        selector:
+          attribute: {}
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:

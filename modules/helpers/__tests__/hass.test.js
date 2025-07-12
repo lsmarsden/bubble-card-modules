@@ -109,3 +109,44 @@ describe("getState() with object input", () => {
     expect(getState({ foo: "bar" }, false)).toBeUndefined();
   });
 });
+
+describe("getState() with DER precedence logic", () => {
+  it("should use DER syntax when present in object entity field, overriding separate attribute", () => {
+    // DER syntax in entity field should take precedence over separate attribute field
+    const input = { entity: "sensor.temperature[unit_of_measurement]", attribute: "calibrated" };
+    expect(getState(input)).toBe("°C"); // Should use unit_of_measurement, not calibrated
+  });
+
+  it("should use separate attribute when no DER syntax in entity field", () => {
+    // When no DER syntax, should use separate attribute field
+    const input = { entity: "sensor.temperature", attribute: "calibrated" };
+    expect(getState(input)).toBe(true); // Should use calibrated attribute
+  });
+
+  it("should handle DER syntax in entity_id field", () => {
+    // Test with entity_id instead of entity
+    const input = { entity_id: "light.living_room[brightness]", attribute: "some_other_attr" };
+    expect(getState(input)).toBe(200); // Should use brightness from DER, not some_other_attr
+  });
+
+  it("should handle DER syntax with non-existent attribute gracefully", () => {
+    const input = { entity: "sensor.temperature[missing_attr]", attribute: "calibrated" };
+    expect(getState(input, false)).toBeUndefined();
+  });
+
+  it("should handle DER syntax with non-existent entity gracefully", () => {
+    const input = { entity: "sensor.unknown[some_attr]", attribute: "fallback_attr" };
+    expect(getState(input)).toEqual(input); // Should return raw input when fallbackToRaw is true
+    expect(getState(input, false)).toBeUndefined();
+  });
+
+  it("should still work with entity only (no attribute fields)", () => {
+    const input = { entity: "sensor.temperature" };
+    expect(getState(input)).toBe("22.5"); // Should return entity state
+  });
+
+  it("should handle edge case where entity field contains DER but no separate attribute", () => {
+    const input = { entity: "sensor.temperature[unit_of_measurement]" };
+    expect(getState(input)).toBe("°C"); // Should extract attribute from DER
+  });
+});

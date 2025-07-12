@@ -17,6 +17,9 @@ definitions:
         type: string
         description: "Source entity for progress value"
         format: "entity[attribute]"
+      source_attribute:
+        type: string
+        description: "Attribute name to use from the source entity (optional - can also use entity[attribute] syntax)"
       entity:
         type: string
         description: "[DEPRECATED] Use 'source' instead. Source entity for progress value"

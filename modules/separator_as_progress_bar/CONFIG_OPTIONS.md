@@ -1406,21 +1406,13 @@ Specific value: `"not"`
 Must be one of:
 
 - "none"
-
 - "dotted"
-
 - "dashed"
-
 - "solid"
-
 - "double"
-
 - "groove"
-
 - "ridge"
-
 - "inset"
-
 - "outset"
 
 ### 5.5. Property `color_stops`

@@ -31,7 +31,22 @@ export function icon_border_progress(card, hass) {
   }
 
   function calculateProgressValue(progressSource, buttonConfig) {
-    let progressValue = parseFloat(getState(progressSource));
+    let progressValue;
+
+    // Check if we have a separate source_attribute field
+    if (buttonConfig && buttonConfig.source_attribute) {
+      // Use object format for new UI attribute support
+      progressValue = parseFloat(
+        getState({
+          entity: progressSource,
+          attribute: buttonConfig.source_attribute,
+        }),
+      );
+    } else {
+      // Fall back to original behavior for backward compatibility
+      progressValue = parseFloat(getState(progressSource));
+    }
+
     let startValue = parseInt(getState(buttonConfig.start));
     let endValue = parseInt(getState(buttonConfig.end));
 
