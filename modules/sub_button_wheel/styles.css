@@ -1,0 +1,105 @@
+.in-wheel {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bubble-container {
+    /*
+    This is normally on scroll, but this means we can't see the buttons
+    outside the card boundaries - may cause issues with certain card types
+    */
+    overflow: inherit !important;
+}
+
+/* Wheel overlay container - covers the card area with high z-index */
+.wheel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    /* Allow clicks to pass through except on interactive elements */
+    z-index: 100;
+    /* High enough to be above card content but reasonable */
+}
+
+.wheel-overlay>* {
+    pointer-events: auto;
+    /* Re-enable pointer events on direct children */
+}
+
+.wheel-container.has-buttons {
+    position: relative;
+}
+
+/* Central button appears above the glass ring when wheel is open */
+.wheel-container.has-buttons.wheel-open {
+    position: relative;
+    z-index: 2;
+    /* Above the glass ring */
+}
+
+/* Glassmorphism ring - positioned using CSS custom properties */
+.wheel-overlay::before {
+    content: '';
+    position: absolute;
+    left: var(--wheel-center-x, 50%);
+    top: var(--wheel-center-y, 50%);
+    transform: translate(-50%, -50%) scale(0);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+
+    /* Glassmorphism effect */
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    /* Smooth animation - starts immediately */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+}
+
+/* Ring expands and becomes visible when wheel is open */
+.wheel-overlay.wheel-open::before {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Wheel buttons positioned relative to the center point with fallback */
+.wheel-overlay .in-wheel {
+    position: absolute;
+    left: var(--wheel-center-x, 50%);
+    top: var(--wheel-center-y, 50%);
+    /* Base transform will be overridden by layout transforms */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+    /* Above the glass ring */
+    /* Initial hidden state */
+    scale: 0;
+    opacity: 0;
+}
+
+/* Wheel buttons with drop shadow when open */
+.wheel-overlay.wheel-open .in-wheel {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Theme variants for the glassmorphism ring */
+@media (prefers-color-scheme: dark) {
+    .wheel-overlay::before {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .wheel-overlay::before {
+        background: rgba(0, 0, 0, 0.1);
+        border-color: rgba(0, 0, 0, 0.2);
+    }
+}
