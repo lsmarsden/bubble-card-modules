@@ -4,7 +4,7 @@ import { jest } from "@jest/globals";
 let mockHass;
 
 // Mock all the helper dependencies first
-jest.unstable_mockModule("../../helpers/color.js", () => ({
+jest.unstable_mockModule("../../helpers/ui/color.js", () => ({
   resolveColor: jest.fn((color, defaultColor) => {
     if (typeof color === "string" && color.startsWith("sensor.")) {
       if (color === "sensor.timeline_color") return "blue";
@@ -15,7 +15,7 @@ jest.unstable_mockModule("../../helpers/color.js", () => ({
   }),
 }));
 
-jest.unstable_mockModule("../../helpers/config.js", () => ({
+jest.unstable_mockModule("../../helpers/utils/config.js", () => ({
   resolveConfig: jest.fn((sources, defaultValue) => {
     for (const source of sources) {
       const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
@@ -29,14 +29,14 @@ jest.unstable_mockModule("../../helpers/config.js", () => ({
   }),
 }));
 
-jest.unstable_mockModule("../../helpers/strings.js", () => ({
+jest.unstable_mockModule("../../helpers/utils/strings.js", () => ({
   suffix: jest.fn((value, defaultSuffix) => {
     if (typeof value === "string" && value.includes("px")) return value;
     return `${value}${defaultSuffix}`;
   }),
 }));
 
-jest.unstable_mockModule("../../helpers/hass.js", () => ({
+jest.unstable_mockModule("../../helpers/entity/hass.js", () => ({
   getState: jest.fn(),
 }));
 
@@ -44,10 +44,10 @@ jest.unstable_mockModule("../../helpers/hass.js", () => ({
 const { separator_as_timeline } = await import("../code.js");
 
 // Import mocks
-const { resolveColor } = await import("../../helpers/color.js");
-const { resolveConfig } = await import("../../helpers/config.js");
-const { suffix } = await import("../../helpers/strings.js");
-const { getState } = await import("../../helpers/hass.js");
+const { resolveColor } = await import("../../helpers/ui/color.js");
+const { resolveConfig } = await import("../../helpers/utils/config.js");
+const { suffix } = await import("../../helpers/utils/strings.js");
+const { getState } = await import("../../helpers/entity/hass.js");
 
 describe("separator_as_timeline - Unit Tests", () => {
   let mockCard, mockThis, mockElement, mockWrapper;

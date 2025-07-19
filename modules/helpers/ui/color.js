@@ -1,4 +1,4 @@
-import { getState } from "./hass.js";
+import { getState } from "../entity/hass.js";
 
 /**
  * Resolves a given color value into a valid CSS color string. If the color cannot be resolved,

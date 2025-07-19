@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { resolveConfig } from "../config";
+import { resolveConfig } from "../config.js";
 
 describe("resolveConfig()", () => {
   const getSource = (path, value, extra = {}) => ({

@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../hass.js", () => ({
+jest.unstable_mockModule("../../entity/hass.js", () => ({
   getState: jest.fn(),
 }));
 
 const { renderTextTemplate, suffix, prefix } = await import("../strings.js");
-const hass = await import("../hass.js");
+const hass = await import("../../entity/hass.js");
 
 describe("suffix()", () => {
   it("adds the suffix if missing", () => {

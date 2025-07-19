@@ -4,11 +4,11 @@ import { jest } from "@jest/globals";
 let mockHass;
 
 // Mock all the helper dependencies first
-jest.unstable_mockModule("../../helpers/condition.js", () => ({
+jest.unstable_mockModule("../../helpers/entity/condition.js", () => ({
   checkAllConditions: jest.fn(() => true),
 }));
 
-jest.unstable_mockModule("../../helpers/color.js", () => ({
+jest.unstable_mockModule("../../helpers/ui/color.js", () => ({
   resolveColor: jest.fn((color, defaultColor) => {
     // Handle entity references by looking up in hass states - these will be resolved at test runtime
     if (typeof color === "string" && color.startsWith("sensor.")) {
@@ -23,22 +23,24 @@ jest.unstable_mockModule("../../helpers/color.js", () => ({
   resolveColorFromStops: jest.fn(() => "rgb(255, 255, 0)"),
 }));
 
-jest.unstable_mockModule("../../helpers/effects.js", () => ({
+jest.unstable_mockModule("../../helpers/ui/effects.js", () => ({
   applyEffects: jest.fn(),
 }));
 
-jest.unstable_mockModule("../../helpers/hass.js", () => ({
+jest.unstable_mockModule("../../helpers/entity/hass.js", () => ({
   getState: jest.fn(),
+  getAttributes: jest.fn(),
+  getDomain: jest.fn(),
 }));
 
-jest.unstable_mockModule("../../helpers/arrays.js", () => ({
+jest.unstable_mockModule("../../helpers/utils/arrays.js", () => ({
   toArray: jest.fn((input) => {
     if (input === undefined || input === null) return [];
     return Array.isArray(input) ? input : [input];
   }),
 }));
 
-jest.unstable_mockModule("../../helpers/config.js", () => ({
+jest.unstable_mockModule("../../helpers/utils/config.js", () => ({
   resolveConfig: jest.fn((sources, defaultValue) => {
     for (const source of sources) {
       const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
@@ -53,19 +55,20 @@ jest.unstable_mockModule("../../helpers/config.js", () => ({
 }));
 
 // Mock the new SVG helper functions
-jest.unstable_mockModule("../../helpers/progressBorder.js", () => ({
+jest.unstable_mockModule("../../helpers/ui/progressBorder.js", () => ({
   createProgressBorder: jest.fn(),
   removeProgressBorder: jest.fn(),
 }));
 
 // Import the helpers to access mocked functions
-const condition = await import("../../helpers/condition.js");
-const color = await import("../../helpers/color.js");
-const effects = await import("../../helpers/effects.js");
-const hass = await import("../../helpers/hass.js");
-const arrays = await import("../../helpers/arrays.js");
-const config = await import("../../helpers/config.js");
-const strokeDashProgress = await import("../../helpers/progressBorder.js");
+const condition = await import("../../helpers/entity/condition.js");
+const color = await import("../../helpers/ui/color.js");
+const effects = await import("../../helpers/ui/effects.js");
+const hass = await import("../../helpers/entity/hass.js");
+const arrays = await import("../../helpers/utils/arrays.js");
+const config = await import("../../helpers/utils/config.js");
+const progress = await import("../../helpers/entity/progress.js");
+const strokeDashProgress = await import("../../helpers/ui/progressBorder.js");
 
 const { icon_border_progress } = await import("../code.js");
 

@@ -1,4 +1,4 @@
-import { getState, getAttributes, getDomain } from "../hass";
+import { getState, getAttributes, getDomain } from "../hass.js";
 
 global.hass = {
   states: {

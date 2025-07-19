@@ -1,5 +1,5 @@
 import { getAttributes, getDomain, getState } from "./hass.js";
-import { parseHHMMSSToSeconds } from "./timeUtils.js";
+import { parseHHMMSSToSeconds } from "../utils/timeUtils.js";
 
 // progress option object must contain `start` and `end` properties
 export function calculateProgressValue(progressSource, progressOptions = { start: 0, end: 100 }) {

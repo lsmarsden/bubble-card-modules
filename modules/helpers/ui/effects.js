@@ -1,4 +1,4 @@
-import { checkAllConditions } from "./condition.js";
+import { checkAllConditions } from "../entity/condition.js";
 
 /**
  * Applies a set of visual effects to a given DOM element based on specified conditions.

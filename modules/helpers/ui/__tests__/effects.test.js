@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../condition.js", () => ({
+jest.unstable_mockModule("../../entity/condition.js", () => ({
   checkAllConditions: jest.fn(),
 }));
 
 const { applyEffects } = await import("../effects.js");
-const condition = await import("../condition.js");
+const condition = await import("../../entity/condition.js");
 
 describe("applyEffects()", () => {
   let mockElement;

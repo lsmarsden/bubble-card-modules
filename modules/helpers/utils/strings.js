@@ -1,4 +1,4 @@
-import { getState } from "./hass.js";
+import { getState } from "../entity/hass.js";
 
 /**
  * Adds a specified suffix to a given string if it doesn't already end with the suffix.
