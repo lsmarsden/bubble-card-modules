@@ -8,6 +8,11 @@ items:
 
 definitions:
   icon_progress_config:
+    type: array
+    items:
+      $ref: "#/definitions/button_config"
+
+  button_config:
     type: object
     properties:
       button:
@@ -21,6 +26,10 @@ definitions:
         type: string
         description: "[DEPRECATED] Use 'source' instead. Source entity for progress value"
         format: "entity[attribute]"
+      invert:
+        type: boolean
+        description: "Invert the progress direction (default: false)"
+        default: false
       start:
         oneOf:
           - type: number

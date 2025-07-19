@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.6.0
+
+<details><summary>See Changes</summary>
+
+- Added ability to invert progress using `invert: true`.
+
+</details>
+
 ### v1.5.0
 
 <details><summary>See Changes</summary>

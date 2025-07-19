@@ -279,6 +279,24 @@ describe("icon_border_progress", () => {
       );
     });
 
+    it("should invert progress percentage correctly", () => {
+      // setup
+      mockHass.states["sensor.progress"].state = "75";
+      mockThis.config.icon_border_progress[0].invert = true;
+
+      // exercise
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify SVG helper was called with correct progress value (75%)
+      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
+        mockElement,
+        25, // 25% progress
+        "rgb(255, 255, 0)",
+        "white",
+        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
+      );
+    });
+
     // https://github.com/Clooos/Bubble-Card/discussions/1525#discussioncomment-13732526
     // Ensure inputs accept floats
     it("should calculate progress percentage correctly for floats", () => {
