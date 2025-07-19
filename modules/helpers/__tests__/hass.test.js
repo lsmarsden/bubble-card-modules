@@ -1,4 +1,4 @@
-import { getState } from "../hass";
+import { getState, getAttributes, getDomain } from "../hass";
 
 global.hass = {
   states: {
@@ -13,6 +13,14 @@ global.hass = {
       state: "on",
       attributes: {
         brightness: 200,
+      },
+    },
+    "timer.cooking": {
+      state: "active",
+      attributes: {
+        duration: "00:15:00",
+        remaining: "00:05:00",
+        finishes_at: "2023-10-01T12:45:00+00:00",
       },
     },
   },
@@ -33,6 +41,10 @@ describe("getState() with no or non-standard input", () => {
 
   it("returns the input as-is for boolean", () => {
     expect(getState(true)).toBe(true);
+  });
+
+  it("returns undefined if fallbackToRaw is false and type is not string or object", () => {
+    expect(getState(1, false)).toBeUndefined();
   });
 });
 
@@ -107,5 +119,121 @@ describe("getState() with object input", () => {
 
   it("returns undefined for irrelevant object structure", () => {
     expect(getState({ foo: "bar" }, false)).toBeUndefined();
+  });
+});
+
+describe("getAttributes()", () => {
+  describe("with valid entity input", () => {
+    it("should return attributes object for string entity ID", () => {
+      const result = getAttributes("sensor.temperature");
+      expect(result).toEqual({
+        unit_of_measurement: "°C",
+        calibrated: true,
+      });
+    });
+
+    it("should return attributes object for object with entity field", () => {
+      const result = getAttributes({ entity: "light.living_room" });
+      expect(result).toEqual({
+        brightness: 200,
+      });
+    });
+
+    it("should return attributes object for object with entity_id field", () => {
+      const result = getAttributes({ entity_id: "timer.cooking" });
+      expect(result).toEqual({
+        duration: "00:15:00",
+        remaining: "00:05:00",
+        finishes_at: "2023-10-01T12:45:00+00:00",
+      });
+    });
+
+    it("should return empty object if entity has no attributes", () => {
+      // Add test entity with no attributes
+      global.hass.states["binary_sensor.door"] = {
+        state: "off",
+      };
+
+      const result = getAttributes("binary_sensor.door");
+      expect(result).toEqual({});
+    });
+  });
+
+  describe("with invalid input", () => {
+    it("should return undefined for null", () => {
+      expect(getAttributes(null)).toBeUndefined();
+    });
+
+    it("should return undefined for undefined", () => {
+      expect(getAttributes(undefined)).toBeUndefined();
+    });
+
+    it("should return undefined for non-string/non-object input", () => {
+      expect(getAttributes(42)).toBeUndefined();
+      expect(getAttributes(true)).toBeUndefined();
+    });
+
+    it("should return undefined for non-existent entity", () => {
+      expect(getAttributes("sensor.unknown")).toBeUndefined();
+    });
+
+    it("should return undefined for empty object", () => {
+      expect(getAttributes({})).toBeUndefined();
+    });
+  });
+});
+
+describe("getDomain()", () => {
+  describe("with valid entity input", () => {
+    it("should return domain for string entity ID", () => {
+      expect(getDomain("sensor.temperature")).toBe("sensor");
+      expect(getDomain("light.living_room")).toBe("light");
+      expect(getDomain("timer.cooking")).toBe("timer");
+    });
+
+    it("should return domain for object with entity field", () => {
+      expect(getDomain({ entity: "sensor.temperature" })).toBe("sensor");
+    });
+
+    it("should return domain for object with entity_id field", () => {
+      expect(getDomain({ entity_id: "light.living_room" })).toBe("light");
+    });
+
+    it("should handle entities with multiple dots in name", () => {
+      // Add test entity with dots in name
+      global.hass.states["sensor.outdoor.temperature.front"] = {
+        state: "18.5",
+        attributes: {},
+      };
+
+      expect(getDomain("sensor.outdoor.temperature.front")).toBe("sensor");
+    });
+  });
+
+  describe("with invalid input", () => {
+    it("should return undefined for null", () => {
+      expect(getDomain(null)).toBeUndefined();
+    });
+
+    it("should return undefined for undefined", () => {
+      expect(getDomain(undefined)).toBeUndefined();
+    });
+
+    it("should return undefined for non-string/non-object input", () => {
+      expect(getDomain(42)).toBeUndefined();
+      expect(getDomain(true)).toBeUndefined();
+    });
+
+    it("should return domain based on first part of entity", () => {
+      expect(getDomain("sensor.unknown")).toBe("sensor");
+    });
+
+    it("should return undefined for empty object", () => {
+      expect(getDomain({})).toBeUndefined();
+    });
+
+    it("should return full domain if no second part", () => {
+      expect(getDomain("sensor")).toBe("sensor");
+    });
   });
 });

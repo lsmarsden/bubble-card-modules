@@ -1,4 +1,4 @@
-import { timeToPercent, parseTimeString, formatTime } from "../timeUtils.js";
+import { timeToPercent, parseTimeString, formatTime, parseHHMMSSToSeconds } from "../timeUtils.js";
 
 describe("timeUtils", () => {
   describe("timeToPercent", () => {
@@ -289,6 +289,30 @@ describe("timeUtils", () => {
       expect(percent).toBeCloseTo(54.17, 2);
       expect(tooltip).toBe("01:00PM");
       expect(timeline).toBe("13");
+    });
+  });
+
+  describe("parseHHMMSSToSeconds", () => {
+    it("should parse valid HH:MM:SS format", () => {
+      expect(parseHHMMSSToSeconds("01:00:00")).toBe(3600); // 1 hour
+      expect(parseHHMMSSToSeconds("00:30:00")).toBe(1800); // 30 minutes
+      expect(parseHHMMSSToSeconds("00:00:45")).toBe(45); // 45 seconds
+      expect(parseHHMMSSToSeconds("02:15:30")).toBe(8130); // 2h 15m 30s
+    });
+
+    it("should handle edge cases", () => {
+      expect(parseHHMMSSToSeconds("00:00:00")).toBe(0); // Zero time
+      expect(parseHHMMSSToSeconds("23:59:59")).toBe(86399); // Max time in a day
+    });
+
+    it("should return 0 for invalid input", () => {
+      expect(parseHHMMSSToSeconds("")).toBe(0);
+      expect(parseHHMMSSToSeconds(null)).toBe(0);
+      expect(parseHHMMSSToSeconds(undefined)).toBe(0);
+      expect(parseHHMMSSToSeconds("invalid")).toBe(0);
+      expect(parseHHMMSSToSeconds("1:2")).toBe(0); // Wrong format
+      expect(parseHHMMSSToSeconds("1:2:3:4")).toBe(0); // Too many parts
+      expect(parseHHMMSSToSeconds("aa:bb:cc")).toBe(0); // Non-numeric
     });
   });
 });

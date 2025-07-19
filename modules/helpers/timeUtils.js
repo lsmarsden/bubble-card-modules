@@ -73,3 +73,20 @@ export function formatTime(h, m, options = {}) {
 
   return `${hourStr}${show_minutes ? ":" + pad(m) : ""}${append_suffix ? suffix : ""}`;
 }
+
+/**
+ * Convert HH:MM:SS time string to total seconds
+ * @param {string} timeString - Time in HH:MM:SS format
+ * @returns {number} Total seconds
+ */
+export function parseHHMMSSToSeconds(timeString) {
+  if (!timeString || typeof timeString !== "string") return 0;
+
+  const parts = timeString.split(":");
+  if (parts.length !== 3) return 0;
+
+  const [hours, minutes, seconds] = parts.map(Number);
+  if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
+
+  return hours * 3600 + minutes * 60 + seconds;
+}

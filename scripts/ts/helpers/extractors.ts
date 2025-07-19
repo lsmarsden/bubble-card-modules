@@ -102,8 +102,7 @@ function resolveHelperDependencies(
     logDebug(`  Resolved to: ${resolvedPath}`);
 
     if (importedFiles.has(resolvedPath)) {
-      logDebug(`  Already processed, skipping`);
-      continue;
+      logDebug(`  Already processed ${resolvedPath}, processing again to resolve new dependencies.`);
     }
     importedFiles.add(resolvedPath);
 

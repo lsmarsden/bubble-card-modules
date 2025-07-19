@@ -7,7 +7,7 @@ export function parseImports(code: string): Map<string, Set<string>> {
 
   // Match import statements - handle both single and multi-line
   // Use a more restrictive regex that doesn't cross import boundaries
-  const importRegex = /import\s*\{\s*([^}]*?)\s*\}\s*from\s*["']([^"']+)["']/g;
+  const importRegex = /import\s*\{\s*([^}]*?)\s*}\s*from\s*["']([^"']+)["']/g;
 
   let match;
   while ((match = importRegex.exec(code)) !== null) {
