@@ -1,10 +1,11 @@
-import { checkAllConditions } from "../helpers/condition.js";
-import { resolveColor, resolveColorFromStops } from "../helpers/color.js";
-import { applyEffects } from "../helpers/effects.js";
-import { getState } from "../helpers/hass.js";
-import { toArray } from "../helpers/arrays.js";
-import { resolveConfig } from "../helpers/config.js";
-import { createProgressBorder, removeProgressBorder } from "../helpers/progressBorder.js";
+import { checkAllConditions } from "../helpers/entity/condition.js";
+import { resolveColor, resolveColorFromStops } from "../helpers/ui/color.js";
+import { applyEffects } from "../helpers/ui/effects.js";
+import { toArray } from "../helpers/utils/arrays.js";
+import { resolveConfig } from "../helpers/utils/config.js";
+import { createProgressBorder, removeProgressBorder } from "../helpers/ui/progressBorder.js";
+import { calculateProgressValue } from "../helpers/entity/progress.js";
+import { manageTimerUpdater } from "../helpers/ui/timerUpdater.js";
 
 export function icon_border_progress(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
@@ -28,24 +29,6 @@ export function icon_border_progress(card, hass) {
     element.style.background = element.dataset.originalBackground;
 
     removeProgressBorder(element);
-  }
-
-  function calculateProgressValue(progressSource, buttonConfig) {
-    let progressValue = parseFloat(getState(progressSource));
-    let startValue = parseFloat(getState(buttonConfig.start));
-    let endValue = parseFloat(getState(buttonConfig.end));
-
-    startValue = isNaN(startValue) ? 0 : startValue;
-    endValue = isNaN(endValue) ? 100 : endValue;
-
-    if (isNaN(progressValue) || progressValue < startValue) {
-      progressValue = startValue;
-    }
-    if (progressValue > endValue) {
-      progressValue = endValue;
-    }
-
-    return ((progressValue - startValue) / (endValue - startValue)) * 100;
   }
 
   function resolveColorConfigs(buttonConfig) {
@@ -91,19 +74,33 @@ export function icon_border_progress(card, hass) {
     });
   }
 
+  function updateProgressDisplay(progressSource, buttonConfig, buttonElement) {
+    const progressValue = calculateProgressValue(progressSource, buttonConfig);
+    const colorStops = buttonConfig.color_stops || [];
+    const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors);
+    const colors = resolveColorConfigs(buttonConfig);
+
+    applyProgressStyling(buttonElement, progressValue, progressColor, colors, buttonConfig);
+  }
+
   // Main processing loop
   toArray(config).forEach((buttonConfig) => {
     const button = buttonConfig.button;
     if (!button) return;
 
     const selector = getElementSelector(button);
-    const element = card.querySelector(selector);
-    if (!element) return;
+    const buttonElement = card.querySelector(selector);
+    if (!buttonElement) return;
 
-    storeOriginalBackground(element);
+    storeOriginalBackground(buttonElement);
 
     if (!checkAllConditions(buttonConfig.condition)) {
-      cleanupProgressStyling(element);
+      cleanupProgressStyling(buttonElement);
+      const updateIntervalId = buttonElement.dataset.progress_update_interval;
+      if (updateIntervalId) {
+        buttonElement.removeAttribute("data-progress_update_interval");
+        clearInterval(Number(updateIntervalId));
+      }
       return;
     }
 
@@ -119,12 +116,10 @@ export function icon_border_progress(card, hass) {
       },
     ]);
 
-    const progressValue = calculateProgressValue(progressSource, buttonConfig);
-    const colorStops = buttonConfig.color_stops || [];
-    const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors);
-    const colors = resolveColorConfigs(buttonConfig);
-
-    applyProgressStyling(element, progressValue, progressColor, colors, buttonConfig);
-    applyEffects(element, buttonConfig.effects || []);
+    manageTimerUpdater(buttonElement, progressSource, () => {
+      updateProgressDisplay(progressSource, buttonConfig, buttonElement);
+    });
+    updateProgressDisplay(progressSource, buttonConfig, buttonElement);
+    applyEffects(buttonElement, buttonConfig.effects || []);
   });
 }

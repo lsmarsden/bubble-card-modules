@@ -29,6 +29,7 @@ This module adds the ability to show progress of entities via icon and sub-butto
 ---
 
 - Show progress as a circular or rounded border around an icon.
+- Timer entity support
 - **Automatic border radius matching**: Progress border automatically matches your icon's border radius for visual consistency.
 - Works with any icon: main or sub-buttons.
 - Define custom start and end values (e.g. progress from 1 to 20).

@@ -1,7 +1,7 @@
-import { checkAllConditions } from "../helpers/condition.js";
-import { renderTextTemplate, suffix } from "../helpers/strings.js";
-import { resolveColor, resolveColorFromStops } from "../helpers/color.js";
-import { getState } from "../helpers/hass.js";
+import { checkAllConditions } from "../helpers/entity/condition.js";
+import { renderTextTemplate, suffix } from "../helpers/utils/strings.js";
+import { resolveColor, resolveColorFromStops } from "../helpers/ui/color.js";
+import { getState } from "../helpers/entity/hass.js";
 
 export function separator_as_progress_bar(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
