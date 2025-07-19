@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.5.0
+
+<details><summary>See Changes</summary>
+
+- Added support for timer entities as `source`. Timers will ignore custom `start` and `end` values.
+
+</details>
+
 ### v1.4.1
 
 <details><summary>See Changes</summary>

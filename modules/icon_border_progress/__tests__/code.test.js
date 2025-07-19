@@ -60,6 +60,16 @@ jest.unstable_mockModule("../../helpers/ui/progressBorder.js", () => ({
   removeProgressBorder: jest.fn(),
 }));
 
+// Mock timer helper functions
+jest.unstable_mockModule("../../helpers/entity/timer.js", () => ({
+  isActiveTimer: jest.fn(() => false),
+}));
+
+// Mock timer updater helper
+jest.unstable_mockModule("../../helpers/ui/timerUpdater.js", () => ({
+  manageTimerUpdater: jest.fn(),
+}));
+
 // Import the helpers to access mocked functions
 const condition = await import("../../helpers/entity/condition.js");
 const color = await import("../../helpers/ui/color.js");
@@ -69,6 +79,8 @@ const arrays = await import("../../helpers/utils/arrays.js");
 const config = await import("../../helpers/utils/config.js");
 const progress = await import("../../helpers/entity/progress.js");
 const strokeDashProgress = await import("../../helpers/ui/progressBorder.js");
+const timer = await import("../../helpers/entity/timer.js");
+const timerUpdater = await import("../../helpers/ui/timerUpdater.js");
 
 const { icon_border_progress } = await import("../code.js");
 
@@ -639,6 +651,32 @@ describe("icon_border_progress", () => {
       expect(strokeDashProgress.removeProgressBorder).toHaveBeenCalledWith(mockElement);
     });
 
+    it("should clean up intervals when condition is false", () => {
+      // set up
+      mockThis.config.icon_border_progress[0].condition = [
+        {
+          condition: "state",
+          entity: "sensor.enabled",
+          state: "on",
+        },
+      ];
+      mockElement.dataset.progress_update_interval = "123";
+      jest.spyOn(global, "clearInterval");
+
+      condition.checkAllConditions.mockReturnValue(false);
+
+      // exercise
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // verify
+      // When condition is false, SVG helper should not be called (progress is cleaned up)
+      expect(strokeDashProgress.createProgressBorder).not.toHaveBeenCalled();
+      // But cleanup should be called
+      expect(strokeDashProgress.removeProgressBorder).toHaveBeenCalledWith(mockElement);
+      expect(mockElement.dataset.progress_update_interval).toBeUndefined();
+      expect(clearInterval).toHaveBeenCalledWith("123");
+    });
+
     it("should process when condition is true", () => {
       mockThis.config.icon_border_progress[0].condition = [
         {
@@ -1094,6 +1132,202 @@ describe("icon_border_progress", () => {
 
       // Cleanup
       backgroundSetter.mockRestore();
+    });
+  });
+
+  describe("timer interval management", () => {
+    beforeEach(() => {
+      // Mock timer functions for these tests
+      jest.useFakeTimers();
+      jest.spyOn(global, "setInterval");
+      jest.spyOn(global, "clearInterval");
+
+      // Reset timer helper mock
+      timer.isActiveTimer.mockReturnValue(false);
+
+      // Set up hass mock implementation for timer domain detection
+      hass.getDomain.mockImplementation((entity) => {
+        if (entity && entity.startsWith("timer.")) return "timer";
+        if (entity && entity.startsWith("sensor.")) return "sensor";
+        return "unknown";
+      });
+    });
+
+    afterEach(() => {
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    it("should set interval for active timer without existing interval", () => {
+      // Setup - Configure for active timer
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+      timer.isActiveTimer.mockReturnValue(true);
+
+      // Ensure no existing interval
+      expect(mockElement.dataset.progress_update_interval).toBeUndefined();
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater should be called with correct parameters
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+
+      // Verify - the update function passed should be updateProgressDisplay with correct arguments
+      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
+
+      // Reset mocks to test the update function
+      jest.clearAllMocks();
+
+      // Exercise - Call the update function
+      updateFunction();
+
+      // Verify - updateProgressDisplay functionality should be executed
+      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
+        mockElement,
+        expect.any(Number), // progress value
+        expect.any(String), // progress color
+        expect.any(String), // remaining color
+        expect.any(Object), // options
+      );
+    });
+    it("should not set duplicate interval for active timer with existing interval", () => {
+      // Setup - Configure for active timer with existing interval
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+      timer.isActiveTimer.mockReturnValue(true);
+      mockElement.dataset.progress_update_interval = "123"; // Existing interval ID
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - setInterval should NOT be called since interval already exists
+      expect(setInterval).not.toHaveBeenCalled();
+
+      // Verify - existing data attribute should remain unchanged
+      expect(mockElement.dataset.progress_update_interval).toBe("123");
+    });
+
+    it("should clear interval for inactive timer with existing interval", () => {
+      // Setup - Configure for inactive timer with existing interval
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+      timer.isActiveTimer.mockReturnValue(false); // Timer is not active
+      mockElement.dataset.progress_update_interval = "456"; // Existing interval ID
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater should be called to clean up interval
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+    });
+
+    it("should clear interval for any non-active-timer entity with existing interval", () => {
+      // Setup - Configure for sensor (non-timer) with existing interval
+      // Note: Current implementation clears intervals for ANY entity that's not an active timer
+      mockThis.config.icon_border_progress[0].source = "sensor.progress";
+      timer.isActiveTimer.mockReturnValue(false); // Not an active timer
+      mockElement.dataset.progress_update_interval = "789"; // Existing interval ID
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater should be called to clean up interval
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(
+        mockElement,
+        "sensor.progress",
+        expect.any(Function),
+      );
+    });
+
+    it("should handle timer state transition from active to inactive", () => {
+      // Setup - Configure for timer
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+
+      // First run - active timer, no existing interval
+      timer.isActiveTimer.mockReturnValue(true);
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater was called for active timer
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+
+      // Reset mocks for second run
+      jest.clearAllMocks();
+
+      // Second run - timer becomes inactive
+      timer.isActiveTimer.mockReturnValue(false);
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater was called again for inactive timer
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+    });
+
+    it("should handle timer state transition from inactive to active", () => {
+      // Setup - Configure for timer that starts inactive
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+
+      // First run - inactive timer
+      timer.isActiveTimer.mockReturnValue(false);
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater should be called for inactive timer
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+
+      // Reset mocks for second run
+      jest.clearAllMocks();
+
+      // Second run - timer becomes active
+      timer.isActiveTimer.mockReturnValue(true);
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater should be called again for active timer
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+
+      // Verify - the update function passed should work correctly
+      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
+
+      // Reset mocks to test the update function
+      jest.clearAllMocks();
+
+      // Exercise - Call the update function
+      updateFunction();
+
+      // Verify - updateProgressDisplay functionality should be executed
+      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
+        mockElement,
+        expect.any(Number), // progress value
+        expect.any(String), // progress color
+        expect.any(String), // remaining color
+        expect.any(Object), // options
+      );
+    });
+
+    it("should call updateProgressDisplay with correct parameters in interval", () => {
+      // Setup - Configure for active timer
+      mockThis.config.icon_border_progress[0].source = "timer.cooking";
+      timer.isActiveTimer.mockReturnValue(true);
+
+      // Exercise - Run module to set up interval
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - manageTimerUpdater was called and capture the callback function
+      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+
+      // Get the callback function from manageTimerUpdater call
+      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
+
+      // Reset mocks to test the callback
+      jest.clearAllMocks();
+
+      // Exercise - Execute the update callback
+      updateFunction();
+
+      // Verify - updateProgressDisplay functionality was executed
+      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
+        mockElement,
+        expect.any(Number), // progress value
+        expect.any(String), // progress color
+        expect.any(String), // remaining color
+        expect.any(Object), // options
+      );
     });
   });
 });

@@ -1895,4 +1895,243 @@ describe("icon_border_progress - Integration Tests", () => {
       expect(mainIcon.style.background).toBe("rgb(128, 128, 128)");
     });
   });
+
+  describe("Timer Interval Management", () => {
+    it("should set data attribute for active timer entity", () => {
+      // Setup - Configure with active timer entity
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "timer.cooking",
+        },
+      ];
+
+      mockHass.states["timer.cooking"] = {
+        state: "active",
+        attributes: {
+          duration: "00:10:00",
+          finishes_at: "2025-07-19T15:30:00Z",
+          remaining: "0:05:30",
+        },
+        domain: "timer",
+      };
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Data attribute should be set for active timer
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.dataset.progress_update_interval).toBeDefined();
+      expect(mainIcon.dataset.progress_update_interval).toMatch(/^\d+$/); // Should be a numeric interval ID
+    });
+
+    it("should remove data attribute when timer becomes inactive", () => {
+      // Setup - Configure with timer entity
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "timer.cooking",
+        },
+      ];
+
+      // First run - active timer
+      mockHass.states["timer.cooking"] = {
+        state: "active",
+        attributes: {
+          duration: "00:10:00",
+          finishes_at: "2025-07-19T15:30:00Z",
+        },
+        domain: "timer",
+      };
+
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.dataset.progress_update_interval).toBeDefined();
+
+      // Second run - timer becomes idle (simulating state change)
+      mockHass.states["timer.cooking"].state = "idle";
+
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Data attribute should be removed when timer is no longer active
+      expect(mainIcon.dataset.progress_update_interval).toBeUndefined();
+    });
+
+    it("should handle timer state transitions correctly", () => {
+      // Setup - Configure with timer entity
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "timer.cooking",
+          background_color: "#444444",
+        },
+      ];
+
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+
+      // Test sequence: idle -> active -> paused -> active -> idle
+      const states = [
+        { state: "idle", shouldHaveInterval: false, description: "idle timer" },
+        { state: "active", shouldHaveInterval: true, description: "active timer" },
+        { state: "paused", shouldHaveInterval: false, description: "paused timer" },
+        { state: "active", shouldHaveInterval: true, description: "resumed timer" },
+        { state: "idle", shouldHaveInterval: false, description: "finished timer" },
+      ];
+
+      states.forEach(({ state, shouldHaveInterval, description }) => {
+        // Setup - Set timer state
+        mockHass.states["timer.cooking"] = {
+          state: state,
+          attributes: {
+            duration: "00:10:00",
+            remaining: state === "paused" ? "0:05:30" : undefined,
+            finishes_at: state === "active" ? "2025-07-19T15:30:00Z" : undefined,
+          },
+          domain: "timer",
+        };
+
+        // Exercise - Run module
+        icon_border_progress.call(mockThis, mockCard, mockHass);
+
+        // Verify - Check interval data attribute based on expected state
+        if (shouldHaveInterval) {
+          expect(mainIcon.dataset.progress_update_interval).toBeDefined();
+          expect(mainIcon.dataset.progress_update_interval).toMatch(/^\d+$/);
+        } else {
+          expect(mainIcon.dataset.progress_update_interval).toBeUndefined();
+        }
+
+        // Verify - Progress visualization should always be applied
+        const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+        expect(svg).toBeTruthy();
+      });
+    });
+
+    it("should not set interval for non-timer entities", () => {
+      // Setup - Configure with sensor entity (not timer)
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+        },
+      ];
+
+      mockHass.states["sensor.progress"] = {
+        state: "75",
+        domain: "sensor",
+      };
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - No interval data attribute should be set for non-timer entities
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.dataset.progress_update_interval).toBeUndefined();
+
+      // Verify - Progress visualization should still be applied
+      const svg = mainIcon.querySelector(".stroke-dash-aligned-svg");
+      expect(svg).toBeTruthy();
+    });
+
+    it("should handle multiple timer entities with different states", () => {
+      // Setup - Configure multiple buttons with different timer entities
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "timer.cooking",
+        },
+        {
+          button: "sub-button-1",
+          source: "timer.laundry",
+        },
+        {
+          button: "sub-button-2",
+          source: "timer.workout",
+        },
+      ];
+
+      // Different timer states
+      mockHass.states["timer.cooking"] = {
+        state: "active",
+        attributes: { duration: "00:10:00", finishes_at: "2025-07-19T15:30:00Z" },
+        domain: "timer",
+      };
+      mockHass.states["timer.laundry"] = {
+        state: "idle",
+        attributes: { duration: "01:30:00" },
+        domain: "timer",
+      };
+      mockHass.states["timer.workout"] = {
+        state: "paused",
+        attributes: { duration: "00:45:00", remaining: "0:20:15" },
+        domain: "timer",
+      };
+
+      // Exercise - Run module
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Only active timer should have interval data attribute
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      const subButton1 = mockCard.querySelector(".bubble-sub-button-1");
+      const subButton2 = mockCard.querySelector(".bubble-sub-button-2");
+
+      expect(mainIcon.dataset.progress_update_interval).toBeDefined(); // active timer
+      expect(subButton1.dataset.progress_update_interval).toBeUndefined(); // idle timer
+      expect(subButton2.dataset.progress_update_interval).toBeUndefined(); // paused timer
+
+      // Verify - All should have progress visualizations
+      expect(mainIcon.querySelector(".stroke-dash-aligned-svg")).toBeTruthy();
+      expect(subButton1.querySelector(".stroke-dash-aligned-svg")).toBeTruthy();
+      expect(subButton2.querySelector(".stroke-dash-aligned-svg")).toBeTruthy();
+    });
+
+    it("should handle timer with condition that becomes false", () => {
+      // Setup - Configure timer with condition
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "timer.cooking",
+          background_color: "#555555",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "binary_sensor.kitchen_occupied",
+              state: "on",
+            },
+          ],
+        },
+      ];
+
+      mockHass.states["timer.cooking"] = {
+        state: "active",
+        attributes: { duration: "00:10:00", finishes_at: "2025-07-19T15:30:00Z" },
+        domain: "timer",
+      };
+      mockHass.states["binary_sensor.kitchen_occupied"] = { state: "on" };
+
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+
+      // Exercise - First run with condition true and active timer
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify - Interval should be set and progress applied
+      expect(mainIcon.dataset.progress_update_interval).toBeDefined();
+      expect(mainIcon.querySelector(".stroke-dash-aligned-svg")).toBeTruthy();
+
+      // Setup - Change condition to false (but timer still active)
+      mockHass.states["binary_sensor.kitchen_occupied"].state = "off";
+
+      // Exercise - Second run with condition false
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // Verify
+      // The interval should be cleaned up
+      // otherwise it will keep running against elements that no longer exist in the DOM
+      // causing console logs and potential memory leaks
+      expect(mainIcon.dataset.progress_update_interval).toBeUndefined();
+      expect(mainIcon.querySelector(".stroke-dash-aligned-svg")).toBeNull();
+      expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
+    });
+  });
 });

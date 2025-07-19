@@ -1,8 +1,8 @@
-import { resolveColor } from "../helpers/color";
-import { resolveConfig } from "../helpers/config";
-import { suffix } from "../helpers/strings";
-import { getState } from "../helpers/hass";
-import { timeToPercent, parseTimeString, formatTime } from "../helpers/timeUtils";
+import { resolveColor } from "../helpers/ui/color";
+import { resolveConfig } from "../helpers/utils/config";
+import { suffix } from "../helpers/utils/strings";
+import { getState } from "../helpers/entity/hass";
+import { timeToPercent, parseTimeString, formatTime } from "../helpers/utils/timeUtils";
 
 export function separator_as_timeline(card, hass) {
   const config = this.config.separator_as_timeline;

@@ -43,9 +43,6 @@ export function parseImports(code: string): Map<string, Set<string>> {
       continue; // Skip imports in strings
     }
 
-    // Skip non-helper imports - include both absolute and relative helper imports
-    if (!importPath.includes("helpers/") && !importPath.startsWith("./")) continue;
-
     // Additional validation: check if the names string looks malformed
     // If it contains quotes or semicolons, it's probably malformed
     if (namesString.includes('"') || namesString.includes("'") || namesString.includes(";")) {
