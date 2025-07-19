@@ -9,7 +9,7 @@ export function manageTimerUpdater(element, progressSource, updateFn) {
   }
 
   if (!shouldHaveUpdater && hasUpdater) {
-    clearInterval(element.dataset.progress_update_interval);
+    clearInterval(Number(element.dataset.progress_update_interval));
     element.removeAttribute("data-progress_update_interval");
   }
 }

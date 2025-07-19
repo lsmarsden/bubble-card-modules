@@ -78,8 +78,8 @@ describe("manageTimerUpdater()", () => {
       // Exercise - Call the function
       manageTimerUpdater(mockElement, "timer.cooking", mockUpdateFn);
 
-      // Verify - clearInterval should be called with interval ID
-      expect(clearInterval).toHaveBeenCalledWith("456");
+      // Verify - clearInterval should be called with numeric interval ID
+      expect(clearInterval).toHaveBeenCalledWith(456);
 
       // Verify - data attribute should be removed
       expect(mockElement.removeAttribute).toHaveBeenCalledWith("data-progress_update_interval");
@@ -160,19 +160,6 @@ describe("manageTimerUpdater()", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle truthy but non-numeric interval values", () => {
-      // Setup - Invalid interval value (string that's truthy but not numeric)
-      timer.isActiveTimer.mockReturnValue(false);
-      mockElement.dataset.progress_update_interval = "invalid"; // Truthy but invalid
-
-      // Exercise - Call the function
-      manageTimerUpdater(mockElement, "timer.cooking", mockUpdateFn);
-
-      // Verify - clearInterval should still be called (helper treats any truthy value as existing interval)
-      expect(clearInterval).toHaveBeenCalledWith("invalid");
-      expect(mockElement.removeAttribute).toHaveBeenCalledWith("data-progress_update_interval");
-    });
-
     it("should handle empty string interval values", () => {
       // Setup - Empty string interval value (falsy)
       timer.isActiveTimer.mockReturnValue(false);

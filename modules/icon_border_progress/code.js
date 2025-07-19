@@ -99,7 +99,7 @@ export function icon_border_progress(card, hass) {
       const updateIntervalId = buttonElement.dataset.progress_update_interval;
       if (updateIntervalId) {
         buttonElement.removeAttribute("data-progress_update_interval");
-        clearInterval(updateIntervalId);
+        clearInterval(Number(updateIntervalId));
       }
       return;
     }

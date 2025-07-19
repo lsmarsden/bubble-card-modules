@@ -674,7 +674,7 @@ describe("icon_border_progress", () => {
       // But cleanup should be called
       expect(strokeDashProgress.removeProgressBorder).toHaveBeenCalledWith(mockElement);
       expect(mockElement.dataset.progress_update_interval).toBeUndefined();
-      expect(clearInterval).toHaveBeenCalledWith("123");
+      expect(clearInterval).toHaveBeenCalledWith(123);
     });
 
     it("should process when condition is true", () => {
