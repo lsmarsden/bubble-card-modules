@@ -20,6 +20,11 @@ editor:
         label: "✨Source entity"
         selector:
           entity: {}
+      - name: invert
+        label: "Invert the progress direction"
+        selector:
+          boolean:
+            default: false
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:
@@ -106,6 +111,11 @@ editor:
         label: "✨Source entity"
         selector:
           entity: {}
+      - name: invert
+        label: "Invert the progress direction"
+        selector:
+          boolean:
+            default: false
       - name: condition
         label: "Condition to show progress (see docs for additional condition configuration)"
         selector:

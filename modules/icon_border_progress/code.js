@@ -76,11 +76,13 @@ export function icon_border_progress(card, hass) {
 
   function updateProgressDisplay(progressSource, buttonConfig, buttonElement) {
     const progressValue = calculateProgressValue(progressSource, buttonConfig);
+    const inverted = buttonConfig?.invert || false;
+    const adjustedProgress = inverted ? 100 - progressValue : progressValue;
     const colorStops = buttonConfig.color_stops || [];
-    const progressColor = resolveColorFromStops(progressValue, colorStops, buttonConfig.interpolate_colors);
+    const progressColor = resolveColorFromStops(adjustedProgress, colorStops, buttonConfig.interpolate_colors);
     const colors = resolveColorConfigs(buttonConfig);
 
-    applyProgressStyling(buttonElement, progressValue, progressColor, colors, buttonConfig);
+    applyProgressStyling(buttonElement, adjustedProgress, progressColor, colors, buttonConfig);
   }
 
   // Main processing loop

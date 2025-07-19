@@ -437,6 +437,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "sub-button-1",
           source: "sensor.saros_10_battery",
+          invert: true,
           start: "sensor.start_value",
           end: "sensor.end_value",
           color_stops: [
@@ -448,7 +449,7 @@ describe("icon_border_progress - Integration Tests", () => {
         },
       ];
 
-      // Battery is at 75, with start=0 and end=200, progress should be 37.5%
+      // Battery is at 75, with start=0 and end=200, and invert=true, progress should be 62.5%
       mockHass.states["sensor.saros_10_battery"].state = "75";
       mockHass.states["sensor.start_value"] = { state: "0" };
       mockHass.states["sensor.end_value"] = { state: "200" };
@@ -467,7 +468,7 @@ describe("icon_border_progress - Integration Tests", () => {
       const progressPath = svg.querySelector(".progress-path");
       expect(progressPath).toBeTruthy();
       expect(progressPath.getAttribute("stroke")).not.toBe("transparent");
-      verifyStrokeDashArray(progressPath, 0, 0, 112.5, 187.5);
+      verifyStrokeDashArray(progressPath, 0, 0, 187.5, 112.5);
       expect(subButton1.style.background).toBe("rgb(10, 10, 10)"); // JSDOM converts #0a0a0a to rgb
     });
 
