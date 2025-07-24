@@ -242,6 +242,38 @@ icon_border_progress:
 
   </details>
 
+  <details>
+    <summary><strong>Conditional configurations for the same button</strong></summary>
+
+This example shows two different configurations for the same button, based on the battery level of a device.
+If multiple configuration conditions match, the first matching configuration in the list will be used.
+
+```yaml
+icon_border_progress:
+  - button: main
+    source: sensor.robo_vac[battery_level]
+    condition:
+      condition: "state",
+      entity_id: "vacuum.robo_vac",
+      state: "docked",
+    color_stops:
+      - percent: 0
+        color: "red"
+      - percent: 100
+        color: "green"
+  - button: main
+    source: sensor.robo_vac[cleaning_progress]
+    condition:
+      condition: "state",
+      entity_id: "vacuum.robo_vac",
+      state: "cleaning",
+    color_stops:
+      - percent: 0
+        color: "blue"
+```
+
+  </details>
+
 ## Install this module
 
 1. Install [Bubble Card](https://github.com/Clooos/Bubble-Card) in Home Assistant if you haven't already.

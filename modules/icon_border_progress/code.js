@@ -85,18 +85,33 @@ export function icon_border_progress(card, hass) {
     applyProgressStyling(buttonElement, adjustedProgress, progressColor, colors, buttonConfig);
   }
 
-  // Main processing loop
-  toArray(config).forEach((buttonConfig) => {
-    const button = buttonConfig.button;
-    if (!button) return;
+  // group button configs by button name
+  function groupByButton(configArray) {
+    return configArray.reduce((groups, buttonConfig) => {
+      const button = buttonConfig.button;
+      if (!button) return groups;
 
+      if (!groups.has(button)) {
+        groups.set(button, []);
+      }
+      groups.get(button).push(buttonConfig);
+      return groups;
+    }, new Map());
+  }
+
+  // Main processing loop
+  groupByButton(toArray(config)).forEach((buttonConfigs, button) => {
     const selector = getElementSelector(button);
     const buttonElement = card.querySelector(selector);
     if (!buttonElement) return;
 
     storeOriginalBackground(buttonElement);
 
-    if (!checkAllConditions(buttonConfig.condition)) {
+    // Find the first configuration with matching conditions
+    const matchingConfig = buttonConfigs.find((config) => checkAllConditions(config.condition));
+
+    if (!matchingConfig) {
+      // No matching conditions found, cleanup styling
       cleanupProgressStyling(buttonElement);
       const updateIntervalId = buttonElement.dataset.progress_update_interval;
       if (updateIntervalId) {
@@ -108,20 +123,20 @@ export function icon_border_progress(card, hass) {
 
     const progressSource = resolveConfig([
       {
-        config: buttonConfig,
+        config: matchingConfig,
         path: "source",
       },
       {
-        config: buttonConfig,
+        config: matchingConfig,
         path: "entity",
         metadata: { deprecated: true, replacedWith: "source" },
       },
     ]);
 
     manageTimerUpdater(buttonElement, progressSource, () => {
-      updateProgressDisplay(progressSource, buttonConfig, buttonElement);
+      updateProgressDisplay(progressSource, matchingConfig, buttonElement);
     });
-    updateProgressDisplay(progressSource, buttonConfig, buttonElement);
-    applyEffects(buttonElement, buttonConfig.effects || []);
+    updateProgressDisplay(progressSource, matchingConfig, buttonElement);
+    applyEffects(buttonElement, matchingConfig.effects || []);
   });
 }

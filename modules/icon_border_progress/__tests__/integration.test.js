@@ -93,7 +93,7 @@ describe("icon_border_progress - Integration Tests", () => {
         {
           button: "main",
           source: "sensor.progress",
-          background_color: "#333333",
+          background_color: "rgb(51, 51, 51)",
           condition: [
             {
               condition: "state",
@@ -126,7 +126,7 @@ describe("icon_border_progress - Integration Tests", () => {
       expect(progressStrokeDashArray).toBeTruthy();
 
       // Verify background styling is applied
-      expect(mainIcon.style.background).toBeTruthy();
+      expect(mainIcon.style.background).toBe("rgb(51, 51, 51)");
 
       // Setup - Change condition to false
       mockHass.states["sensor.enable_progress"] = { state: "off" };
@@ -140,6 +140,67 @@ describe("icon_border_progress - Integration Tests", () => {
 
       // Background should be restored to original value (stored in dataset)
       expect(mainIcon.style.background).toBe(mainIcon.dataset.originalBackground || "");
+    });
+
+    // https://github.com/lsmarsden/bubble-card-modules/issues/1#issuecomment-3102650787
+    it("should apply first condition matching when multiple button configs are defined", () => {
+      // Setup - Real YAML configuration with actual condition
+      mockThis.config.icon_border_progress = [
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "rgb(255, 0, 0)",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "off",
+            },
+          ],
+        },
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "rgb(0, 255, 0)",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "on",
+            },
+          ],
+        },
+        {
+          button: "main",
+          source: "sensor.progress",
+          background_color: "rgb(0, 0, 255)",
+          condition: [
+            {
+              condition: "state",
+              entity_id: "sensor.enable_progress",
+              state: "on",
+            },
+          ],
+        },
+      ];
+      mockHass.states["sensor.progress"] = { state: "75" };
+      mockHass.states["sensor.enable_progress"] = { state: "off" };
+
+      // exercise - call with state off
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // verify
+      const mainIcon = mockCard.querySelector(".bubble-icon-container");
+      expect(mainIcon.style.background).toBe("rgb(255, 0, 0)");
+
+      // set up - change condition to on
+      mockHass.states["sensor.enable_progress"] = { state: "on" };
+
+      // exercise - call with state on
+      icon_border_progress.call(mockThis, mockCard, mockHass);
+
+      // verify first matching condition should apply
+      expect(mainIcon.style.background).toBe("rgb(0, 255, 0)");
     });
 
     it("should handle rapid condition state changes correctly", () => {
