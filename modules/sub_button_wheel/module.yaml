@@ -1,0 +1,18 @@
+module_info:
+  id: sub_button_wheel
+  name: Sub Button Wheel
+  version: 1.0.0
+  creator: lsmarsden
+  link: https://github.com/lsmarsden/bubble-card-modules/tree/main/sub_button_wheel
+  supported:
+    - button
+    - climate
+    - cover
+    - separator
+    - calendar
+    - media-player
+    - select
+  description_file: module_store_description.html
+  code_file: code.js
+  styles: styles.css
+  editor_file: editor.yaml

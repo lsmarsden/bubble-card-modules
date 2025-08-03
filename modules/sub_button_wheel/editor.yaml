@@ -1,0 +1,113 @@
+editor:
+  - name: wheel_opener
+    label: "Button to open the wheel (e.g. 'sub-button-1'). Must have no tap action."
+    selector:
+      text:
+  - type: expandable
+    title: "Layout Options"
+    name: layout_options
+    icon: mdi:page-layout-body
+    schema:
+      - name: wheel_layout
+        label: "Wheel layout style"
+        default: "even-circle"
+        selector:
+          select:
+            options:
+              - label: "Even Circle - Buttons evenly distributed in a circle"
+                value: "even-circle"
+              - label: "Progressive Arc - Dramatic arc with alternating left/right placement"
+                value: "progressive-arc"
+              - label: "Compact Arc - Tighter arc with alternating left/right placement"
+                value: "compact-arc"
+              - label: "Fixed Position - Uses standard 8-button template positions"
+                value: "fixed-position"
+              - label: "Double Ring - Two concentric rings of buttons"
+                value: "double-ring"
+              - label: "Smart Adaptive - Automatically chooses best layout for button count"
+                value: "smart-adaptive"
+      - name: double_ring_inner_count
+        label: "Inner ring button count (double-ring layout only)"
+        default: 4
+        selector:
+          number:
+  - type: expandable
+    title: "Animation Options"
+    name: animation_options
+    icon: mdi:animation-play
+    schema:
+      - name: wheel_animation
+        label: "Animation style when wheel opens"
+        default: "staggered-scale"
+        selector:
+          select:
+            options:
+              - label: "Staggered Scale - Buttons appear one by one with bounce effect"
+                value: "staggered-scale"
+              - label: "Instant - All buttons appear simultaneously"
+                value: "instant"
+      - name: animation_delay
+        label: "Initial delay before animation starts (s)"
+        default: 0.1
+        selector:
+          number:
+            unit_of_measurement: "s"
+      - name: animation_duration
+        label: "Total duration of animation (s)"
+        default: 0.2
+        selector:
+          number:
+            unit_of_measurement: "s"
+  - type: expandable
+    title: "Wheel Buttons"
+    name: wheel_buttons
+    icon: mdi:tire
+    schema:
+      - type: expandable
+        label: "Button 1"
+        name: "0"
+        schema:
+          - name: sub_button
+            label: "Sub-button number (1, 2, 3, etc.)"
+            selector:
+              text:
+          - name: position
+            label: "Fixed position (optional - leave empty for auto)"
+            selector:
+              number:
+      - type: expandable
+        label: "Button 2"
+        name: "1"
+        schema:
+          - name: sub_button
+            label: "Sub-button number (1, 2, 3, etc.)"
+            selector:
+              text:
+          - name: position
+            label: "Fixed position (optional - leave empty for auto)"
+            selector:
+              number:
+      - type: expandable
+        label: "Button 3"
+        name: "2"
+        schema:
+          - name: sub_button
+            label: "Sub-button number (1, 2, 3, etc.)"
+            selector:
+              text:
+          - name: position
+            label: "Fixed position (optional - leave empty for auto)"
+            selector:
+              number:
+      - type: expandable
+        label: "Button 4 (add more in YAML)"
+        name: "3"
+        schema:
+          - name: sub_button
+            label: "Sub-button number (1, 2, 3, etc.)"
+            selector:
+              text:
+          - name: position
+            label: "Fixed position (optional - leave empty for auto)"
+            selector:
+              number:

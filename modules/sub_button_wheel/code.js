@@ -1,283 +1,87 @@
+import { toArray } from "../helpers/utils/arrays.js";
+
 export function sub_button_wheel(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
   const { sub_button_wheel: config } = this.config;
 
-  const exampleConfig = {
-    wheel_opener: "sub-button-1", // main or sub buttons
-    layout_options: {
-      wheel_layout: "even-circle", // 'even-circle', 'progressive-arc'
-    },
-    animation_options: {
-      wheel_animation: "staggered-scale", // 'staggered-scale', 'instant'
-      animation_delay: 0.5, // seconds
-      animation_duration: 1.0, // seconds
-    },
-    wheel_buttons: [
-      // supports up to 8 buttons
-      { sub_button: "1", position: 2 },
-      { sub_button: "2", position: 3 },
-      { sub_button: "3" },
-      { sub_button: "4", position: 5 },
-      { sub_button: "5" },
-    ],
-  };
-
-  // Global interaction manager - one per card to coordinate all wheels
-  class InteractionManager {
-    constructor(card) {
-      this.card = card;
-      this.wheels = new Map(); // wheelContainer -> wheel state
-      this.activeWheel = null;
-
-      // Setup global click handler for outside-click-to-close
-      this.setupOutsideClickHandler();
-    }
-
-    registerWheel(wheelContainer, showCallback, hideCallback, overlayManager) {
-      const wheelState = {
-        container: wheelContainer,
-        show: showCallback,
-        hide: hideCallback,
-        isOpen: false,
-        overlayManager: overlayManager,
-      };
-
-      this.wheels.set(wheelContainer, wheelState);
-      this.setupWheelInteractions(wheelState);
-
-      console.log(`Registered wheel for ${wheelContainer.className}, total wheels: ${this.wheels.size}`);
-    }
-
-    setupWheelInteractions(wheelState) {
-      const { container, overlayManager } = wheelState;
-
-      // Click to toggle - works for both desktop and mobile
-      container.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent triggering outside click handler
-        this.toggleWheel(container);
-      });
-
-      // Also handle clicks on the overlay if it exists
-      if (overlayManager) {
-        // We'll set up overlay click handling when the overlay is created
-      }
-    }
-
-    setupOutsideClickHandler() {
-      // Close any open wheel when clicking outside
-      document.addEventListener(
-        "click",
-        (e) => {
-          if (this.activeWheel) {
-            const wheelState = this.wheels.get(this.activeWheel);
-            const overlay = wheelState?.overlayManager?.getOverlay();
-
-            // Check if click is outside the overlay or on the central button (to toggle)
-            if (overlay && !overlay.contains(e.target) && !this.activeWheel.contains(e.target)) {
-              this.closeAllWheels();
-            } else if (!overlay && !this.activeWheel.contains(e.target)) {
-              this.closeAllWheels();
-            }
-          }
-        },
-        { capture: true },
-      );
-    }
-
-    openWheel(wheelContainer) {
-      const wheelState = this.wheels.get(wheelContainer);
-      if (!wheelState || wheelState.isOpen) return;
-
-      // Close any currently open wheel
-      this.closeAllWheels();
-
-      // Create overlay if overlay manager exists
-      if (wheelState.overlayManager) {
-        const overlay = wheelState.overlayManager.createOverlay(wheelContainer);
-        // Add visual state classes to overlay
-        overlay.classList.add("wheel-open");
-        // Also keep the wheel-open class on the original button for any existing styling
-        wheelContainer.classList.add("wheel-open");
-      } else {
-        // Fallback for wheels without overlay
-        wheelContainer.classList.add("wheel-open");
-      }
-
-      // Open the requested wheel
-      wheelState.isOpen = true;
-      this.activeWheel = wheelContainer;
-      wheelState.show();
-
-      console.log(`Opened wheel: ${wheelContainer.className}`);
-    }
-
-    closeWheel(wheelContainer) {
-      const wheelState = this.wheels.get(wheelContainer);
-      if (!wheelState || !wheelState.isOpen) return;
-
-      wheelState.isOpen = false;
-      if (this.activeWheel === wheelContainer) {
-        this.activeWheel = null;
-      }
-      wheelState.hide();
-
-      // Remove visual state classes and destroy overlay if it exists
-      if (wheelState.overlayManager) {
-        const overlay = wheelState.overlayManager.getOverlay();
-        if (overlay) {
-          overlay.classList.remove("wheel-open");
-        }
-        wheelContainer.classList.remove("wheel-open");
-        wheelState.overlayManager.destroyOverlay();
-      } else {
-        // Fallback for wheels without overlay
-        wheelContainer.classList.remove("wheel-open");
-      }
-
-      console.log(`Closed wheel: ${wheelContainer.className}`);
-    }
-
-    closeAllWheels() {
-      this.wheels.forEach((wheelState, wheelContainer) => {
-        if (wheelState.isOpen) {
-          this.closeWheel(wheelContainer);
-        }
-      });
-    }
-
-    toggleWheel(wheelContainer) {
-      const wheelState = this.wheels.get(wheelContainer);
-      if (!wheelState) return;
-
-      if (wheelState.isOpen) {
-        this.closeWheel(wheelContainer);
-      } else {
-        this.openWheel(wheelContainer);
-      }
-    }
-
-    cleanup() {
-      // Clean up global event listeners when card is destroyed
-      this.closeAllWheels();
-      this.wheels.clear();
-    }
-  }
-
-  // Get or create interaction manager for this card
-  function getInteractionManager(card) {
-    if (!card._wheelInteractionManager) {
-      card._wheelInteractionManager = new InteractionManager(card);
-    }
-    return card._wheelInteractionManager;
-  }
-
-  let wheelButtonsState = "hidden"; // 'hidden', 'shown'
-  let currentWheelButtons = [];
-  let currentOverlayManager = null;
-
-  function showButtons() {
-    if (wheelButtonsState !== "hidden" || currentWheelButtons.length === 0) return;
-
-    console.log("Showing wheel buttons");
-    wheelButtonsState = "shown";
-
-    currentWheelButtons.forEach((button, index) => {
-      // Just change scale/opacity - existing transitions handle the animation
-      button.style.scale = "1";
-      button.style.opacity = "1";
-    });
-  }
-
-  function hideButtons() {
-    if (wheelButtonsState !== "shown" || currentWheelButtons.length === 0) return;
-
-    console.log("Hiding wheel buttons");
-    wheelButtonsState = "hidden";
-
-    currentWheelButtons.forEach((button, index) => {
-      // Just change scale/opacity - existing transitions handle the animation
-      button.style.scale = "0";
-      button.style.opacity = "0";
-    });
-  }
-
-  function moveButtonsToWheel(wheelContainer, layout = "even-circle", animation = "staggered-scale") {
-    const wheelButtonsConfig = config.wheel_buttons;
+  function moveButtonsToWheel(wheelOpenerButton, layout = "even-circle") {
+    const wheelButtonsConfig = toArray(config.wheel_buttons);
     if (!wheelButtonsConfig || wheelButtonsConfig.length === 0) {
       console.warn("No wheel buttons configured, skipping wheel setup");
       return;
     }
 
-    console.log(`Moving ${wheelButtonsConfig.length} buttons to wheel with layout: ${layout}, animation: ${animation}`);
+    const wheelMenu = document.createElement("div");
+    wheelMenu.className = "wheel-menu";
 
-    // Create overlay manager for this wheel
-    const overlayManager = new WheelOverlayManager(card);
-    currentOverlayManager = overlayManager;
+    const overlay = document.createElement("div");
+    overlay.className = "wheel-overlay";
 
-    const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]); // Copy to avoid mutating original
-    const buttonSize = 36; // Default wheel button size
+    // 1. Add glass ring first (behind everything)
+    const glassRing = document.createElement("div");
+    glassRing.className = "glass-ring";
+    wheelMenu.appendChild(glassRing);
 
+    const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]);
+    // assume 36px as there are no variables in buttons until reported otherwise
+    const buttonSize = 36;
     const wheelButtons = [];
+
     orderedButtonConfigs.forEach((buttonConfig) => {
-      const button = card.querySelector(`.bubble-sub-button-${buttonConfig.sub_button}`);
+      const button = card.querySelector(getElementSelector(buttonConfig.sub_button));
       if (!button) {
         console.warn(`Sub-button ${buttonConfig.sub_button} not found, skipping`);
         return;
       }
-      // Don't append to wheelContainer yet - will be handled by overlay
-      button.classList.add("in-wheel");
+
+      button.classList.add("wheel-button");
+      wheelMenu.appendChild(button);
       wheelButtons.push(button);
     });
 
-    // Apply layout positioning directly to buttons
-    const layoutManager = new WheelLayoutManager(buttonSize);
-    layoutManager.applyLayout(layout, orderedButtonConfigs, wheelButtons);
+    wheelMenu.style.width = `${buttonSize}px`;
+    wheelOpenerButton.replaceWith(wheelMenu);
+    wheelMenu.before(overlay);
+    wheelMenu.appendChild(wheelOpenerButton);
 
-    // Set default hidden state for all wheel buttons
-    wheelButtons.forEach((button) => {
-      button.style.scale = "0";
-      button.style.opacity = "0";
-    });
+    // Apply layout positioning directly to buttons
+    const layoutManager = new WheelLayoutManager(buttonSize, config);
+    const glassRingRadius = layoutManager.applyLayout(layout, orderedButtonConfigs, wheelButtons);
+
+    // Set glass ring size based on calculated radius
+    const glassRingDiameter = glassRingRadius * 2;
+    glassRing.style.width = `${glassRingDiameter}px`;
+    glassRing.style.height = `${glassRingDiameter}px`;
 
     const animationManager = new WheelAnimationManager(config);
     animationManager.applyAnimation(orderedButtonConfigs, wheelButtons);
+    const animationOptions = animationManager.getAnimationOptions();
+    glassRing.style.transitionDelay = `${animationOptions.delay}s`;
+    glassRing.style.transitionDuration = `${animationOptions.duration}s`;
 
-    // Store references for show/hide functionality
-    currentWheelButtons = wheelButtons;
-    wheelButtonsState = "hidden";
-
-    // Register this wheel with the interaction manager
-    const interactionManager = getInteractionManager(card);
-    interactionManager.registerWheel(
-      wheelContainer,
-      () => showButtonsInOverlay(overlayManager, wheelButtons),
-      () => hideButtons(),
-      overlayManager,
-    );
-
-    wheelContainer.classList.add("has-buttons");
-  }
-
-  function showButtonsInOverlay(overlayManager, wheelButtons) {
-    // Move wheel buttons to overlay and position them relative to center
-    const overlay = overlayManager.getOverlay();
-    if (overlay) {
-      wheelButtons.forEach((button) => {
-        overlay.appendChild(button);
-        // Buttons will be positioned using CSS custom properties set on overlay
-      });
+    function toggle() {
+      wheelMenu.classList.toggle("active");
+      glassRing.classList.toggle("active");
+      overlay.classList.toggle("active");
     }
-
-    // Show buttons using existing logic
-    showButtons();
+    wheelOpenerButton.onclick = (event) => {
+      event.stopPropagation();
+      toggle();
+    };
+    overlay.onclick = (event) => {
+      event.stopPropagation();
+      if (wheelMenu.classList.contains("active")) {
+        toggle();
+      }
+    };
   }
 
   class WheelLayoutManager {
-    constructor(buttonSize = 36) {
+    constructor(buttonSize = 36, config = {}) {
       this.buttonSize = buttonSize;
+      this.config = config;
     }
 
-    // Shared utility methods
     calculateCirclePosition(index, total, radius, startAngle = -90) {
       const angle = (index * 360) / total + startAngle;
       const x = Math.cos((angle * Math.PI) / 180) * radius;
@@ -285,260 +89,160 @@ export function sub_button_wheel(card, hass) {
       return { x: Math.round(x), y: Math.round(y) };
     }
 
-    getCardinalPositions(radius) {
-      return [
-        { x: 0, y: -radius }, // Top (0°)
-        { x: radius, y: 0 }, // Right (90°)
-        { x: 0, y: radius }, // Bottom (180°)
-        { x: -radius, y: 0 }, // Left (270°)
-      ];
-    }
-
-    applyLayout(layout, buttonConfigs, buttonElements) {
+    getLayoutRadius(layout) {
       switch (layout) {
         case "even-circle":
-          this.applyEvenCircleLayout(buttonConfigs, buttonElements);
-          break;
-        case "progressive-arc":
-          this.applyProgressiveArcLayout(buttonConfigs, buttonElements);
-          break;
-        case "quadrant-plus":
-          this.applyQuadrantPlusLayout(buttonConfigs, buttonElements);
-          break;
-        case "compact-arc":
-          this.applyCompactArcLayout(buttonConfigs, buttonElements);
-          break;
-        case "double-ring":
-          this.applyDoubleRingLayout(buttonConfigs, buttonElements);
-          break;
         case "smart-adaptive":
-          this.applySmartAdaptiveLayout(buttonConfigs, buttonElements);
-          break;
-        case "wide-circle":
-          this.applyWideCircleLayout(buttonConfigs, buttonElements);
-          break;
+        case "fixed-position":
+          return this.buttonSize * 0.8 + 25;
+
+        case "double-ring":
+          return this.buttonSize * 0.8 + 65; // outer ring radius
+
+        case "progressive-arc":
+        case "compact-arc":
+          return 1.6 * this.buttonSize;
         default:
-          console.warn(`Unknown layout: ${layout}`);
+          return this.buttonSize * 0.8 + 25;
       }
     }
 
-    applyEvenCircleLayout(buttonConfigs, buttonElements) {
-      // Simple radius scaling: 80% of button size + 30px padding
-      const radius = this.buttonSize * 0.8 + 30;
+    calculateGlassRingRadius(layoutRadius) {
+      // Glass ring is always layout radius + 25px (for visual separation)
+      return layoutRadius + 25;
+    }
+
+    applyLayout(layout, buttonConfigs, buttonElements) {
+      // Get the layout radius first
+      const layoutRadius = this.getLayoutRadius(layout);
+
+      // Apply layout using the calculated radius
+      switch (layout) {
+        case "even-circle":
+          this.applyEvenCircleLayout(buttonConfigs, buttonElements, layoutRadius);
+          break;
+        case "progressive-arc":
+          this.applyCircularArcLayout(buttonConfigs, buttonElements, 2.0, layoutRadius);
+          break;
+        case "compact-arc":
+          this.applyCircularArcLayout(buttonConfigs, buttonElements, 1.0, layoutRadius);
+          break;
+        case "fixed-position":
+          this.applyFixedPositionLayout(buttonConfigs, buttonElements, layoutRadius);
+          break;
+        case "double-ring":
+          this.applyDoubleRingLayout(buttonConfigs, buttonElements, layoutRadius);
+          break;
+        case "smart-adaptive":
+          this.applySmartAdaptiveLayout(buttonConfigs, buttonElements, layoutRadius);
+          break;
+        default:
+          this.applyEvenCircleLayout(buttonConfigs, buttonElements, layoutRadius);
+          break;
+      }
+
+      // Return the calculated glass ring radius
+      return this.calculateGlassRingRadius(layoutRadius);
+    }
+
+    applyEvenCircleLayout(buttonConfigs, buttonElements, radius) {
       const buttonCount = buttonElements.length;
 
       buttonElements.forEach((button, index) => {
         const { x, y } = this.calculateCirclePosition(index, buttonCount, radius);
         // For overlay buttons, we need to add the offset to the base center positioning
-        button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        button.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
 
-    applyProgressiveArcLayout(buttonConfigs, buttonElements) {
-      // Arc spacing ratio - adjust this to make the arc tighter (0.8) or wider (1.2)
-      const arcSpacingRatio = 1.0;
+    applyCircularArcLayout(buttonConfigs, buttonElements, arcSpacingRatio, radius) {
+      // Maximum 7 buttons supported (1 at top + 3 on each side)
+      const maxButtons = 7;
 
-      buttonElements.forEach((button, index) => {
-        let x, y;
+      buttonElements.slice(0, maxButtons).forEach((button, index) => {
+        let angle, x, y;
 
         if (index === 0) {
-          // First button always goes center top
-          x = 0;
-          y = Math.round(-1.75 * this.buttonSize * arcSpacingRatio);
+          // First button always goes at the top (-90°)
+          angle = -90;
         } else {
-          // Define the arc position ratios for additional buttons
-          const arcPositionRatios = [
-            { x: 0.875, y: -1.5 }, // Right side
-            { x: -0.875, y: -1.5 }, // Left side
-            { x: 1.5, y: -0.875 }, // Further right
-            { x: -1.5, y: -0.875 }, // Further left
-            { x: 1.875, y: -0.25 }, // Far right
-            { x: -1.875, y: -0.25 }, // Far left
-          ];
+          // Calculate arc span based on button count and spacing ratio
+          // More buttons = wider arc, spacing ratio affects overall spread
+          const buttonCount = Math.min(buttonElements.length, maxButtons);
+          const maxArcSpan = 120 * arcSpacingRatio; // Maximum arc span in degrees
+          const arcSpan = Math.min(maxArcSpan, (buttonCount - 1) * 20 * arcSpacingRatio);
 
-          if (index - 1 < arcPositionRatios.length) {
-            const ratio = arcPositionRatios[index - 1];
-            x = Math.round(ratio.x * this.buttonSize * arcSpacingRatio);
-            y = Math.round(ratio.y * this.buttonSize * arcSpacingRatio);
-          } else {
-            // Fallback for more buttons - extend the arc
-            const isRight = index % 2 === 1;
-            const level = Math.floor((index - 1) / 2);
-            const baseX = 0.875 * this.buttonSize * arcSpacingRatio;
-            const baseY = -1.5 * this.buttonSize * arcSpacingRatio;
-            const levelSpacingX = 0.625 * this.buttonSize * arcSpacingRatio;
-            const levelSpacingY = 0.375 * this.buttonSize * arcSpacingRatio;
+          // Calculate angular increment between buttons (excluding the first top button)
+          const angularIncrement = arcSpan / (buttonCount - 1);
 
-            x = Math.round(isRight ? baseX + level * levelSpacingX : -(baseX + level * levelSpacingX));
-            y = Math.round(baseY + level * levelSpacingY);
-          }
+          // Alternate buttons left and right of center
+          const sideIndex = Math.floor((index - 1) / 2) + 1; // 1, 2, 3...
+          const isRight = (index - 1) % 2 === 0; // Even indices go right, odd go left
+
+          angle = -90 + (isRight ? 1 : -1) * sideIndex * angularIncrement;
         }
+
+        // Convert angle to x, y coordinates on the circle
+        x = Math.cos((angle * Math.PI) / 180) * radius;
+        y = Math.sin((angle * Math.PI) / 180) * radius;
 
         // Apply position directly to button
-        button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        button.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
       });
-    }
 
-    applyQuadrantPlusLayout(buttonConfigs, buttonElements) {
-      // Cardinal directions with consistent radius - relative to button size
-      const radius = this.buttonSize * 0.8 + 45;
-      const cardinalPositions = this.getCardinalPositions(radius);
-      const buttonCount = buttonElements.length;
-
-      // Handle different button counts gracefully
-      let positions = [];
-      if (buttonCount === 2) {
-        // Horizontal line: left and right
-        positions = [cardinalPositions[3], cardinalPositions[1]]; // Left, Right
-      } else if (buttonCount === 3) {
-        // Triangle: top, bottom-left, bottom-right
-        positions = [
-          cardinalPositions[0], // Top
-          { x: -radius * 0.7, y: radius * 0.7 }, // Bottom-left
-          { x: radius * 0.7, y: radius * 0.7 }, // Bottom-right
-        ];
-      } else {
-        // 4+ buttons: use cardinal directions, then add intermediate positions
-        positions = [...cardinalPositions];
-
-        // Add intermediate positions for 5+ buttons
-        if (buttonCount > 4) {
-          const intermediateRadius = radius * 0.85;
-          for (let i = 4; i < buttonCount; i++) {
-            const angle = (i - 4) * 45 - 45; // Start at -45° (top-right diagonal)
-            const x = Math.cos((angle * Math.PI) / 180) * intermediateRadius;
-            const y = Math.sin((angle * Math.PI) / 180) * intermediateRadius;
-            positions.push({ x: Math.round(x), y: Math.round(y) });
-          }
-        }
-      }
-
-      buttonElements.forEach((button, index) => {
-        if (index < positions.length) {
-          const { x, y } = positions[index];
-          button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-        }
-      });
-    }
-
-    applyCompactArcLayout(buttonConfigs, buttonElements) {
-      // Similar to progressive-arc but with tighter spacing - relative to button size
-      const arcSpacingRatio = 0.7; // Tighter than progressive-arc (1.0)
-
-      buttonElements.forEach((button, index) => {
-        let x, y;
-
-        if (index === 0) {
-          // First button always goes center top, closer to center
-          x = 0;
-          y = Math.round(-1.4 * this.buttonSize * arcSpacingRatio);
-        } else {
-          // Tighter arc position ratios
-          const arcPositionRatios = [
-            { x: 0.7, y: -1.2 }, // Right side (closer)
-            { x: -0.7, y: -1.2 }, // Left side (closer)
-            { x: 1.2, y: -0.7 }, // Further right
-            { x: -1.2, y: -0.7 }, // Further left
-            { x: 1.5, y: -0.2 }, // Far right
-            { x: -1.5, y: -0.2 }, // Far left
-          ];
-
-          if (index - 1 < arcPositionRatios.length) {
-            const ratio = arcPositionRatios[index - 1];
-            x = Math.round(ratio.x * this.buttonSize * arcSpacingRatio);
-            y = Math.round(ratio.y * this.buttonSize * arcSpacingRatio);
-          } else {
-            // Fallback for more buttons - extend the compact arc
-            const isRight = index % 2 === 1;
-            const level = Math.floor((index - 1) / 2);
-            const baseX = 0.7 * this.buttonSize * arcSpacingRatio;
-            const baseY = -1.2 * this.buttonSize * arcSpacingRatio;
-            const levelSpacingX = 0.5 * this.buttonSize * arcSpacingRatio;
-            const levelSpacingY = 0.3 * this.buttonSize * arcSpacingRatio;
-
-            x = Math.round(isRight ? baseX + level * levelSpacingX : -(baseX + level * levelSpacingX));
-            y = Math.round(baseY + level * levelSpacingY);
-          }
-        }
-
-        button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      });
-    }
-
-    applyDoubleRingLayout(buttonConfigs, buttonElements) {
-      const buttonCount = buttonElements.length;
-      // Inner ring radius - relative to button size
-      const innerRadius = this.buttonSize * 0.8 + 35;
-      // Outer ring radius - relative to button size
-      const outerRadius = this.buttonSize * 0.8 + 65;
-
-      buttonElements.forEach((button, index) => {
-        let x, y;
-
-        if (index < 4) {
-          // First 4 buttons go in inner ring
-          const { x: ix, y: iy } = this.calculateCirclePosition(index, 4, innerRadius);
-          x = ix;
-          y = iy;
-        } else {
-          // Remaining buttons go in outer ring
-          const outerIndex = index - 4;
-          const outerCount = buttonCount - 4;
-          const { x: ox, y: oy } = this.calculateCirclePosition(outerIndex, outerCount, outerRadius);
-          x = ox;
-          y = oy;
-        }
-
-        button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      });
-    }
-
-    applySmartAdaptiveLayout(buttonConfigs, buttonElements) {
-      const buttonCount = buttonElements.length;
-
-      if (buttonCount === 2) {
-        // Horizontal line - relative to button size
-        const spacing = this.buttonSize * 0.8 + 40;
-        const positions = [
-          { x: -spacing, y: 0 }, // Left
-          { x: spacing, y: 0 }, // Right
-        ];
-
-        buttonElements.forEach((button, index) => {
-          const { x, y } = positions[index];
-          button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-        });
-      } else if (buttonCount === 3) {
-        // Triangle formation - relative to button size
-        const radius = this.buttonSize * 0.8 + 40;
-        const positions = [
-          { x: 0, y: -radius }, // Top
-          { x: -radius * 0.866, y: radius * 0.5 }, // Bottom-left (60° apart)
-          { x: radius * 0.866, y: radius * 0.5 }, // Bottom-right
-        ];
-
-        buttonElements.forEach((button, index) => {
-          const { x, y } = positions[index];
-          button.style.transform = `translate(calc(-50% + ${Math.round(x)}px), calc(-50% + ${Math.round(y)}px))`;
-        });
-      } else if (buttonCount === 4) {
-        // Plus/cross pattern - reuse quadrant-plus logic
-        this.applyQuadrantPlusLayout(buttonConfigs, buttonElements);
-      } else {
-        // 5+ buttons: circle distribution - reuse even-circle logic
-        this.applyEvenCircleLayout(buttonConfigs, buttonElements);
+      // Warn if more buttons than supported
+      if (buttonElements.length > maxButtons) {
+        console.warn(
+          `Circular arc layout supports maximum ${maxButtons} buttons, ${buttonElements.length - maxButtons} buttons will be hidden`,
+        );
       }
     }
 
-    applyWideCircleLayout(buttonConfigs, buttonElements) {
-      // Same as even-circle but with larger radius - relative to button size
-      const radius = this.buttonSize * 0.8 + 70; // Increased from +30 to +70
-      const buttonCount = buttonElements.length;
+    applyFixedPositionLayout(buttonConfigs, buttonElements, radius) {
+      // Uses standard 8-button positions regardless of actual button count
+      const totalPositions = 8; // Fixed 8-position template
 
       buttonElements.forEach((button, index) => {
-        const { x, y } = this.calculateCirclePosition(index, buttonCount, radius);
-        button.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        // Use index directly as position in 8-button layout
+        const { x, y } = this.calculateCirclePosition(index, totalPositions, radius);
+        button.style.transform = `translate(${x}px, ${y}px)`;
       });
+    }
+
+    applyFixedPositionToRing(buttonElements, radius) {
+      // Helper method for applying fixed-position layout to a specific ring
+      const totalPositions = 8;
+      buttonElements.forEach((button, index) => {
+        const { x, y } = this.calculateCirclePosition(index, totalPositions, radius);
+        button.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+
+    applyDoubleRingLayout(buttonConfigs, buttonElements, outerRadius) {
+      // Get inner button count from config, default to 4
+      const innerButtonCount = this.config?.layout_options?.double_ring_inner_count || 4;
+
+      // Calculate inner radius as outer radius minus button size (for spacing between rings)
+      const innerRadius = outerRadius - this.buttonSize;
+
+      // Split buttons into inner and outer rings
+      const innerButtons = buttonElements.slice(0, innerButtonCount);
+      const outerButtons = buttonElements.slice(innerButtonCount);
+
+      // Apply fixed-position layout to each ring
+      this.applyFixedPositionToRing(innerButtons, innerRadius);
+      this.applyFixedPositionToRing(outerButtons, outerRadius);
+    }
+
+    applySmartAdaptiveLayout(buttonConfigs, buttonElements, radius) {
+      const buttonCount = buttonElements.length;
+
+      if (buttonCount <= 3) {
+        this.applyFixedPositionLayout(buttonConfigs, buttonElements, radius);
+      } else {
+        // 4+ buttons: circle distribution - use even-circle logic
+        this.applyEvenCircleLayout(buttonConfigs, buttonElements, radius);
+      }
     }
   }
 
@@ -551,8 +255,8 @@ export function sub_button_wheel(card, hass) {
     getAnimationOptions() {
       return {
         animation: this.config.animation_options?.wheel_animation || "staggered-scale",
-        duration: this.config.animation_options?.animation_duration || 1.0,
-        delay: this.config.animation_options?.animation_delay || 0.5,
+        duration: this.config.animation_options?.animation_duration || 0.2,
+        delay: this.config.animation_options?.animation_delay || 0.1,
       };
     }
 
@@ -575,10 +279,6 @@ export function sub_button_wheel(card, hass) {
       buttonElements.forEach((button, index) => {
         button.style.transition = `all ${animationOptions.duration}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`;
         button.style.transitionDelay = `${animationOptions.delay + index * delayIncrement}s`;
-
-        console.log(
-          `Button ${index + 1}: ${button.textContent} with staggered transition delay ${animationOptions.delay + index * delayIncrement}s`,
-        );
       });
     }
 
@@ -587,63 +287,7 @@ export function sub_button_wheel(card, hass) {
         // Clear any existing transitions
         button.style.transition = "";
         button.style.transitionDelay = "";
-
-        console.log(`Button ${index + 1}: ${button.textContent} with instant animation (no delays)`);
       });
-    }
-  }
-
-  // Overlay manager for card-level overlay (simpler approach)
-  class WheelOverlayManager {
-    constructor(card) {
-      this.card = card;
-      this.overlay = null;
-      this.centralButton = null;
-    }
-
-    createOverlay(centralButton) {
-      if (this.overlay) return this.overlay;
-
-      this.centralButton = centralButton;
-
-      // Get central button position relative to the card
-      const cardRect = this.card.getBoundingClientRect();
-      const buttonRect = centralButton.getBoundingClientRect();
-
-      const centerX = buttonRect.left - cardRect.left + buttonRect.width / 2;
-      const centerY = buttonRect.top - cardRect.top + buttonRect.height / 2;
-
-      // Create overlay that covers the card area
-      this.overlay = document.createElement("div");
-      this.overlay.className = "wheel-overlay";
-
-      // Set center position as CSS custom properties
-      this.overlay.style.setProperty("--wheel-center-x", `${centerX}px`);
-      this.overlay.style.setProperty("--wheel-center-y", `${centerY}px`);
-
-      // Append to card for simple relative positioning
-      this.card.appendChild(this.overlay);
-
-      console.log(`Created overlay at card level. Center: ${centerX}px, ${centerY}px`);
-
-      return this.overlay;
-    }
-
-    destroyOverlay() {
-      if (!this.overlay) return;
-
-      console.log("Destroying overlay");
-
-      // Remove overlay from card
-      this.overlay.remove();
-
-      // Reset state
-      this.overlay = null;
-      this.centralButton = null;
-    }
-
-    getOverlay() {
-      return this.overlay;
     }
   }
 
@@ -683,17 +327,27 @@ export function sub_button_wheel(card, hass) {
     return allButtons.sort((a, b) => a.position - b.position);
   }
 
+  function getElementSelector(button) {
+    if (button === "main-button" || button === "main") {
+      return ".bubble-icon-container";
+    } else {
+      return typeof button === "string" && button.startsWith("sub-button-")
+        ? `.bubble-${button}`
+        : `.bubble-sub-button-${button}`;
+    }
+  }
+
   const wheelOpener = config.wheel_opener;
   if (!wheelOpener) {
     return;
   }
-  const wheelOpenerButton = card.querySelector(`.bubble-${wheelOpener}`);
+  const wheelOpenerButton = card.querySelector(getElementSelector(wheelOpener));
 
-  if (!wheelOpenerButton || wheelOpenerButton.classList.contains("wheel-container")) {
+  if (!wheelOpenerButton || wheelOpenerButton.classList.contains("wheel-open-button")) {
     return;
   }
 
-  wheelOpenerButton.classList.add("wheel-container");
+  wheelOpenerButton.classList.add("wheel-open-button");
   const layout = config.layout_options?.wheel_layout || "even-circle";
 
   moveButtonsToWheel(wheelOpenerButton, layout);

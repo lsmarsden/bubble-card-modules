@@ -1,0 +1,78 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: sub_button_wheel
+title: "`sub_button_wheel`"
+type: object
+description: "Configuration for sub-button wheel layout functionality"
+properties:
+  wheel_opener:
+    type: string
+    description: "Button that opens the wheel (e.g., 'main', 'sub-button-1', etc.)"
+  layout_options:
+    type: object
+    description: "Layout configuration options"
+    properties:
+      wheel_layout:
+        type: string
+        description: "Wheel layout style"
+        enum:
+          - "even-circle"
+          - "progressive-arc"
+          - "compact-arc"
+          - "fixed-position"
+          - "double-ring"
+          - "smart-adaptive"
+        default: "even-circle"
+      double_ring_inner_count:
+        type: integer
+        description: "Number of buttons in inner ring (double-ring layout only)"
+        minimum: 1
+        maximum: 8
+        default: 4
+  animation_options:
+    type: object
+    description: "Animation configuration options"
+    properties:
+      wheel_animation:
+        type: string
+        description: "Animation style when wheel opens"
+        enum:
+          - "staggered-scale"
+          - "instant"
+        default: "staggered-scale"
+      animation_delay:
+        type: number
+        description: "Initial delay before animation starts (seconds)"
+        minimum: 0
+        maximum: 10
+        default: 0.5
+      animation_duration:
+        type: number
+        description: "Total duration of animation (seconds)"
+        minimum: 0.1
+        maximum: 10
+        default: 1.0
+  wheel_buttons:
+    type: array
+    description: "Array of sub-buttons to include in the wheel"
+    items:
+      $ref: "#/definitions/wheel_button"
+    maxItems: 8
+
+definitions:
+  wheel_button:
+    type: object
+    properties:
+      sub_button:
+        type: string
+        description: "Sub-button identifier (1, 2, 3, etc.)"
+      position:
+        type: integer
+        description: "Fixed position in wheel (1-8, optional)"
+        minimum: 1
+        maximum: 8
+    required:
+      - sub_button
+
+required:
+  - wheel_opener
+  - wheel_buttons

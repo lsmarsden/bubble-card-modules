@@ -1,7 +1,103 @@
-.in-wheel {
+.wheel-menu {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.glass-ring {
+    --c-light: #fff;
+    --c-dark: #000;
+    --glass-reflex-dark: 1;
+    --glass-reflex-light: 1;
+
     position: absolute;
-    transform: translate(-50%, -50%);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(6px);
+    box-shadow: inset 0 0 0 1px color-mix(
+            in srgb,
+            var(--c-light) calc(var(--glass-reflex-light) * 10%),
+            transparent
+    ),
+    inset 1.8px 3px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
+    inset -2px -2px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
+    inset -0.3px -1px 4px 0 color-mix(
+            in srgb,
+            var(--c-dark) calc(var(--glass-reflex-dark) * 12%),
+            transparent
+    ),
+    inset -1.5px 2.5px 0 -2px color-mix(
+            in srgb,
+            var(--c-dark) calc(var(--glass-reflex-dark) * 20%),
+            transparent
+    ),
+    inset 0 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+    inset 2px -6.5px 1px -4px color-mix(
+            in srgb,
+            var(--c-dark) calc(var(--glass-reflex-dark) * 10%),
+            transparent
+    ),
+    0 1px 5px 0 color-mix(
+            in srgb,
+            var(--c-dark) calc(var(--glass-reflex-dark) * 10%),
+            transparent
+    ),
+    0 6px 16px 0 color-mix(
+            in srgb,
+            var(--c-dark) calc(var(--glass-reflex-dark) * 8%),
+            transparent
+    );
+    transition: all ease-in-out;
+    transform: scale(0);
+    opacity: 0;
+    z-index: 1;
+}
+
+.glass-ring.active {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.wheel-menu.active * {
+    z-index: 1;
+}
+
+.wheel-menu.active .wheel-button {
+    scale: 1 !important;
+    opacity: 1 !important;
+}
+
+.wheel-button {
+    scale: 0;
+    opacity: 0;
+    position: absolute !important;
+    z-index: 1;
+}
+
+.wheel-open-button {
+    cursor: pointer;
+}
+
+.wheel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.wheel-overlay.active {
+    z-index: 1;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .bubble-container {
@@ -10,96 +106,4 @@
     outside the card boundaries - may cause issues with certain card types
     */
     overflow: inherit !important;
-}
-
-/* Wheel overlay container - covers the card area with high z-index */
-.wheel-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    /* Allow clicks to pass through except on interactive elements */
-    z-index: 100;
-    /* High enough to be above card content but reasonable */
-}
-
-.wheel-overlay>* {
-    pointer-events: auto;
-    /* Re-enable pointer events on direct children */
-}
-
-.wheel-container.has-buttons {
-    position: relative;
-}
-
-/* Central button appears above the glass ring when wheel is open */
-.wheel-container.has-buttons.wheel-open {
-    position: relative;
-    z-index: 2;
-    /* Above the glass ring */
-}
-
-/* Glassmorphism ring - positioned using CSS custom properties */
-.wheel-overlay::before {
-    content: '';
-    position: absolute;
-    left: var(--wheel-center-x, 50%);
-    top: var(--wheel-center-y, 50%);
-    transform: translate(-50%, -50%) scale(0);
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-
-    /* Glassmorphism effect */
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-
-    /* Smooth animation - starts immediately */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-        opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    opacity: 0;
-}
-
-/* Ring expands and becomes visible when wheel is open */
-.wheel-overlay.wheel-open::before {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-}
-
-/* Wheel buttons positioned relative to the center point with fallback */
-.wheel-overlay .in-wheel {
-    position: absolute;
-    left: var(--wheel-center-x, 50%);
-    top: var(--wheel-center-y, 50%);
-    /* Base transform will be overridden by layout transforms */
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1;
-    /* Above the glass ring */
-    /* Initial hidden state */
-    scale: 0;
-    opacity: 0;
-}
-
-/* Wheel buttons with drop shadow when open */
-.wheel-overlay.wheel-open .in-wheel {
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
-}
-
-/* Theme variants for the glassmorphism ring */
-@media (prefers-color-scheme: dark) {
-    .wheel-overlay::before {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-}
-
-@media (prefers-color-scheme: light) {
-    .wheel-overlay::before {
-        background: rgba(0, 0, 0, 0.1);
-        border-color: rgba(0, 0, 0, 0.2);
-    }
 }
