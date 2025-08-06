@@ -3,6 +3,11 @@ editor:
     label: "Button to open the wheel (e.g. 'sub-button-1'). Must have no tap action."
     selector:
       text:
+  - name: close_on_sub_button_click
+    label: "Close wheel when any sub-button is clicked"
+    default: false
+    selector:
+      boolean:
   - type: expandable
     title: "Layout Options"
     name: layout_options
@@ -75,6 +80,10 @@ editor:
             label: "Fixed position (optional - leave empty for auto)"
             selector:
               number:
+          - name: close_on_click
+            label: "Close wheel when this button is clicked (overrides global setting)"
+            selector:
+              boolean:
       - type: expandable
         label: "Button 2"
         name: "1"
@@ -87,6 +96,10 @@ editor:
             label: "Fixed position (optional - leave empty for auto)"
             selector:
               number:
+          - name: close_on_click
+            label: "Close wheel when this button is clicked (overrides global setting)"
+            selector:
+              boolean:
       - type: expandable
         label: "Button 3"
         name: "2"
@@ -99,6 +112,10 @@ editor:
             label: "Fixed position (optional - leave empty for auto)"
             selector:
               number:
+          - name: close_on_click
+            label: "Close wheel when this button is clicked (overrides global setting)"
+            selector:
+              boolean:
       - type: expandable
         label: "Button 4 (add more in YAML)"
         name: "3"
@@ -111,3 +128,7 @@ editor:
             label: "Fixed position (optional - leave empty for auto)"
             selector:
               number:
+          - name: close_on_click
+            label: "Close wheel when this button is clicked (overrides global setting)"
+            selector:
+              boolean:

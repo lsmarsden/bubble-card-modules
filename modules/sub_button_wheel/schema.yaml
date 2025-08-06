@@ -7,6 +7,10 @@ properties:
   wheel_opener:
     type: string
     description: "Button that opens the wheel (e.g., 'main', 'sub-button-1', etc.)"
+  close_on_sub_button_click:
+    type: boolean
+    description: "Close wheel when any sub-button is clicked (global setting)"
+    default: false
   layout_options:
     type: object
     description: "Layout configuration options"
@@ -70,6 +74,9 @@ definitions:
         description: "Fixed position in wheel (1-8, optional)"
         minimum: 1
         maximum: 8
+      close_on_click:
+        type: boolean
+        description: "Close wheel when this button is clicked (overrides global close_on_sub_button_click setting)"
     required:
       - sub_button
 

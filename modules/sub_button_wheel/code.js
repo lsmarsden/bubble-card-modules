@@ -4,6 +4,15 @@ export function sub_button_wheel(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
   const { sub_button_wheel: config } = this.config;
 
+  function shouldCloseOnClick(buttonConfig, globalConfig) {
+    // Individual button setting takes precedence
+    if (buttonConfig.close_on_click !== undefined) {
+      return buttonConfig.close_on_click;
+    }
+    // Fall back to global setting, default to false
+    return globalConfig.close_on_sub_button_click || false;
+  }
+
   function moveButtonsToWheel(wheelOpenerButton, layout = "even-circle") {
     const wheelButtonsConfig = toArray(config.wheel_buttons);
     if (!wheelButtonsConfig || wheelButtonsConfig.length === 0) {
@@ -64,16 +73,45 @@ export function sub_button_wheel(card, hass) {
       glassRing.classList.toggle("active");
       overlay.classList.toggle("active");
     }
+
+    function closeWheel() {
+      if (wheelMenu.classList.contains("active")) {
+        toggle();
+      }
+    }
+
     wheelOpenerButton.onclick = (event) => {
       event.stopPropagation();
       toggle();
     };
     overlay.onclick = (event) => {
       event.stopPropagation();
-      if (wheelMenu.classList.contains("active")) {
-        toggle();
-      }
+      closeWheel();
     };
+
+    orderedButtonConfigs.forEach((buttonConfig, index) => {
+      if (shouldCloseOnClick(buttonConfig, config)) {
+        const button = wheelButtons[index];
+
+        // Listen higher up in the DOM tree where the event bubbles
+        wheelMenu.addEventListener(
+          "hass-action",
+          (event) => {
+            // Check if the event came from this specific button
+            if (event.target === button || button.contains(event.target)) {
+              closeWheel();
+            }
+          },
+          { once: false },
+        ); // Don't use once since we want to catch multiple clicks
+
+        // for buttons with no tap actions
+        const tapAction = JSON.parse(button.dataset.tapAction || '{"action":"none"}');
+        if (tapAction.action === "none") {
+          button.onclick = (event) => closeWheel();
+        }
+      }
+    });
   }
 
   class WheelLayoutManager {
@@ -255,8 +293,8 @@ export function sub_button_wheel(card, hass) {
     getAnimationOptions() {
       return {
         animation: this.config.animation_options?.wheel_animation || "staggered-scale",
-        duration: this.config.animation_options?.animation_duration || 0.2,
-        delay: this.config.animation_options?.animation_delay || 0.1,
+        duration: this.config.animation_options?.animation_duration ?? 0.2,
+        delay: this.config.animation_options?.animation_delay ?? 0.1,
       };
     }
 
