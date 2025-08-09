@@ -3,6 +3,7 @@ import { toArray } from "../helpers/utils/arrays.js";
 export function sub_button_wheel(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
   const { sub_button_wheel: config } = this.config;
+  const mainButtonSelector = ".bubble-icon-container";
 
   function shouldCloseOnClick(buttonConfig, globalConfig) {
     // Individual button setting takes precedence
@@ -20,9 +21,12 @@ export function sub_button_wheel(card, hass) {
       return;
     }
 
+    const isMainButtonOpener = isMainButton(config.wheel_opener);
     const wheelMenu = document.createElement("div");
     wheelMenu.className = "wheel-menu";
-
+    if (isMainButtonOpener) {
+      wheelMenu.classList.add("main-opener");
+    }
     const overlay = document.createElement("div");
     overlay.className = "wheel-overlay";
 
@@ -33,6 +37,8 @@ export function sub_button_wheel(card, hass) {
 
     const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]);
     // assume 36px as there are no variables in buttons until reported otherwise
+    // if main button it will cause 6px difference in sizing due to the main icon
+    // being 42px, but it will be centered anyway
     const buttonSize = 36;
     const wheelButtons = [];
 
@@ -49,9 +55,14 @@ export function sub_button_wheel(card, hass) {
     });
 
     wheelMenu.style.width = `${buttonSize}px`;
+    wheelMenu.style.height = `${buttonSize}px`;
     wheelOpenerButton.replaceWith(wheelMenu);
     wheelMenu.before(overlay);
     wheelMenu.appendChild(wheelOpenerButton);
+
+    // remove existing default tap action from wheel opener button
+    // https://github.com/Clooos/Bubble-Card/discussions/1714
+    wheelOpenerButton.setAttribute("data-tap-action", JSON.stringify({ action: "none" }));
 
     // Apply layout positioning directly to buttons
     const layoutManager = new WheelLayoutManager(buttonSize, config);
@@ -366,13 +377,17 @@ export function sub_button_wheel(card, hass) {
   }
 
   function getElementSelector(button) {
-    if (button === "main-button" || button === "main") {
-      return ".bubble-icon-container";
+    if (isMainButton(button)) {
+      return mainButtonSelector;
     } else {
       return typeof button === "string" && button.startsWith("sub-button-")
         ? `.bubble-${button}`
         : `.bubble-sub-button-${button}`;
     }
+  }
+
+  function isMainButton(button) {
+    return button === "main-button" || button === "main";
   }
 
   const wheelOpener = config.wheel_opener;

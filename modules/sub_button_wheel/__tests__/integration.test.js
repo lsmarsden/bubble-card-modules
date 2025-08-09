@@ -129,10 +129,46 @@ describe("sub_button_wheel - Integration Tests", () => {
 
       // Verify wheel menu size matches button size
       expect(wheelMenu.style.width).toBe("36px");
+      expect(wheelMenu.style.height).toBe("36px");
 
       // Verify overlay is positioned correctly (before wheel menu in DOM)
       const overlay = document.querySelector(".wheel-overlay");
       expect(overlay.nextElementSibling).toBe(wheelMenu);
+    });
+    it("should remove default tap action on the wheel opener button", () => {
+      // Setup - Basic configuration
+      const originalButtonSelectors = [
+        ".bubble-sub-button-1",
+        ".bubble-sub-button-2",
+        ".bubble-sub-button-3",
+        ".bubble-sub-button-4",
+      ];
+      mockThis.config.sub_button_wheel = {
+        wheel_opener: "main",
+        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
+      };
+
+      // Set up main button with initial tap action to verify it gets overridden
+      const mainButton = mockCard.querySelector(".bubble-icon-container");
+      mainButton.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.main" });
+
+      // Verify initial DOM state
+      originalButtonSelectors.forEach((selector) => {
+        expect(mockCard.querySelector(selector)).toBeTruthy();
+      });
+      expect(document.querySelector(".wheel-menu")).toBeNull();
+
+      // Verify main button initially has the tap action we set
+      expect(mainButton.getAttribute("data-tap-action")).toBe('{"action":"toggle","entity":"light.main"}');
+
+      // Exercise
+      sub_button_wheel.call(mockThis, mockCard, mockHass);
+
+      // Verify
+      const wheelMenu = document.querySelector(".wheel-menu");
+      const openerButton = wheelMenu.querySelector(".wheel-open-button");
+
+      expect(openerButton.getAttribute("data-tap-action")).toBe('{"action":"none"}');
     });
 
     it("should not create wheel when no buttons are configured", () => {
@@ -753,6 +789,7 @@ describe("sub_button_wheel - Integration Tests", () => {
       // Verify - Sub-button-1 becomes opener, others become wheel buttons
       const wheelMenu = document.querySelector(".wheel-menu");
       expect(wheelMenu).toBeTruthy();
+      expect(wheelMenu.classList).not.toContain("main-opener");
 
       const openerButton = wheelMenu.querySelector(".wheel-open-button");
       expect(openerButton).toBeTruthy();
@@ -782,6 +819,7 @@ describe("sub_button_wheel - Integration Tests", () => {
       const wheelButtons = wheelMenu.querySelectorAll(".wheel-button");
 
       expect(wheelMenu).toBeTruthy();
+      expect(wheelMenu.classList).toContain("main-opener");
       expect(wheelButtons.length).toBe(2);
 
       // Should use default even-circle layout with precise positioning
@@ -814,7 +852,7 @@ describe("sub_button_wheel - Integration Tests", () => {
     it("should handle partial configuration gracefully", () => {
       // Setup - Only layout specified, no animation config
       mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
+        wheel_opener: "main-button",
         layout_options: {
           wheel_layout: "progressive-arc",
           // No double_ring_inner_count specified
@@ -844,7 +882,7 @@ describe("sub_button_wheel - Integration Tests", () => {
     it("should handle single button configuration", () => {
       // Setup - Only one wheel button
       mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
+        wheel_opener: "main-button",
         wheel_buttons: [{ sub_button: "1" }],
       };
 
@@ -863,7 +901,8 @@ describe("sub_button_wheel - Integration Tests", () => {
       const openerButton = wheelMenu.querySelector(".wheel-open-button");
 
       openerButton.click();
-      expect(wheelMenu.classList.contains("active")).toBe(true);
+      expect(wheelMenu.classList).toContain("active");
+      expect(wheelMenu.classList).toContain("main-opener");
     });
 
     it("should handle maximum supported buttons for arc layouts", () => {

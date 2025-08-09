@@ -5,6 +5,17 @@
     align-items: center;
 }
 
+.wheel-menu.main-opener {
+    margin: 6px 9px 6px 11px;
+}
+
+.wheel-menu .bubble-icon-container {
+    /* When using main icon as the wheel opener, the margins interfere
+     with styling, so reset and use the wheel-menu.main-opener margins instead for alignment
+    */
+    margin: 0 !important;
+}
+
 .glass-ring {
     --c-light: #fff;
     --c-dark: #000;

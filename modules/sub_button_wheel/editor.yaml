@@ -1,6 +1,6 @@
 editor:
   - name: wheel_opener
-    label: "Button to open the wheel (e.g. 'sub-button-1'). Must have no tap action."
+    label: "Button to open the wheel ('main', or '1' for 'sub-button-1' etc.)"
     selector:
       text:
   - name: close_on_sub_button_click

@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.2.0
+
+<details><summary>See Changes</summary>
+
+- Added support for using main button as the wheel opener. Use `wheel_opener: "main"` to enable this feature.
+- Existing tap actions will automatically be removed from the wheel opener button without manual configuration.
+
+</details>
 ### v1.1.0
 
 <details><summary>See Changes</summary>
