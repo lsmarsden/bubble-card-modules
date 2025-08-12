@@ -34,9 +34,35 @@ function clean(str) {
 }
 
 /**
+ * Formats numeric values for display in text templates.
+ * - If the value is a number that rounds to an integer when displayed to 2 decimal places, returns the integer as a string
+ * - If the value is a number that has decimal places when displayed to 2 decimal places, returns the number formatted to 2 decimal places
+ * - For all other values (non-numbers, NaN, Infinity), returns the value unchanged
+ *
+ * Fixes https://github.com/lsmarsden/bubble-card-modules/issues/9
+ *
+ * @param {*} value - The value to format
+ * @return {*} The formatted value - string for formatted numbers, unchanged value for non-numbers
+ */
+export function formatNumber(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return value;
+  }
+
+  const roundedToTwo = parseFloat(value.toFixed(2));
+
+  if (Number.isInteger(roundedToTwo)) {
+    return String(roundedToTwo);
+  }
+
+  return roundedToTwo.toFixed(2);
+}
+
+/**
  * Renders a text template by replacing placeholders with their corresponding values.
  * Placeholders in the form of `{key}` within the text are replaced with values obtained
  * from the `placeholders` object in the `textTemplate`.
+ * Numeric values are automatically formatted using formatNumber().
  *
  * @param {Object} textTemplate - The text template object containing the text and placeholders.
  * @param {string} textTemplate.text - The string containing placeholder keys to be replaced.
@@ -51,7 +77,8 @@ export function renderTextTemplate(textTemplate) {
   const data = {};
 
   for (const key in placeholders) {
-    data[key] = getState(placeholders[key]) ?? "";
+    const rawValue = getState(placeholders[key]) ?? "";
+    data[key] = formatNumber(rawValue);
   }
 
   return textTemplate.text.replace(/\{(\w+)}/g, (_, key) => data[key] ?? "");
