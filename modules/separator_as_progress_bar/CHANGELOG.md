@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.1.1
+
+<details><summary>See Changes</summary>
+
+- [Issue #9](https://github.com/lsmarsden/bubble-card-modules/issues/9): Fixed default formatting of numeric states in text templates to default to 2 decimal places.
+
+</details>
+
 ### v1.1.0
 
 <details><summary>See Changes</summary>
