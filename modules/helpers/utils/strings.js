@@ -52,7 +52,7 @@ export function formatNumber(value) {
   const roundedToTwo = parseFloat(value.toFixed(2));
 
   if (Number.isInteger(roundedToTwo)) {
-    return String(Math.round(roundedToTwo));
+    return String(roundedToTwo);
   }
 
   return roundedToTwo.toFixed(2);
