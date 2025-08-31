@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.3.0
+
+<details><summary>See Changes</summary>
+
+- Added support for having multiple wheels in the same card. Each wheel can have its own configuration.
+
+</details>
+
 ### v1.2.0
 
 <details><summary>See Changes</summary>
@@ -8,6 +16,7 @@
 - Existing tap actions will automatically be removed from the wheel opener button without manual configuration.
 
 </details>
+
 ### v1.1.0
 
 <details><summary>See Changes</summary>

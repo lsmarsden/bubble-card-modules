@@ -239,6 +239,35 @@ sub_button_wheel:
 
   </details>
 
+  <details>
+    <summary><strong>Multiple wheels in the same card</strong></summary>
+
+```yaml
+sub_button_wheel:
+  - wheel_opener: sub-button-1
+    layout_options:
+    wheel_layout: even-circle
+    animation_options:
+    wheel_animation: instant
+    animation_delay: 0.1
+    animation_duration: 0.2
+    wheel_buttons:
+      - sub_button: 2
+      - sub_button: 3
+  - wheel_opener: sub-button-4
+    layout_options:
+    wheel_layout: even-circle
+    animation_options:
+    wheel_animation: instant
+    animation_delay: 0.1
+    animation_duration: 0.2
+    wheel_buttons:
+      - sub_button: 5
+      - sub_button: 6
+```
+
+</details>
+
 ## Install this module
 
 1. Install [Bubble Card](https://github.com/Clooos/Bubble-Card) in Home Assistant if you haven't already.

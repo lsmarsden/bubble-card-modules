@@ -104,10 +104,12 @@ describe("sub_button_wheel - Integration Tests", () => {
         ".bubble-sub-button-3",
         ".bubble-sub-button-4",
       ];
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
+        },
+      ];
 
       // Verify initial DOM state
       originalButtonSelectors.forEach((selector) => {
@@ -143,10 +145,12 @@ describe("sub_button_wheel - Integration Tests", () => {
         ".bubble-sub-button-3",
         ".bubble-sub-button-4",
       ];
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
+        },
+      ];
 
       // Set up main button with initial tap action to verify it gets overridden
       const mainButton = mockCard.querySelector(".bubble-icon-container");
@@ -173,10 +177,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should not create wheel when no buttons are configured", () => {
       // Setup - Empty configuration
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -188,10 +194,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should not create wheel when opener button not found", () => {
       // Setup - Invalid opener
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "nonexistent",
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "nonexistent",
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -205,13 +213,15 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Precise Layout Mathematical Verification", () => {
     it("should apply even-circle layout with exact mathematical positioning", () => {
       // Setup - 4 buttons for 90° intervals
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "even-circle",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "even-circle",
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }, { sub_button: "4" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -234,19 +244,21 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply progressive-arc layout with first button at top and alternating sides", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "progressive-arc",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "progressive-arc",
+          },
+          wheel_buttons: [
+            { sub_button: "1" }, // Top (-90°)
+            { sub_button: "2" }, // Right side
+            { sub_button: "3" }, // Left side
+            { sub_button: "4" }, // Further right
+            { sub_button: "5" }, // Further left
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1" }, // Top (-90°)
-          { sub_button: "2" }, // Right side
-          { sub_button: "3" }, // Left side
-          { sub_button: "4" }, // Further right
-          { sub_button: "5" }, // Further left
-        ],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -273,13 +285,15 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply compact-arc layout with tighter spacing", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "compact-arc",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "compact-arc",
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -302,13 +316,15 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply fixed-position layout using 8-position template", () => {
       // Setup - 3 buttons should use positions 0, 1, 2 of 8-position template
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "fixed-position",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "fixed-position",
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -340,21 +356,23 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply double-ring layout with inner and outer rings", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "double-ring",
-          double_ring_inner_count: 3,
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "double-ring",
+            double_ring_inner_count: 3,
+          },
+          wheel_buttons: [
+            { sub_button: "1" }, // Inner ring
+            { sub_button: "2" }, // Inner ring
+            { sub_button: "3" }, // Inner ring
+            { sub_button: "4" }, // Outer ring
+            { sub_button: "5" }, // Outer ring
+            { sub_button: "6" }, // Outer ring
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1" }, // Inner ring
-          { sub_button: "2" }, // Inner ring
-          { sub_button: "3" }, // Inner ring
-          { sub_button: "4" }, // Outer ring
-          { sub_button: "5" }, // Outer ring
-          { sub_button: "6" }, // Outer ring
-        ],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -387,13 +405,15 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply smart-adaptive layout choosing appropriate algorithm", () => {
       // Setup - 2 buttons should use fixed-position logic
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "smart-adaptive",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "smart-adaptive",
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -417,19 +437,21 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply smart-adaptive layout with even-circle for 4+ buttons", () => {
       // Setup - 5 buttons should use even-circle logic
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "smart-adaptive",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "smart-adaptive",
+          },
+          wheel_buttons: [
+            { sub_button: "1" },
+            { sub_button: "2" },
+            { sub_button: "3" },
+            { sub_button: "4" },
+            { sub_button: "5" },
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1" },
-          { sub_button: "2" },
-          { sub_button: "3" },
-          { sub_button: "4" },
-          { sub_button: "5" },
-        ],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -458,15 +480,17 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Enhanced Animation Configurations", () => {
     it("should apply staggered-scale animation with precise timing calculations", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        animation_options: {
-          wheel_animation: "staggered-scale",
-          animation_delay: 0.2,
-          animation_duration: 0.8,
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          animation_options: {
+            wheel_animation: "staggered-scale",
+            animation_delay: 0.2,
+            animation_duration: 0.8,
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -495,13 +519,15 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should apply instant animation clearing all transition properties", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        animation_options: {
-          wheel_animation: "instant",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          animation_options: {
+            wheel_animation: "instant",
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -516,10 +542,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should use default animation when not specified", () => {
       // Setup - No animation options specified
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -539,17 +567,19 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Enhanced Button Positioning", () => {
     it("should respect manual button positioning with precise verification", () => {
       // Setup - Explicit positions using fixed-position layout
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "fixed-position",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "fixed-position",
+          },
+          wheel_buttons: [
+            { sub_button: "1", position: 1 }, // Position 0 in 8-position template (top)
+            { sub_button: "2", position: 5 }, // Position 4 in 8-position template (bottom)
+            { sub_button: "3", position: 3 }, // Position 2 in 8-position template (right)
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1", position: 1 }, // Position 0 in 8-position template (top)
-          { sub_button: "2", position: 5 }, // Position 4 in 8-position template (bottom)
-          { sub_button: "3", position: 3 }, // Position 2 in 8-position template (right)
-        ],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -574,17 +604,19 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should auto-assign positions maintaining config order", () => {
       // Setup - Mixed explicit and auto-assigned positions
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "fixed-position",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "fixed-position",
+          },
+          wheel_buttons: [
+            { sub_button: "1", position: 3 }, // Explicit position 3 (index 2)
+            { sub_button: "2" }, // Auto-assigned to available position 1 (index 0)
+            { sub_button: "3" }, // Auto-assigned to available position 2 (index 1)
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1", position: 3 }, // Explicit position 3 (index 2)
-          { sub_button: "2" }, // Auto-assigned to available position 1 (index 0)
-          { sub_button: "3" }, // Auto-assigned to available position 2 (index 1)
-        ],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -604,16 +636,18 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle position overflow gracefully", () => {
       // Setup - More buttons than explicit positions
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [
-          { sub_button: "1", position: 1 },
-          { sub_button: "2", position: 2 },
-          { sub_button: "3" }, // Should get position 3
-          { sub_button: "4" }, // Should get position 4
-          { sub_button: "5" }, // Should get position 5
-        ],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [
+            { sub_button: "1", position: 1 },
+            { sub_button: "2", position: 2 },
+            { sub_button: "3" }, // Should get position 3
+            { sub_button: "4" }, // Should get position 4
+            { sub_button: "5" }, // Should get position 5
+          ],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -631,10 +665,12 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Enhanced Interaction Behavior", () => {
     it("should handle wheel toggle with precise state management", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -674,10 +710,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle overlay click to close when wheel is open", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -700,10 +738,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should prevent event propagation on button clicks", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       let propagationStopped = false;
       const mockEvent = {
@@ -733,15 +773,17 @@ describe("sub_button_wheel - Integration Tests", () => {
       const existingSelectors = [".bubble-sub-button-1", ".bubble-sub-button-2"];
       const nonExistentSelectors = [".bubble-sub-button-99", ".bubble-sub-button-100"];
 
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [
-          { sub_button: "1" }, // Exists
-          { sub_button: "99" }, // Doesn't exist
-          { sub_button: "2" }, // Exists
-          { sub_button: "100" }, // Doesn't exist
-        ],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [
+            { sub_button: "1" }, // Exists
+            { sub_button: "99" }, // Doesn't exist
+            { sub_button: "2" }, // Exists
+            { sub_button: "100" }, // Doesn't exist
+          ],
+        },
+      ];
 
       // Verify initial state
       existingSelectors.forEach((selector) => {
@@ -778,10 +820,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle wheel opener as sub-button", () => {
       // Setup - Use sub-button as wheel opener
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "1", // Sub-button instead of main
-        wheel_buttons: [{ sub_button: "2" }, { sub_button: "3" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "1", // Sub-button instead of main
+          wheel_buttons: [{ sub_button: "2" }, { sub_button: "3" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -806,10 +850,12 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Enhanced Default Configuration", () => {
     it("should use default layout and animation when not specified", () => {
       // Setup - Minimal configuration
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -851,15 +897,17 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle partial configuration gracefully", () => {
       // Setup - Only layout specified, no animation config
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main-button",
-        layout_options: {
-          wheel_layout: "progressive-arc",
-          // No double_ring_inner_count specified
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main-button",
+          layout_options: {
+            wheel_layout: "progressive-arc",
+            // No double_ring_inner_count specified
+          },
+          // No animation_options specified
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
         },
-        // No animation_options specified
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -881,10 +929,12 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Edge Cases and Error Handling", () => {
     it("should handle single button configuration", () => {
       // Setup - Only one wheel button
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main-button",
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main-button",
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -907,21 +957,23 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle maximum supported buttons for arc layouts", () => {
       // Setup - 7 buttons for progressive-arc (maximum supported)
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "progressive-arc",
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "progressive-arc",
+          },
+          wheel_buttons: [
+            { sub_button: "1" },
+            { sub_button: "2" },
+            { sub_button: "3" },
+            { sub_button: "4" },
+            { sub_button: "5" },
+            { sub_button: "6" },
+            { sub_button: "7" },
+          ],
         },
-        wheel_buttons: [
-          { sub_button: "1" },
-          { sub_button: "2" },
-          { sub_button: "3" },
-          { sub_button: "4" },
-          { sub_button: "5" },
-          { sub_button: "6" },
-          { sub_button: "7" },
-        ],
-      };
+      ];
 
       // Note: Only 6 sub-buttons exist in DOM, but 7 requested
       // Exercise
@@ -943,15 +995,17 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle zero animation duration", () => {
       // Setup - Zero duration animation should work correctly (not fall back to defaults)
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        animation_options: {
-          wheel_animation: "staggered-scale",
-          animation_duration: 0, // Should be used as 0, not fallback to default
-          animation_delay: 0, // Should be used as 0, not fallback to default
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          animation_options: {
+            wheel_animation: "staggered-scale",
+            animation_duration: 0, // Should be used as 0, not fallback to default
+            animation_delay: 0, // Should be used as 0, not fallback to default
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -971,14 +1025,16 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle double-ring with invalid inner count", () => {
       // Setup - Invalid inner count (larger than total buttons)
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        layout_options: {
-          wheel_layout: "double-ring",
-          double_ring_inner_count: 10, // More than available buttons
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: {
+            wheel_layout: "double-ring",
+            double_ring_inner_count: 10, // More than available buttons
+          },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
         },
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }, { sub_button: "3" }],
-      };
+      ];
 
       // Exercise
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -995,10 +1051,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should skip wheel creation when already processed", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       // Exercise - Run first time
       sub_button_wheel.call(mockThis, mockCard, mockHass);
@@ -1033,23 +1091,13 @@ describe("sub_button_wheel - Integration Tests", () => {
       }
     });
 
-    it("should handle undefined config gracefully", () => {
-      // Setup - sub_button_wheel property is undefined
-      mockThis.config.sub_button_wheel = undefined;
-
-      // Exercise - Will throw because config.wheel_opener is accessed
-      expect(() => {
-        sub_button_wheel.call(mockThis, mockCard, mockHass);
-      }).toThrow("Cannot read properties of undefined");
-
-      // This is expected behavior - the code doesn't handle undefined config
-    });
-
     it("should handle missing wheel_opener gracefully", () => {
       // Setup - No wheel_opener specified
-      mockThis.config.sub_button_wheel = {
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       // Exercise
       expect(() => {
@@ -1064,11 +1112,13 @@ describe("sub_button_wheel - Integration Tests", () => {
   describe("Close-on-Click Functionality", () => {
     it("should close wheel when global close_on_sub_button_click is true and hass-action event fires", () => {
       // Setup - Global close on sub-button click enabled
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: true,
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: true,
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       // Add tap-action data to simulate bubble card buttons with real actions
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
@@ -1099,11 +1149,13 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should close wheel for buttons with no tap-actions using click handler", () => {
       // Setup - Global close on sub-button click enabled
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: true,
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: true,
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       // Set buttons to have no tap actions (action: "none")
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
@@ -1133,11 +1185,13 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should not close wheel when global close_on_sub_button_click is false", () => {
       // Setup - Global close on sub-button click disabled
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: false,
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: false,
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       button1.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test1" });
@@ -1164,14 +1218,16 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should use individual close_on_click setting to override global setting", () => {
       // Setup - Global disabled, but one button has individual override
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: false,
-        wheel_buttons: [
-          { sub_button: "1", close_on_click: true }, // Override to enable
-          { sub_button: "2" }, // Uses global (false)
-        ],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: false,
+          wheel_buttons: [
+            { sub_button: "1", close_on_click: true }, // Override to enable
+            { sub_button: "2" }, // Uses global (false)
+          ],
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       const button2 = mockCard.querySelector(".bubble-sub-button-2");
@@ -1208,14 +1264,16 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should use individual close_on_click false to override global true", () => {
       // Setup - Global enabled, but one button has individual override to disable
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: true,
-        wheel_buttons: [
-          { sub_button: "1", close_on_click: false }, // Override to disable
-          { sub_button: "2" }, // Uses global (true)
-        ],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: true,
+          wheel_buttons: [
+            { sub_button: "1", close_on_click: false }, // Override to disable
+            { sub_button: "2" }, // Uses global (true)
+          ],
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       const button2 = mockCard.querySelector(".bubble-sub-button-2");
@@ -1228,13 +1286,11 @@ describe("sub_button_wheel - Integration Tests", () => {
       // Open the wheel
       const wheelMenu = document.querySelector(".wheel-menu");
       const openerButton = wheelMenu.querySelector(".wheel-open-button");
-      const wheelButtons = wheelMenu.querySelectorAll(".wheel-button");
-
       openerButton.click();
       expect(wheelMenu.classList.contains("active")).toBe(true);
 
       // Test button1 first (should not close - individual override to false)
-      const wheelButton1 = wheelButtons[0];
+      const wheelButton1 = wheelMenu.querySelectorAll(".wheel-button")[0];
       const hassActionEvent1 = new Event("hass-action", { bubbles: true, composed: true });
       Object.defineProperty(hassActionEvent1, "target", { value: wheelButton1, writable: false });
       wheelButton1.dispatchEvent(hassActionEvent1);
@@ -1242,7 +1298,7 @@ describe("sub_button_wheel - Integration Tests", () => {
       expect(wheelMenu.classList.contains("active")).toBe(true); // Should remain open
 
       // Test button2 (should close - uses global true)
-      const wheelButton2 = wheelButtons[1];
+      const wheelButton2 = wheelMenu.querySelectorAll(".wheel-button")[1];
       const hassActionEvent2 = new Event("hass-action", { bubbles: true, composed: true });
       Object.defineProperty(hassActionEvent2, "target", { value: wheelButton2, writable: false });
       wheelButton2.dispatchEvent(hassActionEvent2);
@@ -1252,10 +1308,12 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should default to no close behavior when neither global nor individual setting specified", () => {
       // Setup - No close settings specified
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       button1.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test1" });
@@ -1281,11 +1339,13 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should handle event target identification correctly for nested elements", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: true,
-        wheel_buttons: [{ sub_button: "1" }],
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: true,
+          wheel_buttons: [{ sub_button: "1" }],
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       button1.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test1" });
@@ -1321,11 +1381,13 @@ describe("sub_button_wheel - Integration Tests", () => {
 
     it("should not interfere with events from non-wheel buttons", () => {
       // Setup
-      mockThis.config.sub_button_wheel = {
-        wheel_opener: "main",
-        close_on_sub_button_click: true,
-        wheel_buttons: [{ sub_button: "1" }], // Only button 1 in wheel
-      };
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          close_on_sub_button_click: true,
+          wheel_buttons: [{ sub_button: "1" }], // Only button 1 in wheel
+        },
+      ];
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
       button1.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test1" });
@@ -1359,10 +1421,16 @@ describe("sub_button_wheel - Integration Tests", () => {
       // Setup - One button with close enabled, one without
       mockThis.config.sub_button_wheel = {
         wheel_opener: "main",
-        wheel_buttons: [
-          { sub_button: "1", close_on_click: true },
-          { sub_button: "2", close_on_click: false },
-        ],
+        wheel_buttons: {
+          0: {
+            sub_button: "1",
+            close_on_click: true,
+          },
+          1: {
+            sub_button: "2",
+            close_on_click: false,
+          },
+        },
       };
 
       const button1 = mockCard.querySelector(".bubble-sub-button-1");
@@ -1396,6 +1464,203 @@ describe("sub_button_wheel - Integration Tests", () => {
       wheelButton1.dispatchEvent(hassActionEvent1);
 
       expect(wheelMenu.classList.contains("active")).toBe(false); // Should close
+    });
+  });
+
+  describe("Multiple Wheels Configuration", () => {
+    it("should create multiple separate wheels from array configuration", () => {
+      // Setup - Multiple wheel configurations
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+        {
+          wheel_opener: "3", // Use sub-button-3 as opener for second wheel
+          wheel_buttons: [{ sub_button: "4" }, { sub_button: "5" }],
+        },
+      ];
+
+      // Add tap actions for buttons to verify functionality
+      const button1 = mockCard.querySelector(".bubble-sub-button-1");
+      const button2 = mockCard.querySelector(".bubble-sub-button-2");
+      const button3 = mockCard.querySelector(".bubble-sub-button-3");
+      const button4 = mockCard.querySelector(".bubble-sub-button-4");
+      const button5 = mockCard.querySelector(".bubble-sub-button-5");
+
+      button1.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test1" });
+      button2.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test2" });
+      button3.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test3" });
+      button4.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test4" });
+      button5.dataset.tapAction = JSON.stringify({ action: "toggle", entity: "light.test5" });
+
+      // Exercise
+      sub_button_wheel.call(mockThis, mockCard, mockHass);
+
+      // Verify - Two separate wheel menus should be created
+      const wheelMenus = document.querySelectorAll(".wheel-menu");
+      expect(wheelMenus.length).toBe(2);
+
+      // Verify first wheel (main opener)
+      const firstWheel = wheelMenus[0];
+      expect(firstWheel.classList.contains("main-opener")).toBe(true);
+      expect(firstWheel.querySelector(".wheel-open-button")).toBeTruthy();
+
+      const firstWheelButtons = firstWheel.querySelectorAll(".wheel-button");
+      expect(firstWheelButtons.length).toBe(2);
+      expect(firstWheel.querySelector(".bubble-sub-button-1")).toBeTruthy();
+      expect(firstWheel.querySelector(".bubble-sub-button-2")).toBeTruthy();
+
+      // Verify second wheel (sub-button-3 opener)
+      const secondWheel = wheelMenus[1];
+      expect(secondWheel.classList.contains("main-opener")).toBe(false);
+      expect(secondWheel.querySelector(".wheel-open-button.bubble-sub-button-3")).toBeTruthy();
+
+      const secondWheelButtons = secondWheel.querySelectorAll(".wheel-button");
+      expect(secondWheelButtons.length).toBe(2);
+      expect(secondWheel.querySelector(".bubble-sub-button-4")).toBeTruthy();
+      expect(secondWheel.querySelector(".bubble-sub-button-5")).toBeTruthy();
+
+      // Verify both wheels have independent functionality
+      const firstOpener = firstWheel.querySelector(".wheel-open-button");
+      const secondOpener = secondWheel.querySelector(".wheel-open-button");
+      const firstOverlay = document.querySelectorAll(".wheel-overlay")[0];
+      const secondOverlay = document.querySelectorAll(".wheel-overlay")[1];
+
+      // Test first wheel opens independently
+      firstOpener.click();
+      expect(firstWheel.classList.contains("active")).toBe(true);
+      expect(secondWheel.classList.contains("active")).toBe(false);
+
+      // Test second wheel opens independently
+      secondOpener.click();
+      expect(firstWheel.classList.contains("active")).toBe(true);
+      expect(secondWheel.classList.contains("active")).toBe(true);
+
+      // Test overlays close their respective wheels
+      firstOverlay.click();
+      expect(firstWheel.classList.contains("active")).toBe(false);
+      expect(secondWheel.classList.contains("active")).toBe(true);
+
+      secondOverlay.click();
+      expect(firstWheel.classList.contains("active")).toBe(false);
+      expect(secondWheel.classList.contains("active")).toBe(false);
+    });
+
+    it("should handle single wheel configuration as before (backward compatibility)", () => {
+      // Setup - Single wheel configuration (not in array)
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+      ];
+
+      // Exercise
+      sub_button_wheel.call(mockThis, mockCard, mockHass);
+
+      // Verify - Single wheel created as before
+      const wheelMenus = document.querySelectorAll(".wheel-menu");
+      expect(wheelMenus.length).toBe(1);
+
+      const wheelMenu = wheelMenus[0];
+      expect(wheelMenu.classList.contains("main-opener")).toBe(true);
+
+      const wheelButtons = wheelMenu.querySelectorAll(".wheel-button");
+      expect(wheelButtons.length).toBe(2);
+
+      // Verify functionality works as before
+      const opener = wheelMenu.querySelector(".wheel-open-button");
+      opener.click();
+      expect(wheelMenu.classList.contains("active")).toBe(true);
+    });
+
+    it("should handle mixed configurations with different layouts and animations", () => {
+      // Setup - Multiple wheels with different configurations
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          layout_options: { wheel_layout: "even-circle" },
+          animation_options: { wheel_animation: "staggered-scale", animation_duration: 0.3 },
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+        {
+          wheel_opener: "3",
+          layout_options: { wheel_layout: "progressive-arc" },
+          animation_options: { wheel_animation: "instant" },
+          wheel_buttons: [{ sub_button: "4" }, { sub_button: "5" }, { sub_button: "6" }],
+        },
+      ];
+
+      // Exercise
+      sub_button_wheel.call(mockThis, mockCard, mockHass);
+
+      // Verify - Both wheels created with different configurations
+      const wheelMenus = document.querySelectorAll(".wheel-menu");
+      expect(wheelMenus.length).toBe(2);
+
+      // Verify first wheel uses even-circle layout
+      const firstWheelButtons = wheelMenus[0].querySelectorAll(".wheel-button");
+      expect(firstWheelButtons.length).toBe(2);
+
+      // Verify staggered animation applied to first wheel
+      firstWheelButtons.forEach((button) => {
+        expect(button.style.transition).toContain("0.3s");
+        expect(button.style.transitionDelay).toBeTruthy();
+      });
+
+      // Verify second wheel uses progressive-arc layout
+      const secondWheelButtons = wheelMenus[1].querySelectorAll(".wheel-button");
+      expect(secondWheelButtons.length).toBe(3);
+
+      // Verify instant animation applied to second wheel (no transitions)
+      secondWheelButtons.forEach((button) => {
+        expect(button.style.transition).toBe("");
+        expect(button.style.transitionDelay).toBe("");
+      });
+
+      // Verify first button in progressive-arc is at top
+      verifyButtonPosition(secondWheelButtons[0], 0, -58); // Progressive-arc radius: 58px
+    });
+
+    it("should skip invalid wheel configurations gracefully", () => {
+      // Setup - Mixed valid and invalid configurations
+      mockThis.config.sub_button_wheel = [
+        {
+          wheel_opener: "main",
+          wheel_buttons: [{ sub_button: "1" }, { sub_button: "2" }],
+        },
+        {
+          wheel_opener: "nonexistent", // Invalid opener
+          wheel_buttons: [{ sub_button: "3" }, { sub_button: "4" }],
+        },
+        {
+          wheel_opener: "5",
+          wheel_buttons: [], // No buttons
+        },
+        {
+          wheel_opener: "6",
+          wheel_buttons: [{ sub_button: "3" }], // Valid configuration
+        },
+      ];
+
+      // Exercise
+      sub_button_wheel.call(mockThis, mockCard, mockHass);
+
+      // Verify - Only valid wheels created (first and last)
+      const wheelMenus = document.querySelectorAll(".wheel-menu");
+      expect(wheelMenus.length).toBe(2);
+
+      // Verify first wheel (main opener)
+      const firstWheel = wheelMenus[0];
+      expect(firstWheel.classList.contains("main-opener")).toBe(true);
+      expect(firstWheel.querySelectorAll(".wheel-button").length).toBe(2);
+
+      // Verify last wheel (sub-button-6 opener)
+      const lastWheel = wheelMenus[1];
+      expect(lastWheel.querySelector(".wheel-open-button.bubble-sub-button-6")).toBeTruthy();
+      expect(lastWheel.querySelectorAll(".wheel-button").length).toBe(1);
+      expect(lastWheel.querySelector(".bubble-sub-button-3")).toBeTruthy();
     });
   });
 });

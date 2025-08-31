@@ -2,128 +2,8 @@ import { toArray } from "../helpers/utils/arrays.js";
 
 export function sub_button_wheel(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
-  const { sub_button_wheel: config } = this.config;
   const mainButtonSelector = ".bubble-icon-container";
-
-  function shouldCloseOnClick(buttonConfig, globalConfig) {
-    // Individual button setting takes precedence
-    if (buttonConfig.close_on_click !== undefined) {
-      return buttonConfig.close_on_click;
-    }
-    // Fall back to global setting, default to false
-    return globalConfig.close_on_sub_button_click || false;
-  }
-
-  function moveButtonsToWheel(wheelOpenerButton, layout = "even-circle") {
-    const wheelButtonsConfig = toArray(config.wheel_buttons);
-    if (!wheelButtonsConfig || wheelButtonsConfig.length === 0) {
-      console.warn("No wheel buttons configured, skipping wheel setup");
-      return;
-    }
-
-    const isMainButtonOpener = isMainButton(config.wheel_opener);
-    const wheelMenu = document.createElement("div");
-    wheelMenu.className = "wheel-menu";
-    if (isMainButtonOpener) {
-      wheelMenu.classList.add("main-opener");
-    }
-    const overlay = document.createElement("div");
-    overlay.className = "wheel-overlay";
-
-    // 1. Add glass ring first (behind everything)
-    const glassRing = document.createElement("div");
-    glassRing.className = "glass-ring";
-    wheelMenu.appendChild(glassRing);
-
-    const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]);
-    // assume 36px as there are no variables in buttons until reported otherwise
-    // if main button it will cause 6px difference in sizing due to the main icon
-    // being 42px, but it will be centered anyway
-    const buttonSize = 36;
-    const wheelButtons = [];
-
-    orderedButtonConfigs.forEach((buttonConfig) => {
-      const button = card.querySelector(getElementSelector(buttonConfig.sub_button));
-      if (!button) {
-        console.warn(`Sub-button ${buttonConfig.sub_button} not found, skipping`);
-        return;
-      }
-
-      button.classList.add("wheel-button");
-      wheelMenu.appendChild(button);
-      wheelButtons.push(button);
-    });
-
-    wheelMenu.style.width = `${buttonSize}px`;
-    wheelMenu.style.height = `${buttonSize}px`;
-    wheelOpenerButton.replaceWith(wheelMenu);
-    wheelMenu.before(overlay);
-    wheelMenu.appendChild(wheelOpenerButton);
-
-    // remove existing default tap action from wheel opener button
-    // https://github.com/Clooos/Bubble-Card/discussions/1714
-    wheelOpenerButton.setAttribute("data-tap-action", JSON.stringify({ action: "none" }));
-
-    // Apply layout positioning directly to buttons
-    const layoutManager = new WheelLayoutManager(buttonSize, config);
-    const glassRingRadius = layoutManager.applyLayout(layout, orderedButtonConfigs, wheelButtons);
-
-    // Set glass ring size based on calculated radius
-    const glassRingDiameter = glassRingRadius * 2;
-    glassRing.style.width = `${glassRingDiameter}px`;
-    glassRing.style.height = `${glassRingDiameter}px`;
-
-    const animationManager = new WheelAnimationManager(config);
-    animationManager.applyAnimation(orderedButtonConfigs, wheelButtons);
-    const animationOptions = animationManager.getAnimationOptions();
-    glassRing.style.transitionDelay = `${animationOptions.delay}s`;
-    glassRing.style.transitionDuration = `${animationOptions.duration}s`;
-
-    function toggle() {
-      wheelMenu.classList.toggle("active");
-      glassRing.classList.toggle("active");
-      overlay.classList.toggle("active");
-    }
-
-    function closeWheel() {
-      if (wheelMenu.classList.contains("active")) {
-        toggle();
-      }
-    }
-
-    wheelOpenerButton.onclick = (event) => {
-      event.stopPropagation();
-      toggle();
-    };
-    overlay.onclick = (event) => {
-      event.stopPropagation();
-      closeWheel();
-    };
-
-    orderedButtonConfigs.forEach((buttonConfig, index) => {
-      if (shouldCloseOnClick(buttonConfig, config)) {
-        const button = wheelButtons[index];
-
-        // Listen higher up in the DOM tree where the event bubbles
-        wheelMenu.addEventListener(
-          "hass-action",
-          (event) => {
-            // Check if the event came from this specific button
-            if (event.target === button || button.contains(event.target)) {
-              closeWheel();
-            }
-          },
-          { once: false },
-        ); // Don't use once since we want to catch multiple clicks
-
-        // for buttons with no tap actions
-        const tapAction = JSON.parse(button.dataset.tapAction || '{"action":"none"}');
-        if (tapAction.action === "none") {
-          button.onclick = (event) => closeWheel();
-        }
-      }
-    });
-  }
+  const { sub_button_wheel: config } = this.config;
 
   class WheelLayoutManager {
     constructor(buttonSize = 36, config = {}) {
@@ -340,6 +220,126 @@ export function sub_button_wheel(card, hass) {
     }
   }
 
+  function shouldCloseOnClick(buttonConfig, wheelConfig) {
+    // Individual button setting takes precedence
+    if (buttonConfig.close_on_click !== undefined) {
+      return buttonConfig.close_on_click;
+    }
+    // Fall back to global setting, default to false
+    return wheelConfig.close_on_sub_button_click || false;
+  }
+
+  function moveButtonsToWheel(wheelOpenerButton, layout = "even-circle", wheelConfig) {
+    const wheelButtonsConfig = toArray(wheelConfig.wheel_buttons);
+    if (!wheelButtonsConfig || wheelButtonsConfig.length === 0) {
+      console.warn("No wheel buttons configured, skipping wheel setup");
+      return;
+    }
+
+    const isMainButtonOpener = isMainButton(wheelConfig.wheel_opener);
+    const wheelMenu = document.createElement("div");
+    wheelMenu.className = "wheel-menu";
+    if (isMainButtonOpener) {
+      wheelMenu.classList.add("main-opener");
+    }
+    const overlay = document.createElement("div");
+    overlay.className = "wheel-overlay";
+
+    // 1. Add glass ring first (behind everything)
+    const glassRing = document.createElement("div");
+    glassRing.className = "glass-ring";
+    wheelMenu.appendChild(glassRing);
+
+    const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]);
+    // assume 36px as there are no variables in buttons until reported otherwise
+    // if main button it will cause 6px difference in sizing due to the main icon
+    // being 42px, but it will be centered anyway
+    const buttonSize = 36;
+    const wheelButtons = [];
+
+    orderedButtonConfigs.forEach((buttonConfig) => {
+      const button = card.querySelector(getElementSelector(buttonConfig.sub_button));
+      if (!button) {
+        console.warn(`Sub-button ${buttonConfig.sub_button} not found, skipping`);
+        return;
+      }
+
+      button.classList.add("wheel-button");
+      wheelMenu.appendChild(button);
+      wheelButtons.push(button);
+    });
+
+    wheelMenu.style.width = `${buttonSize}px`;
+    wheelMenu.style.height = `${buttonSize}px`;
+    wheelOpenerButton.replaceWith(wheelMenu);
+    wheelMenu.before(overlay);
+    wheelMenu.appendChild(wheelOpenerButton);
+
+    // remove existing default tap action from wheel opener button
+    // https://github.com/Clooos/Bubble-Card/discussions/1714
+    wheelOpenerButton.setAttribute("data-tap-action", JSON.stringify({ action: "none" }));
+
+    // Apply layout positioning directly to buttons
+    const layoutManager = new WheelLayoutManager(buttonSize, wheelConfig);
+    const glassRingRadius = layoutManager.applyLayout(layout, orderedButtonConfigs, wheelButtons);
+
+    // Set glass ring size based on calculated radius
+    const glassRingDiameter = glassRingRadius * 2;
+    glassRing.style.width = `${glassRingDiameter}px`;
+    glassRing.style.height = `${glassRingDiameter}px`;
+
+    const animationManager = new WheelAnimationManager(wheelConfig);
+    animationManager.applyAnimation(orderedButtonConfigs, wheelButtons);
+    const animationOptions = animationManager.getAnimationOptions();
+    glassRing.style.transitionDelay = `${animationOptions.delay}s`;
+    glassRing.style.transitionDuration = `${animationOptions.duration}s`;
+
+    function toggle() {
+      wheelMenu.classList.toggle("active");
+      glassRing.classList.toggle("active");
+      overlay.classList.toggle("active");
+    }
+
+    function closeWheel() {
+      if (wheelMenu.classList.contains("active")) {
+        toggle();
+      }
+    }
+
+    wheelOpenerButton.onclick = (event) => {
+      event.stopPropagation();
+      toggle();
+    };
+    overlay.onclick = (event) => {
+      event.stopPropagation();
+      closeWheel();
+    };
+
+    orderedButtonConfigs.forEach((buttonConfig, index) => {
+      if (shouldCloseOnClick(buttonConfig, wheelConfig)) {
+        const button = wheelButtons[index];
+
+        // Listen higher up in the DOM tree where the event bubbles
+        wheelMenu.addEventListener(
+          "hass-action",
+          (event) => {
+            // Check if the event came from this specific button
+            if (event.target === button || button.contains(event.target)) {
+              closeWheel();
+            }
+          },
+          { once: false },
+        ); // Don't use once since we want to catch multiple clicks
+
+        // for buttons with no tap actions
+        const tapAction = JSON.parse(button.dataset.tapAction || '{"action":"none"}');
+        if (tapAction.action === "none") {
+          button.onclick = (event) => closeWheel();
+        }
+      }
+    });
+  }
+
   function processButtonPositions(wheelButtonsConfig) {
     // First, collect explicitly positioned buttons
     const explicitPositions = new Set();
@@ -390,18 +390,20 @@ export function sub_button_wheel(card, hass) {
     return button === "main-button" || button === "main";
   }
 
-  const wheelOpener = config.wheel_opener;
-  if (!wheelOpener) {
-    return;
-  }
-  const wheelOpenerButton = card.querySelector(getElementSelector(wheelOpener));
+  toArray(config).forEach((wheelConfig) => {
+    const wheelOpener = wheelConfig.wheel_opener;
+    if (!wheelOpener) {
+      return;
+    }
+    const wheelOpenerButton = card.querySelector(getElementSelector(wheelOpener));
 
-  if (!wheelOpenerButton || wheelOpenerButton.classList.contains("wheel-open-button")) {
-    return;
-  }
+    if (!wheelOpenerButton || wheelOpenerButton.classList.contains("wheel-open-button")) {
+      return;
+    }
 
-  wheelOpenerButton.classList.add("wheel-open-button");
-  const layout = config.layout_options?.wheel_layout || "even-circle";
+    wheelOpenerButton.classList.add("wheel-open-button");
+    const layout = wheelConfig.layout_options?.wheel_layout || "even-circle";
 
-  moveButtonsToWheel(wheelOpenerButton, layout);
+    moveButtonsToWheel(wheelOpenerButton, layout, wheelConfig);
+  });
 }
