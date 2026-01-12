@@ -132,17 +132,17 @@ export function sub_button_wheel(card, hass) {
       const totalPositions = 8; // Fixed 8-position template
 
       buttonElements.forEach((button, index) => {
-        // Use index directly as position in 8-button layout
-        const { x, y } = this.calculateCirclePosition(index, totalPositions, radius);
+        // Use button's position
+        const { x, y } = this.calculateCirclePosition(buttonConfigs[index].position, totalPositions, radius);
         button.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
 
-    applyFixedPositionToRing(buttonElements, radius) {
+    applyFixedPositionToRing(buttonElements, buttonPositions, radius) {
       // Helper method for applying fixed-position layout to a specific ring
       const totalPositions = 8;
       buttonElements.forEach((button, index) => {
-        const { x, y } = this.calculateCirclePosition(index, totalPositions, radius);
+        const { x, y } = this.calculateCirclePosition(buttonPositions[index], totalPositions, radius);
         button.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
@@ -156,11 +156,13 @@ export function sub_button_wheel(card, hass) {
 
       // Split buttons into inner and outer rings
       const innerButtons = buttonElements.slice(0, innerButtonCount);
+      const innerPositions = buttonConfigs.slice(0, innerButtonCount).map(bc => bc.position);
       const outerButtons = buttonElements.slice(innerButtonCount);
+      const outerPositions = buttonConfigs.slice(innerButtonCount).map(bc => bc.position);
 
       // Apply fixed-position layout to each ring
-      this.applyFixedPositionToRing(innerButtons, innerRadius);
-      this.applyFixedPositionToRing(outerButtons, outerRadius);
+      this.applyFixedPositionToRing(innerButtons, innerPositions, innerRadius);
+      this.applyFixedPositionToRing(outerButtons, outerPositions, outerRadius);
     }
 
     applySmartAdaptiveLayout(buttonConfigs, buttonElements, radius) {
@@ -344,7 +346,7 @@ export function sub_button_wheel(card, hass) {
     // First, collect explicitly positioned buttons
     const explicitPositions = new Set();
     const explicitButtons = [];
-    const unpositionedButtons = [];
+    unpositionedButtons = [];
 
     wheelButtonsConfig.forEach((buttonConfig) => {
       if (buttonConfig.position !== undefined) {
@@ -356,7 +358,7 @@ export function sub_button_wheel(card, hass) {
     });
 
     // Find available positions for unpositioned buttons
-    const totalButtons = wheelButtonsConfig.length;
+    const totalButtons = 8;
     const availablePositions = [];
     for (let i = 1; i <= totalButtons; i++) {
       if (!explicitPositions.has(i)) {
@@ -365,11 +367,11 @@ export function sub_button_wheel(card, hass) {
     }
 
     // Assign positions to unpositioned buttons in config order
-    unpositionedButtons.forEach((buttonConfig, index) => {
-      if (index < availablePositions.length) {
-        buttonConfig.position = availablePositions[index];
-      }
-    });
+    unpositionedButtons = unpositionedButtons.map((buttonConfig, index) =>
+      index < availablePositions.length
+        ? { ...buttonConfig, position: availablePositions[index] }
+        : buttonConfig
+    );
 
     // Combine and sort by position
     const allButtons = [...explicitButtons, ...unpositionedButtons];
