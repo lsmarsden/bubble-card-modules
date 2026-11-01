@@ -75,7 +75,25 @@ async function generateModule() {
   await fs.mkdir(path.join(modulePath, "__tests__"), { recursive: true });
   await fs.writeFile(
     path.join(modulePath, "__tests__", "code.test.js"),
-    `import {jest} from '@jest/globals';\n\n const { ${answers.id} } = await import("../code.js");\n\ndescribe('${answers.id}()', () => {\n    it('should be implemented', () => {\n        // TODO: Add tests for your module\n        expect(true).toBe(true);\n    });\n});\n`,
+    [
+      `import { ${answers.id} } from "../code.js";`,
+      `import { useCardHarness } from "../../../testing/cardHarness.js";`,
+      `import { sourceAndArtifact } from "../../../testing/artifact.js";`,
+      ``,
+      `// See .github/copilot-instructions.md (Testing Strategy) and testing/cardHarness.js.`,
+      `const h = useCardHarness({ states: {} });`,
+      `const render = (config) => h().run(moduleFn, config);`,
+      `let moduleFn;`,
+      ``,
+      `describe.each(sourceAndArtifact("${answers.id}", ${answers.id}))("${answers.id} (%s)", (_, fn) => {`,
+      `  beforeAll(() => {`,
+      `    moduleFn = fn;`,
+      `  });`,
+      ``,
+      `  it.todo("describe the first behaviour this module guarantees");`,
+      `});`,
+      ``,
+    ].join("\n"),
   );
 
   await createFileFromTemplate(path.join(modulePath, "schema.yaml"), "./modules/templates/schema_template.yaml", {
@@ -101,7 +119,7 @@ async function generateModule() {
   });
 
   console.log(`Created new module at ${modulePath}`);
-  console.log(`Don't forget to add tests in ${modulePath}/tests/code.test.js`);
+  console.log(`Don't forget to add tests in ${modulePath}/__tests__/code.test.js`);
 }
 
 generateModule();
