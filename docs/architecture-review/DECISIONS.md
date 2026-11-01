@@ -130,3 +130,12 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
   modules would have lacked `readSourcePercent`/`readTimerPercent` (ReferenceError, whole module skipped). Minimal fix
   in `extractors.ts` (recurse instead of eager extraction); other modules' built output byte-identical. Strengthens the
   case for candidate 2's artifact tests.
+- **Coverage audit after uplift** (`6238fb3`): comparing config keys used by old vs new tests found three behaviours no
+  longer asserted (icon 3px/800ms border, per-range timeline icon overrides, module-level numeric_state); restored.
+  Remaining dropped keys were mock plumbing or `start_angle` (an option the code no longer reads).
+- **Candidate 2 done** (`d1fc8be`, pushed): `buildModule(moduleDir) -> { id, info, yaml, warnings }` with esbuild;
+  regex extractor deleted; Jest global setup builds artifacts once per run in a Node child process (esbuild can't run
+  under jsdom), written to a temp dir (deviation from "in memory": the build itself writes nothing, the test setup
+  stores its output outside the repo); every module suite runs against source and built artifact (765 tests).
+  Mutation check: unbinding `this` in the build fails 46 artifact runs. Wrapper now `return ""` (upstream's cleanCSS
+  strips the old leading `undefined`, so it was harmless). esbuild renames shadowed locals (`card2`, `hass2`, `config2`).
