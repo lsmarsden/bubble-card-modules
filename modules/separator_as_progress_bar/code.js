@@ -1,7 +1,7 @@
 import { checkAllConditions } from "../helpers/entity/condition.js";
 import { renderTextTemplate, suffix } from "../helpers/utils/strings.js";
 import { resolveColor, resolveColorFromStops } from "../helpers/ui/color.js";
-import { getState } from "../helpers/entity/hass.js";
+import { showProgress, stopProgress } from "../helpers/entity/progress.js";
 
 export function separator_as_progress_bar(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
@@ -16,8 +16,11 @@ export function separator_as_progress_bar(card, hass) {
     wrapper.appendChild(element);
   }
 
+  const progressCtx = { host: this, onTeardown: typeof onTeardown === "function" ? onTeardown : undefined };
+
   if (!checkAllConditions(config.condition)) {
     // Clean up progress bar elements when overall condition is false
+    stopProgress(progressCtx, element);
     element.classList.remove("bubble-line-progress");
     element.style.removeProperty("--progress-width");
     element.style.removeProperty("--bubble-line-progress-color");
@@ -34,22 +37,12 @@ export function separator_as_progress_bar(card, hass) {
     }
   }
 
-  let progressValue = config.override ? config.override : parseFloat(getState(config.source));
-
-  if (isNaN(progressValue) || progressValue < 0 || progressValue > 100) {
-    progressValue = 0;
-  }
-
   if (!config.progress_style) {
+    stopProgress(progressCtx, element);
     return;
   }
   const progressStyle = config.progress_style;
   const interpolate = progressStyle.interpolate ?? true;
-  const colorStops = progressStyle.color_stops;
-  const progressColor = resolveColorFromStops(progressValue, colorStops, interpolate);
-
-  const backgroundColorStops = progressStyle.background_color_stops;
-  const backgroundProgressColor = resolveColorFromStops(progressValue, backgroundColorStops, interpolate);
 
   const bubbleBorderRadius = getComputedStyle(element).getPropertyValue("--bubble-icon-border-radius");
   if (bubbleBorderRadius && bubbleBorderRadius.trim() !== "") {
@@ -75,15 +68,34 @@ export function separator_as_progress_bar(card, hass) {
   element.classList.add("bubble-line-progress");
   wrapper.style.setProperty("--bubble-line-height", suffix(progressStyle.height ?? "6", "px"));
 
-  // Delay setting the progress width until the element is visible and painted.
-  // This allows the initial width to transition from zero when loading the page, otherwise it transitions from full width for some reason.
-  // Still happens when switching views via tabs though.
-  element.style.setProperty("--progress-width", "0cqw");
-  requestAnimationFrame(() => {
-    element.style.setProperty("--progress-width", `${config.invert ? 100 - progressValue : progressValue}cqw`);
-  });
-  element.style.setProperty("--bubble-line-progress-color", progressColor);
-  element.style.setProperty("--bubble-line-progress-background-color", backgroundProgressColor);
+  function renderProgress(percent) {
+    const width = `${percent}cqw`;
+    if (element.style.getPropertyValue("--progress-width") === "") {
+      // First paint: start from zero and set the width once the element is painted, so it grows in rather than
+      // transitioning from full width. Later updates (including timer ticks) set the width directly.
+      element.style.setProperty("--progress-width", "0cqw");
+      requestAnimationFrame(() => element.style.setProperty("--progress-width", width));
+    } else {
+      element.style.setProperty("--progress-width", width);
+    }
+    element.style.setProperty(
+      "--bubble-line-progress-color",
+      resolveColorFromStops(percent, progressStyle.color_stops, interpolate),
+    );
+    element.style.setProperty(
+      "--bubble-line-progress-background-color",
+      resolveColorFromStops(percent, progressStyle.background_color_stops, interpolate),
+    );
+  }
+
+  const progressOptions = {
+    source: config.source,
+    start: config.start,
+    end: config.end,
+    override: config.override,
+    invert: config.invert,
+  };
+  showProgress(progressCtx, element, progressOptions, renderProgress);
 
   const shineSettings = progressStyle.shine_settings;
   if (shineSettings && (shineSettings.show_shine ?? false) && checkAllConditions(shineSettings.condition)) {

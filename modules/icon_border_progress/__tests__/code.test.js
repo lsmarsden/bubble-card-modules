@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { icon_border_progress } from "../code.js";
-import { useCardHarness } from "../../../testing/cardHarness.js";
+import { createCardHarness, useCardHarness } from "../../../testing/cardHarness.js";
 
 // jsdom has no SVG geometry: path length falls back to 300, so N% progress draws "0 0 3N 300-3N".
 // Clock pinned to 2025-07-01T12:00:00Z.
@@ -259,13 +259,14 @@ describe("icon_border_progress", () => {
     // 100s timer finishing 50s after the pinned clock → 50% elapsed.
     const timer = (state, attributes = {}) =>
       h().setState("timer.cook", { state, attributes: { duration: "0:01:40", ...attributes } });
-    const ticker = () => main().dataset.progress_update_interval;
+    const activeTimer = (id = "timer.cook", finishes_at = "2025-07-01T12:00:50Z") =>
+      h().setState(id, { state: "active", attributes: { duration: "0:01:40", finishes_at } });
+    const tickers = () => jest.getTimerCount();
 
     it("shows elapsed progress of an active timer and advances it every second", () => {
-      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      activeTimer();
       render([{ button: "main", source: "timer.cook" }]);
       expect(dash()).toBe("0 0 150 150");
-      expect(ticker()).toBeDefined();
 
       h().tick(10_000);
       expect(dash()).toBe("0 0 180 120");
@@ -281,37 +282,107 @@ describe("icon_border_progress", () => {
       expect(dash()).toBe(expected);
     });
 
-    it("runs no ticker for non-timer sources", () => {
-      render([{ button: "main", source: "sensor.progress" }]);
-      expect(ticker()).toBeUndefined();
+    it.each([
+      ["non-timer sources", () => render([{ button: "main", source: "sensor.progress" }])],
+      [
+        "paused timers",
+        () => (timer("paused", { remaining: "0:00:25" }), render([{ button: "main", source: "timer.cook" }])),
+      ],
+    ])("runs no ticker for %s", (_, arrange) => {
+      arrange();
+      expect(tickers()).toBe(0);
     });
 
     it("stops the ticker when the timer is no longer active", () => {
-      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      activeTimer();
       render([{ button: "main", source: "timer.cook" }]);
 
       timer("idle");
       rerender();
-      expect(ticker()).toBeUndefined();
-      expect(jest.getTimerCount()).toBe(0);
+      expect(tickers()).toBe(0);
     });
 
     it("stops the ticker when no config matches", () => {
-      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      activeTimer();
       render([{ button: "main", source: "timer.cook", condition: [enabled] }]);
 
       h().setState("sensor.enable", "off");
       rerender();
-      expect(ticker()).toBeUndefined();
-      expect(jest.getTimerCount()).toBe(0);
+      expect(tickers()).toBe(0);
     });
 
     it("keeps one ticker per button across renders", () => {
-      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
-      render([{ button: "main", source: "timer.cook" }]);
+      activeTimer();
+      render([
+        { button: "main", source: "timer.cook" },
+        { button: "sub-button-1", source: "timer.cook" },
+      ]);
       rerender();
       rerender();
-      expect(jest.getTimerCount()).toBe(1);
+      expect(tickers()).toBe(2);
+    });
+
+    it("ticks with the latest config after a condition switches configs", () => {
+      activeTimer();
+      h().setState("sensor.mode", "a");
+      const when = (state) => ({ condition: "state", entity_id: "sensor.mode", state });
+      render([
+        { button: "main", source: "timer.cook", condition: when("a"), color_stops: [{ percent: 0, color: "#ff0000" }] },
+        { button: "main", source: "timer.cook", condition: when("b"), color_stops: [{ percent: 0, color: "#00ff00" }] },
+      ]);
+      expect(stroke()).toBe("#ff0000");
+
+      h().setState("sensor.mode", "b");
+      rerender();
+      h().tick(1_000);
+      expect(stroke()).toBe("#00ff00");
+    });
+
+    it("ticks the latest source after it switches to another active timer", () => {
+      activeTimer("timer.a", "2025-07-01T12:00:50Z");
+      activeTimer("timer.b", "2025-07-01T12:01:30Z");
+      h().setState("sensor.mode", "a");
+      const when = (state) => ({ condition: "state", entity_id: "sensor.mode", state });
+      render([
+        { button: "main", source: "timer.a", condition: when("a") },
+        { button: "main", source: "timer.b", condition: when("b") },
+      ]);
+
+      h().setState("sensor.mode", "b");
+      rerender();
+      h().tick(10_000);
+      expect(dash()).toBe("0 0 60 240");
+    });
+
+    it("releases every ticker when Bubble Card tears the card down", () => {
+      activeTimer();
+      render([
+        { button: "main", source: "timer.cook" },
+        { button: "sub-button-1", source: "timer.cook" },
+      ]);
+      expect(h().teardownCount()).toBe(1);
+
+      h().teardown();
+      expect(tickers()).toBe(0);
+    });
+
+    it("stops ticking once the card leaves the page, on Bubble Card versions without onTeardown", () => {
+      h().cleanup();
+      const legacy = createCardHarness({ mode: "legacy", rect: { width: 40, height: 40 } });
+      try {
+        legacy.setState("timer.cook", {
+          state: "active",
+          attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+        });
+        legacy.run(icon_border_progress, [{ button: "main", source: "timer.cook" }]);
+        expect(tickers()).toBe(1);
+
+        legacy.disconnect();
+        legacy.tick(1_000);
+        expect(tickers()).toBe(0);
+      } finally {
+        legacy.cleanup();
+      }
     });
   });
 });

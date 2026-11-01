@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { separator_as_progress_bar } from "../code.js";
-import { useCardHarness } from "../../../testing/cardHarness.js";
+import { createCardHarness, useCardHarness } from "../../../testing/cardHarness.js";
 
 const h = useCardHarness({
   type: "separator",
@@ -70,10 +70,12 @@ describe("separator_as_progress_bar", () => {
     it.each([
       ["the entity state", "75", {}, "75cqw"],
       ["override over the entity", "75", { override: 30 }, "30cqw"],
+      ["an override of 0", "75", { override: 0 }, "0cqw"],
       ["inverted", "75", { invert: true }, "25cqw"],
+      ["a custom range", "150", { start: 0, end: 200 }, "75cqw"],
       ["a non-numeric state as 0", "invalid", {}, "0cqw"],
-      ["a negative value as 0", "-10", {}, "0cqw"],
-      ["a value above 100 as 0", "150", {}, "0cqw"],
+      ["a negative value clamped to 0", "-10", {}, "0cqw"],
+      ["a value above 100 clamped to 100", "150", {}, "100cqw"],
     ])("shows %s", (_, state, extra, expected) => {
       h().setState("sensor.task_progress", state);
       render({ ...bar(), ...extra });
@@ -85,7 +87,7 @@ describe("separator_as_progress_bar", () => {
       expect(width()).toBe("0cqw");
     });
 
-    it("starts from zero and sets the width on the next frame", () => {
+    it("grows in from zero on first paint, then updates the width directly", () => {
       const frames = [];
       global.requestAnimationFrame = jest.fn((cb) => frames.push(cb));
       render(bar());
@@ -93,6 +95,106 @@ describe("separator_as_progress_bar", () => {
 
       frames.forEach((cb) => cb());
       expect(width()).toBe("75cqw");
+
+      h().setState("sensor.task_progress", "80");
+      rerender();
+      expect(width()).toBe("80cqw");
+      expect(global.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    });
+
+    it("grows in from zero again after the condition hid the bar", () => {
+      const config = { ...bar(), condition: [cleaning] };
+      render(config);
+      h().setState("sensor.saros_10_status", "docked");
+      rerender();
+      const frames = [];
+      global.requestAnimationFrame = jest.fn((cb) => frames.push(cb));
+
+      h().setState("sensor.saros_10_status", "cleaning");
+      rerender();
+      expect(width()).toBe("0cqw");
+      expect(frames).toHaveLength(1);
+    });
+  });
+
+  describe("timers", () => {
+    // 100s timer finishing 50s after the pinned clock (12:00:00Z) → 50% elapsed.
+    beforeEach(() => {
+      h().setState("timer.wash", {
+        state: "active",
+        attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+      });
+    });
+    const timerBar = (extra = {}) => ({ source: "timer.wash", progress_style: {}, ...extra });
+
+    it("shows elapsed progress and advances it every second without collapsing the bar", () => {
+      render(timerBar());
+      expect(width()).toBe("50cqw");
+
+      h().tick(1_000);
+      expect(width()).toBe("51cqw");
+      h().tick(9_000);
+      expect(width()).toBe("60cqw");
+    });
+
+    it("recolours as the timer advances", () => {
+      render(
+        timerBar({
+          progress_style: {
+            interpolate: false,
+            color_stops: [
+              { percent: 0, color: "#ff0000" },
+              { percent: 55, color: "#00ff00" },
+            ],
+          },
+        }),
+      );
+      expect(prop(line(), "--bubble-line-progress-color")).toBe("#ff0000");
+
+      h().tick(5_000);
+      expect(prop(line(), "--bubble-line-progress-color")).toBe("#00ff00");
+    });
+
+    it.each([
+      [
+        "the condition stops holding",
+        { condition: [cleaning] },
+        () => h().setState("sensor.saros_10_status", "docked"),
+      ],
+      ["progress_style is removed", {}, () => (h().host.config.separator_as_progress_bar.progress_style = undefined)],
+      ["the timer stops", {}, () => h().setState("timer.wash", { state: "idle", attributes: {} })],
+    ])("stops ticking when %s", (_, extra, change) => {
+      render(timerBar(extra));
+      expect(jest.getTimerCount()).toBe(1);
+
+      change();
+      rerender();
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it("stops ticking once the card leaves the page, on Bubble Card versions without onTeardown", () => {
+      h().cleanup();
+      const legacy = createCardHarness({ type: "separator", mode: "legacy" });
+      try {
+        legacy.setState("timer.wash", {
+          state: "active",
+          attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+        });
+        legacy.run(separator_as_progress_bar, timerBar());
+        expect(jest.getTimerCount()).toBe(1);
+
+        legacy.disconnect();
+        legacy.tick(1_000);
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        legacy.cleanup();
+      }
+    });
+
+    it("stops ticking when Bubble Card tears the card down", () => {
+      render(timerBar());
+      h().teardown();
+      expect(jest.getTimerCount()).toBe(0);
     });
   });
 
@@ -117,12 +219,12 @@ describe("separator_as_progress_bar", () => {
       expect(prop(line(), "--bubble-line-progress-background-color")).toBe(expected);
     });
 
-    it("chooses the colour from the raw value even when inverted", () => {
+    it("chooses the colour from the displayed (inverted) progress", () => {
       render({
         ...bar({ interpolate: false, color_stops: [stops[0], { percent: 50, color: "#00ff00" }] }),
         invert: true,
       });
-      expect(prop(line(), "--bubble-line-progress-color")).toBe("#00ff00");
+      expect(prop(line(), "--bubble-line-progress-color")).toBe("#ff0000");
     });
 
     it.each([

@@ -141,6 +141,11 @@ Import from `../helpers/` - see `modules/helpers/README.md` for complete list:
 - `getState(entity, fallbackToRaw)` - Entity state resolution
 - `resolveColor(color, defaultColor)` - Color resolution with CSS vars
 - `applyEffects(element, effects)` - Visual effects application
+- `showProgress(ctx, element, options, render)` / `stopProgress(ctx, element)` - Progress reading: percent from a
+  progress source (entity, timer, `start`/`end`, `override`, `invert`), kept current by a ticker for active timers.
+  Pass `ctx = { host: this, onTeardown: typeof onTeardown === "function" ? onTeardown : undefined }`.
+
+See `GLOSSARY.md` for domain terms and the Bubble Card runtime contract (names in `code:` scope, `onTeardown`, Jinja).
 
 ### 5. Error Handling Standards
 

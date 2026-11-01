@@ -141,13 +141,7 @@ function resolveHelperDependencies(
     const uniqueCalled = [...new Set(calledFunctions)].filter((depName) => !importedNames.has(depName));
 
     if (uniqueCalled.length > 0) {
-      const additionalFunctions = extractFunctionBodies(fileContent, uniqueCalled, true);
-      for (const [depName, depBody] of additionalFunctions.entries()) {
-        if (!importedNames.has(depName)) {
-          importedNames.add(depName);
-          helperFunctions.push(depBody);
-        }
-      }
+      // Recurse so each callee's own callees are scanned too (marking them imported here skipped that scan).
       resolveHelperDependencies(filePath, fileContent, uniqueCalled, helperFunctions, importedNames, importedFiles);
     }
   }

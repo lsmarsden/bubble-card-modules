@@ -1,5 +1,17 @@
 # Changelog
 
+### v1.2.0
+
+<details><summary>See Changes</summary>
+
+- Added custom progress ranges with `start` and `end` (numbers or entities), matching `icon_border_progress`.
+- Added support for `timer` entities as `source`; progress updates every second while the timer is active.
+- Changed: values outside the range are now clamped (e.g. 150% shows a full bar). Previously they showed an empty bar.
+- Changed: with `invert: true`, colour stops now follow the displayed (inverted) progress, matching `icon_border_progress`.
+- Fixed `override: 0` being ignored.
+
+</details>
+
 ### v1.1.1
 
 <details><summary>See Changes</summary>
