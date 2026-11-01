@@ -139,3 +139,9 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
   stores its output outside the repo); every module suite runs against source and built artifact (765 tests).
   Mutation check: unbinding `this` in the build fails 46 artifact runs. Wrapper now `return ""` (upstream's cleanCSS
   strips the old leading `undefined`, so it was harmless). esbuild renames shadowed locals (`card2`, `hass2`, `config2`).
+- **PR opened**: https://github.com/lsmarsden/bubble-card-modules/pull/19 (`claude/affectionate-maxwell-rouon6` → `main`).
+- **Follow-up tasks, ordered** (each builds on the previous; base = PR #19's branch until merged):
+  1. fix `exists` condition + timeline `highlight_active`; 2. evaluate upstream `checkConditionsMet` (fallback must
+     include the `exists` fix); 3. `hasChanged` gating (read all inputs every pass, gate only DOM writes, since Bubble
+     Card's tracking-proxy `hass` registers dependencies on reads; keep calling `showProgress` each pass). An earlier
+     `hasChanged` session was started from the pre-dependency prompt and may be based on pre-refactor `main`.
