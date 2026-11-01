@@ -45,5 +45,10 @@ Checked against Bubble Card v3.4.3 (`src/modules/module-documentation.md`, `src/
   with `typeof name === "function"`, and make the fallback behave the same.
 - `onTeardown(fn)`: one registration per module per card (the last wins), run once when the card is torn down, which
   includes being moved in the DOM. Fallback for older versions: check `element.isConnected` inside timers.
+- `checkConditionsMet(conditions, hass)`: upstream's condition evaluator, in scope in every stable release with modules
+  (v3.0.0+; first in v2.5.0-beta.6). Takes a list only, and throws on a single object or a `null` entry. On 3.4.x it is
+  bound to the card, so `template` conditions re-render it. Its semantics differ from our `checkAllConditions` and
+  change between versions (`not` from 3.0.1, `template` and numeric `attribute` from 3.1.0). It has no `exists`
+  condition and doesn't read `entity[attribute]` thresholds. Modules evaluate conditions with `checkAllConditions`.
 - `code:` may contain Home Assistant (Jinja) templates: any `{{` or `{%` is sent to the server. Built modules must
   never contain them.
