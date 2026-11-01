@@ -257,7 +257,17 @@ describe("separator_as_timeline", () => {
         icon_settings: { icon_color: "orange", icon_background_color: "black", icon_size: "20px" },
         ranges: [
           iconRange,
-          { ...iconRange, label: "Night", icon_settings: { icon_color: "white", icon_size: "16px" } },
+          {
+            ...iconRange,
+            label: "Night",
+            icon_settings: {
+              icon_color: "white",
+              icon_size: "16px",
+              icon_image_size: "12px",
+              icon_outline_color: "#000000",
+              icon_active_color: "yellow",
+            },
+          },
         ],
       });
 
@@ -268,6 +278,10 @@ describe("separator_as_timeline", () => {
       expect(night.style.color).toBe("var(--white-color)");
       expect(night.style.background).toBe("var(--black-color)");
       expect(night.style.getPropertyValue("--icon-size")).toBe("16px");
+      expect(night.style.getPropertyValue("--mdc-icon-size")).toBe("12px");
+      expect(night.style.border).toBe("1px solid rgb(0, 0, 0)");
+      expect(wrapper().style.getPropertyValue("--icon-group-Night-active-color")).toBe("var(--yellow-color)");
+      expect(work.style.getPropertyValue("--mdc-icon-size")).toBe("16px");
     });
 
     it.each([
