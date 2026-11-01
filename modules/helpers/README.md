@@ -51,6 +51,7 @@ module_id:
     /* module styles */
 ```
 
-Helpers read Bubble Card's scope names (`hass`, and on 3.3.0+ `onTeardown`/`hasChanged`) as free variables; see the
-runtime contract in [`GLOSSARY.md`](../../GLOSSARY.md). The build fails if the output contains `{{` or `{%`, which
+Helpers read `hass` as a free variable. Names only newer Bubble Card versions have (`onTeardown`, `hasChanged`, both
+3.3.0+) are passed in by the module through a `ctx` object, guarded with `typeof name === "function"`; see the runtime
+contract in [`GLOSSARY.md`](../../GLOSSARY.md). The build fails if the output contains `{{` or `{%`, which
 Bubble Card would send to Home Assistant as a Jinja template.

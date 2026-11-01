@@ -4,7 +4,7 @@ import { useCardHarness } from "../../../testing/cardHarness.js";
 import { sourceAndArtifact } from "../../../testing/artifact.js";
 
 // Clock pinned to 2025-07-01 12:00 UTC (TZ=UTC), so "now" sits at 50% of the day.
-const h = useCardHarness({
+const h = useCardHarness(() => ({
   type: "separator",
   computedStyle: { height: "2px" },
   states: {
@@ -17,7 +17,8 @@ const h = useCardHarness({
     "input_datetime.lunch_start": "12:30:00",
     "input_datetime.lunch_end": "13:30:00",
   },
-});
+  mode: harnessMode,
+}));
 
 const render = (config) => h().run(moduleFn, config);
 const wrapper = () => h().$(".bubble-line-wrapper");
@@ -32,13 +33,14 @@ beforeEach(() => {
 });
 afterEach(() => warn.mockRestore());
 
-let moduleFn;
+let moduleFn, harnessMode;
 
 describe.each(sourceAndArtifact("separator_as_timeline", separator_as_timeline))(
   "separator_as_timeline (%s)",
-  (_, fn) => {
+  (_, fn, mode) => {
     beforeAll(() => {
       moduleFn = fn;
+      harnessMode = mode;
     });
 
     describe("setup", () => {
@@ -86,7 +88,7 @@ describe.each(sourceAndArtifact("separator_as_timeline", separator_as_timeline))
         expect(segments()).toHaveLength(0);
       });
 
-      it("clears previous segments and icons on every render", () => {
+      it("keeps one of each segment and icon across renders", () => {
         const config = { ranges: [{ start: "09:00", end: "17:00", icon: "mdi:work", color: "blue" }] };
         render(config);
         render(config);
@@ -440,6 +442,135 @@ describe.each(sourceAndArtifact("separator_as_timeline", separator_as_timeline))
         expect(h().$(".timeline-tick").innerText).toBe("00");
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('"time_format.global_settings.show_minutes"'));
       });
+    });
+
+    describe("style passes", () => {
+      const config = () => ({
+        marker_color: "sensor.marker_colour",
+        ranges: [
+          { label: "Work", start_entity: "sensor.work_start", end_entity: "sensor.work_end", icon: "mdi:work" },
+          { label: "Late", start: "12:30", end: "13:00", icon: "mdi:clock", color: "sensor.late_colour" },
+        ],
+      });
+      beforeEach(() => h().setStates({ "sensor.marker_colour": "#ff0000", "sensor.late_colour": "#00ff00" }));
+      const rerender = () => h().run(moduleFn);
+      const markerLeft = () => wrapper().style.getPropertyValue("--timeline-marker-left");
+      const glowing = (label) => icons(`.group-${label}`)[0].style.filter !== "";
+
+      // A pass that changes nothing: what it read through hass, and what it wrote to the DOM.
+      const quietPass = () => {
+        let writes;
+        const reads = h().readsDuring(() => (writes = h().writesDuring(rerender)));
+        return { reads, writes };
+      };
+
+      it("writes nothing when nothing changed, but still reads every entity it depends on", () => {
+        render(config());
+        const { reads, writes } = quietPass();
+
+        expect(writes).toEqual([]);
+        expect(reads).toEqual(
+          expect.arrayContaining([
+            "sensor.work_start",
+            "sensor.work_end",
+            "sensor.marker_colour",
+            "sensor.late_colour",
+          ]),
+        );
+        expect(segments()).toHaveLength(2);
+      });
+
+      it("keeps its segments across a pass that changed nothing, so a hover survives it", () => {
+        render(config());
+        const work = segmentFor("Work");
+        work.dispatchEvent(new Event("mouseenter"));
+        rerender();
+
+        expect(segmentFor("Work")).toBe(work);
+        expect(work.classList.contains("highlighted")).toBe(true);
+      });
+
+      it("writes nothing while the clock stays within the same minute", () => {
+        render(config());
+        h().tick(59_000);
+        expect(quietPass().writes).toEqual([]);
+      });
+
+      it("moves the current-time marker as the minutes pass", () => {
+        render(config());
+        h().tick(60_000);
+        rerender();
+        expect(pct(markerLeft())).toBeCloseTo(((12 * 60 + 1) / 1440) * 100);
+      });
+
+      it("moves the active highlight as the clock enters a range", () => {
+        render(config());
+        expect(glowing("Late")).toBe(false);
+
+        h().tick(30 * 60_000);
+        rerender();
+        expect(glowing("Late")).toBe(true);
+      });
+
+      it.each([
+        [
+          "a time entity",
+          () => h().setState("sensor.work_start", "10:00"),
+          () => expect(segmentFor("Work").dataset.tooltip).toBe("Work: 10:00 → 17:30"),
+        ],
+        [
+          "a colour entity",
+          () => h().setState("sensor.late_colour", "#0000ff"),
+          () => expect(segmentFor("Late").style.background).toBe("rgb(0, 0, 255)"),
+        ],
+        [
+          "the marker colour entity",
+          () => h().setState("sensor.marker_colour", "#0000ff"),
+          () => expect(wrapper().style.getPropertyValue("--marker-color")).toBe("#0000ff"),
+        ],
+      ])("redraws when %s changes", (_, change, expectRedrawn) => {
+        render(config());
+        rerender();
+        change();
+        rerender();
+        expectRedrawn();
+      });
+
+      it.each([
+        ["a segment", () => segments()[0].remove(), () => expect(segments()).toHaveLength(2)],
+        ["an icon", () => icons()[0].remove(), () => expect(icons()).toHaveLength(2)],
+        [
+          "the marker",
+          () => h().$(".timeline-marker").remove(),
+          () => expect(h().$$(".timeline-marker")).toHaveLength(1),
+        ],
+        [
+          "the ticks",
+          () =>
+            h()
+              .$$(".timeline-tick")
+              .forEach((t) => t.remove()),
+          () => expect(h().$$(".timeline-tick")).toHaveLength(5),
+        ],
+        [
+          "the marker position",
+          () => wrapper().style.removeProperty("--timeline-marker-left"),
+          () => expect(markerLeft()).toBe("50%"),
+        ],
+      ])("redraws %s after something else removed it", (_, strip, expectRedrawn) => {
+        render(config());
+        strip();
+        rerender();
+        expectRedrawn();
+      });
+
+      if (mode === "3.3+") {
+        it("redraws whenever Bubble Card's hasChanged says something changed", () => {
+          render(config());
+          global.hasChanged.mockReturnValue(true);
+          expect(quietPass().writes).not.toEqual([]);
+        });
+      }
     });
   },
 );
