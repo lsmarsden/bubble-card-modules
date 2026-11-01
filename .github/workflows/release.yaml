@@ -121,7 +121,7 @@ jobs:
         run: npm ci
 
       - name: Test specific module
-        run: npm test -- --testPathPattern="modules/${{ matrix.module }}" --testPathIgnorePatterns="modules/helpers"
+        run: npm test -- --testPathPatterns="modules/${{ matrix.module }}" --testPathIgnorePatterns="modules/helpers"
         continue-on-error: true
 
   create-release:

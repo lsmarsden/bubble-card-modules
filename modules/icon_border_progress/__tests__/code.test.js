@@ -1,1351 +1,317 @@
 import { jest } from "@jest/globals";
+import { icon_border_progress } from "../code.js";
+import { useCardHarness } from "../../../testing/cardHarness.js";
 
-// Global reference for mocks to access
-let mockHass;
+// jsdom has no SVG geometry: path length falls back to 300, so N% progress draws "0 0 3N 300-3N".
+// Clock pinned to 2025-07-01T12:00:00Z.
+const h = useCardHarness({
+  rect: { width: 40, height: 40 },
+  computedStyle: { borderRadius: "50%" },
+  states: { "sensor.progress": "75", "sensor.enable": "on" },
+});
 
-// Mock all the helper dependencies first
-jest.unstable_mockModule("../../helpers/entity/condition.js", () => ({
-  checkAllConditions: jest.fn(() => true),
-}));
+const render = (config) => h().run(icon_border_progress, config);
+const rerender = () => h().run(icon_border_progress);
+const main = () => h().$(".bubble-icon-container");
+const sub = (n) => h().$(`.bubble-sub-button-${n}`);
+const svg = (el = main()) => el.querySelector(".stroke-dash-aligned-svg");
+const path = (el = main()) => el.querySelector(".progress-path");
+const dash = (el = main()) => path(el)?.getAttribute("stroke-dasharray");
+const stroke = (el = main()) => path(el)?.getAttribute("stroke");
+const remaining = (el = main()) => el.querySelector(".bg-path").getAttribute("stroke");
+const enabled = { condition: "state", entity_id: "sensor.enable", state: "on" };
 
-jest.unstable_mockModule("../../helpers/ui/color.js", () => ({
-  resolveColor: jest.fn((color, defaultColor) => {
-    // Handle entity references by looking up in hass states - these will be resolved at test runtime
-    if (typeof color === "string" && color.startsWith("sensor.")) {
-      // Return a placeholder that tests can check for - the actual module will resolve this
-      // For the tests, we'll simulate resolved colors: sensor.background -> "white"
-      if (color === "sensor.background") return "white";
-      if (color === "sensor.color") return "blue";
-      return defaultColor;
-    }
-    return color || defaultColor;
-  }),
-  resolveColorFromStops: jest.fn(() => "rgb(255, 255, 0)"),
-}));
-
-jest.unstable_mockModule("../../helpers/ui/effects.js", () => ({
-  applyEffects: jest.fn(),
-}));
-
-jest.unstable_mockModule("../../helpers/entity/hass.js", () => ({
-  getState: jest.fn(),
-  getAttributes: jest.fn(),
-  getDomain: jest.fn(),
-}));
-
-jest.unstable_mockModule("../../helpers/utils/arrays.js", () => ({
-  toArray: jest.fn((input) => {
-    if (input === undefined || input === null) return [];
-    return Array.isArray(input) ? input : [input];
-  }),
-}));
-
-jest.unstable_mockModule("../../helpers/utils/config.js", () => ({
-  resolveConfig: jest.fn((sources, defaultValue) => {
-    for (const source of sources) {
-      const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-      let value = source.config;
-      for (const key of keys) {
-        value = value?.[key];
-      }
-      if (value !== undefined) return value;
-    }
-    return defaultValue;
-  }),
-}));
-
-// Mock the new SVG helper functions
-jest.unstable_mockModule("../../helpers/ui/progressBorder.js", () => ({
-  createProgressBorder: jest.fn(),
-  removeProgressBorder: jest.fn(),
-}));
-
-// Mock timer helper functions
-jest.unstable_mockModule("../../helpers/entity/timer.js", () => ({
-  isActiveTimer: jest.fn(() => false),
-}));
-
-// Mock timer updater helper
-jest.unstable_mockModule("../../helpers/ui/timerUpdater.js", () => ({
-  manageTimerUpdater: jest.fn(),
-}));
-
-// Import the helpers to access mocked functions
-const condition = await import("../../helpers/entity/condition.js");
-const color = await import("../../helpers/ui/color.js");
-const effects = await import("../../helpers/ui/effects.js");
-const hass = await import("../../helpers/entity/hass.js");
-const arrays = await import("../../helpers/utils/arrays.js");
-const config = await import("../../helpers/utils/config.js");
-const progress = await import("../../helpers/entity/progress.js");
-const strokeDashProgress = await import("../../helpers/ui/progressBorder.js");
-const timer = await import("../../helpers/entity/timer.js");
-const timerUpdater = await import("../../helpers/ui/timerUpdater.js");
-
-const { icon_border_progress } = await import("../code.js");
+let warn;
+beforeEach(() => {
+  warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => warn.mockRestore());
 
 describe("icon_border_progress", () => {
-  let mockCard;
-  let mockElement;
-  let mockConfig;
-  let mockThis;
-
-  beforeEach(() => {
-    // Reset all mocks
-    jest.clearAllMocks();
-
-    // Reset DOM
-    document.body.innerHTML = "";
-
-    // Create a mock card element with the required structure
-    mockCard = document.createElement("div");
-    mockElement = document.createElement("div");
-    mockElement.className = "bubble-icon-container";
-    mockCard.appendChild(mockElement);
-    document.body.appendChild(mockCard);
-
-    // Mock getComputedStyle
-    global.getComputedStyle = jest.fn().mockReturnValue({
-      getPropertyValue: jest.fn().mockReturnValue(""),
+  describe("targeting", () => {
+    it.each([
+      ["main", () => main()],
+      ["main-button", () => main()],
+      ["sub-button-2", () => sub(2)],
+    ])("draws on button %s", (button, target) => {
+      render([{ button, source: "sensor.progress" }]);
+      expect(dash(target())).toBe("0 0 225 75");
+      expect(target().style.position).toBe("relative");
     });
 
-    // Create mock hass object with proper state structure
-    mockHass = {
-      states: {
-        "sensor.progress": { state: "50" },
-        "sensor.start": { state: "0" },
-        "sensor.end": { state: "100" },
-        "sensor.color": { state: "blue" },
-        "sensor.background": { state: "white" },
-      },
-    };
-
-    // Set up the hass.getState mock to return appropriate values
-    hass.getState.mockImplementation((entity) => {
-      return mockHass.states[entity]?.state;
+    it("draws independently on several buttons", () => {
+      h().setStates({ "sensor.a": "20", "sensor.b": "60" });
+      render([
+        { button: "main", source: "sensor.a" },
+        { button: "sub-button-1", source: "sensor.b" },
+      ]);
+      expect(dash(main())).toBe("0 0 60 240");
+      expect(dash(sub(1))).toBe("0 0 180 120");
     });
 
-    // Basic test config
-    mockConfig = {
-      icon_border_progress: [
+    it("accepts config in the editor's numbered-object shape", () => {
+      render({
+        0: { button: "main", source: "sensor.progress" },
+        1: { button: "sub-button-1", source: "sensor.progress" },
+      });
+      expect(svg(main())).not.toBeNull();
+      expect(svg(sub(1))).not.toBeNull();
+    });
+
+    it.each([
+      ["a missing element", [{ button: "sub-button-9", source: "sensor.progress" }]],
+      ["a config without button", [{ source: "sensor.progress" }]],
+      ["an empty config", []],
+      ["no config", undefined],
+    ])("ignores %s", (_, config) => {
+      expect(() => render(config)).not.toThrow();
+      expect(h().$$(".stroke-dash-aligned-svg")).toHaveLength(0);
+    });
+  });
+
+  describe("progress value", () => {
+    it.each([
+      ["0–100 by default", "75", {}, "0 0 225 75"],
+      ["a custom range", "150", { start: 0, end: 200 }, "0 0 225 75"],
+      ["a float range", "2.5", { start: 0, end: 5 }, "0 0 150 150"],
+      ["a range offset from zero", "15", { start: 10, end: 30 }, "0 0 75 225"],
+      ["values above end, clamped", "250", { start: 0, end: 200 }, "300 0"],
+      ["values below start, clamped", "5", { start: 10, end: 30 }, "0 300"],
+      ["non-numeric state as start", "unavailable", {}, "0 300"],
+      ["non-numeric start/end as defaults", "40", { start: "x", end: "y" }, "0 0 120 180"],
+    ])("maps %s", (_, state, range, expected) => {
+      h().setState("sensor.value", state);
+      render([{ button: "main", source: "sensor.value", ...range }]);
+      expect(dash()).toBe(expected);
+    });
+
+    it("reads start and end from entities", () => {
+      h().setStates({ "sensor.value": "30", "sensor.min": "20", "sensor.max": "60" });
+      render([{ button: "main", source: "sensor.value", start: "sensor.min", end: "sensor.max" }]);
+      expect(dash()).toBe("0 0 75 225");
+    });
+
+    it("hides the border for a missing entity", () => {
+      render([{ button: "main", source: "sensor.missing" }]);
+      expect(stroke()).toBe("transparent");
+    });
+
+    it("inverts the displayed progress", () => {
+      render([{ button: "main", source: "sensor.progress", invert: true }]);
+      expect(dash()).toBe("0 0 75 225");
+    });
+
+    it("still honours the deprecated entity key, with a warning", () => {
+      render([{ button: "main", entity: "sensor.progress" }]);
+      expect(dash()).toBe("0 0 225 75");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Use "source" instead'));
+    });
+
+    it("offsets the start point with offset_percent", () => {
+      h().setState("sensor.progress", "50");
+      render([{ button: "main", source: "sensor.progress", offset_percent: 25 }]);
+      expect(dash()).toBe("0 75 150 75");
+    });
+
+    it("passes border_radius through to the border shape", () => {
+      render([{ button: "main", source: "sensor.progress", border_radius: 0 }]);
+      expect(svg().getAttribute("data-config")).toBe("false-0-40-40");
+    });
+  });
+
+  describe("colours", () => {
+    const stops = [
+      { percent: 0, color: "#ff0000" },
+      { percent: 100, color: "#00ff00" },
+    ];
+
+    it("uses the primary colour without color_stops, and dark grey for the remainder", () => {
+      render([{ button: "main", source: "sensor.progress" }]);
+      expect(stroke()).toBe("var(--primary-color)");
+      expect(remaining()).toBe("var(--dark-grey-color)");
+    });
+
+    it.each([
+      ["picks the lower stop", false, "#ff0000"],
+      ["interpolates between stops", true, "color-mix(in srgb, #ff0000 25%, #00ff00 75%)"],
+    ])("%s", (_, interpolate_colors, expected) => {
+      render([{ button: "main", source: "sensor.progress", color_stops: stops, interpolate_colors }]);
+      expect(stroke()).toBe(expected);
+    });
+
+    it("chooses the colour from the inverted progress", () => {
+      render([
         {
-          button: "main-button",
+          button: "main",
           source: "sensor.progress",
-          start: "sensor.start",
-          end: "sensor.end",
+          invert: true,
           color_stops: [
-            { percentage: 0, color: "red" },
-            { percentage: 50, color: "yellow" },
-            { percentage: 100, color: "green" },
+            { percent: 0, color: "red" },
+            { percent: 50, color: "green" },
           ],
-          remaining_color: "sensor.background",
-          background_color: "sensor.background",
         },
-      ],
-    };
-
-    // Create the `this` context that the function expects
-    mockThis = {
-      config: mockConfig,
-    };
-  });
-
-  describe("DOM element selection", () => {
-    it("should find and modify main-button element", () => {
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify the new SVG helper was called with correct parameters
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value (50%)
-        "rgb(255, 255, 0)", // progress color from resolveColorFromStops mock
-        "white", // remaining color resolved from sensor.background
-
-        {
-          strokeWidth: 3,
-          animationDuration: 800,
-          borderRadiusOverride: undefined,
-          offsetPercent: 0,
-        },
-      );
-      // Verify background color is set to resolved background color from sensor.background
-      expect(mockElement.style.background).toBe("white");
+      ]);
+      expect(stroke()).toBe("var(--red-color)");
     });
 
-    it("should find and modify main element (alias for main-button)", () => {
-      mockThis.config.icon_border_progress[0].button = "main";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "white", // remaining color resolved from sensor.background
-
-        {
-          strokeWidth: 3,
-          animationDuration: 800,
-          borderRadiusOverride: undefined,
-          offsetPercent: 0,
-        },
-      );
+    it.each([
+      ["remaining_color", { remaining_color: "blue" }, false],
+      ["deprecated remainingcolor", { remainingcolor: "blue" }, true],
+    ])("colours the remainder from %s", (_, keys, deprecated) => {
+      render([{ button: "main", source: "sensor.progress", ...keys }]);
+      expect(remaining()).toBe("var(--blue-color)");
+      expect(warn).toHaveBeenCalledTimes(deprecated ? 1 : 0);
     });
 
-    it("should find custom button element", () => {
-      mockThis.config.icon_border_progress[0].button = "custom-button";
-      mockElement.className = "bubble-custom-button";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "white", // remaining color resolved from sensor.background
-
-        {
-          strokeWidth: 3,
-          animationDuration: 800,
-          borderRadiusOverride: undefined,
-          offsetPercent: 0,
-        },
-      );
+    it.each([
+      ["background_color", { background_color: "#333333" }, "rgb(51, 51, 51)"],
+      ["deprecated backcolor", { backcolor: "#333333" }, "rgb(51, 51, 51)"],
+      ["background_color over backcolor", { background_color: "#333333", backcolor: "#444444" }, "rgb(51, 51, 51)"],
+      ["a theme colour name", { background_color: "invalid-color" }, "var(--invalid-color-color)"],
+      ["an entity", { background_color: "sensor.bg" }, "rgb(0, 0, 255)"],
+    ])("sets the background from %s", (_, keys, expected) => {
+      h().setState("sensor.bg", "#0000ff");
+      render([{ button: "main", source: "sensor.progress", ...keys }]);
+      expect(main().style.background).toBe(expected);
     });
 
-    it("should handle missing element gracefully", () => {
-      mockThis.config.icon_border_progress[0].button = "nonexistent";
-
-      expect(() => {
-        icon_border_progress.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-
-      // Verify SVG helper was not called since element doesn't exist
-      expect(strokeDashProgress.createProgressBorder).not.toHaveBeenCalled();
-    });
-
-    it("should handle start_angle configuration", () => {
-      mockThis.config.icon_border_progress[0].start_angle = 90;
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called with correct start angle
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "white", // remaining color resolved from sensor.background
-        {
-          strokeWidth: 3,
-          animationDuration: 800,
-          borderRadiusOverride: undefined,
-          offsetPercent: 0,
-        },
-      );
-    });
-
-    it("should use default start_angle when not specified", () => {
-      // start_angle not set in config, should default to 0
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify default start angle of 0 is used
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50,
-        "rgb(255, 255, 0)",
-        "white", // remaining color resolved from sensor.background
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
+    it("leaves Bubble Card's own background alone when none is configured", () => {
+      main().style.background = "rgb(1, 2, 3)";
+      render([{ button: "main", source: "sensor.progress" }]);
+      expect(main().style.background).toBe("rgb(1, 2, 3)");
     });
   });
 
-  describe("progress value calculation", () => {
-    it("should calculate progress percentage correctly", () => {
-      mockHass.states["sensor.progress"].state = "75";
+  describe("conditions", () => {
+    const conditional = (extra = {}) => [
+      { button: "main", source: "sensor.progress", background_color: "#333333", condition: [enabled], ...extra },
+    ];
 
-      icon_border_progress.call(mockThis, mockCard, mockHass);
+    it("draws while the condition holds and fully cleans up when it stops", () => {
+      main().style.background = "rgb(9, 9, 9)";
+      render(conditional());
+      expect(svg()).not.toBeNull();
+      expect(main().style.background).toBe("rgb(51, 51, 51)");
 
-      // Verify SVG helper was called with correct progress value (75%)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        75, // 75% progress
-        "rgb(255, 255, 0)",
-        "white",
+      h().setState("sensor.enable", "off");
+      rerender();
+      expect(svg()).toBeNull();
+      expect(main().style.background).toBe("rgb(9, 9, 9)");
 
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
+      h().setState("sensor.enable", "on");
+      rerender();
+      expect(svg()).not.toBeNull();
     });
 
-    it("should invert progress percentage correctly", () => {
-      // setup
-      mockHass.states["sensor.progress"].state = "75";
-      mockThis.config.icon_border_progress[0].invert = true;
-
-      // exercise
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called with correct progress value (75%)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        25, // 25% progress
-        "rgb(255, 255, 0)",
-        "white",
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
+    it("remembers the original background only once", () => {
+      render(conditional());
+      h().setState("sensor.enable", "off");
+      rerender();
+      expect(main().style.background).toBe("");
+      expect(main().dataset.originalBackground).toBe("");
     });
 
-    // https://github.com/Clooos/Bubble-Card/discussions/1525#discussioncomment-13732526
-    // Ensure inputs accept floats
-    it("should calculate progress percentage correctly for floats", () => {
-      mockHass.states["sensor.progress"].state = "0.7";
-      mockHass.states["sensor.start"].state = "0.2";
-      mockHass.states["sensor.end"].state = "0.8";
+    it("uses the first config whose condition holds", () => {
+      h().setStates({ "sensor.mode": "b", "sensor.a": "10", "sensor.b": "90" });
+      const on = (state) => ({ condition: "state", entity_id: "sensor.mode", state });
+      render([
+        { button: "main", source: "sensor.a", condition: on("a") },
+        { button: "main", source: "sensor.b", condition: on("b") },
+        { button: "main", source: "sensor.progress" },
+      ]);
+      expect(dash()).toBe("0 0 270 30");
 
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called with correct progress value (75%)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        expect.closeTo(500 / 6), // 75% progress
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
+      h().setState("sensor.mode", "c");
+      rerender();
+      expect(dash()).toBe("0 0 225 75");
     });
 
-    it("should handle custom start and end values", () => {
-      mockHass.states["sensor.progress"].state = "150";
-      mockHass.states["sensor.start"].state = "100";
-      mockHass.states["sensor.end"].state = "200";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // 150 in range 100-200 = 50% progress
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // (150-100)/(200-100) * 100 = 50%
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should clamp values below start to start value", () => {
-      mockHass.states["sensor.progress"].state = "-10";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Value below start should be clamped to 0%
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        0, // clamped to 0%
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should clamp values above end to end value", () => {
-      mockHass.states["sensor.progress"].state = "150";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Value above end should be clamped to 100%
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        100, // clamped to 100%
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should handle NaN values by using start value", () => {
-      mockHass.states["sensor.progress"].state = "invalid";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Invalid value should result in 0% (start value)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        0, // NaN becomes 0%
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should use default start (0) and end (100) for NaN values", () => {
-      mockHass.states["sensor.start"].state = "invalid";
-      mockHass.states["sensor.end"].state = "invalid";
-      mockHass.states["sensor.progress"].state = "50";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Should default to 0-100 range, so 50 = 50%
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // 50% with default 0-100 range
-        "rgb(255, 255, 0)",
-        "white",
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-  });
-
-  describe("color handling", () => {
-    it("should apply color from color stops", () => {
-      mockHass.states["sensor.progress"].state = "25";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify color from color stops is passed to SVG helper
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        25, // 25% progress
-        "rgb(255, 255, 0)", // Color from resolveColorFromStops mock
-        "white", // Remaining color from mock
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should handle remaining_color configuration", () => {
-      // Setup a fresh configuration for this test
-      mockThis.config.icon_border_progress[0] = {
-        button: "main-button",
-        source: "sensor.progress",
-        start: 0,
-        end: 100,
-        remaining_color: "sensor.background",
-        background_color: "sensor.background",
-      };
-
-      // Ensure proper entity states
-      mockHass.states["sensor.progress"].state = "50";
-      mockHass.states["sensor.background"].state = "rgba(100,100,100,0.5)";
-
-      // Override config resolution for this test
-      config.resolveConfig.mockImplementation((sources) => {
-        for (const source of sources) {
-          if (source.path === "source") return "sensor.progress";
-          if (source.path === "remaining_color") return "sensor.background";
-          if (source.path === "background_color") return "sensor.background";
-        }
-        return undefined;
-      });
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "sensor.background") return "rgba(100,100,100,0.5)";
-        return colorValue || defaultColor;
-      });
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify remaining color is passed to SVG helper
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // Progress value (50%)
-        "rgb(255, 255, 0)", // Progress color from mock
-        "rgba(100,100,100,0.5)", // Remaining color resolved from entity
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should handle background_color configuration", () => {
-      // Setup a fresh configuration for this test
-      mockThis.config.icon_border_progress[0] = {
-        button: "main-button",
-        source: "sensor.progress",
-        start: 0,
-        end: 100,
-        background_color: "sensor.color", // Only set background, leave remaining_color to default
-      };
-
-      // Ensure proper entity states
-      mockHass.states["sensor.progress"].state = "50";
-      mockHass.states["sensor.color"].state = "blue";
-
-      // Override config resolution for this test
-      config.resolveConfig.mockImplementation((sources) => {
-        for (const source of sources) {
-          if (source.path === "source") return "sensor.progress";
-          if (source.path === "background_color") return "sensor.color";
-          if (source.path === "remaining_color") return undefined; // No remaining_color configured
-        }
-        return undefined;
-      });
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "sensor.color") return "blue";
-        return defaultColor; // For remaining_color, return default
-      });
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify background is applied to element and SVG helper is called
-      expect(mockElement.style.background).toBe("blue");
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // Progress value (50%)
-        "rgb(255, 255, 0)", // Progress color from mock
-        "var(--dark-grey-color)", // Default remaining color (since we only set background_color)
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should use default colors when entities are not found", () => {
-      delete mockThis.config.icon_border_progress[0].remaining_color;
-      delete mockThis.config.icon_border_progress[0].background_color;
-
-      // Mock config.resolveConfig to return undefined (no config found)
-      config.resolveConfig.mockReturnValue(undefined);
-      // Mock color.resolveColor to return the default values
-      color.resolveColor.mockImplementation((color, defaultColor) => defaultColor);
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      expect(color.resolveColor).toHaveBeenCalledWith(undefined, "var(--dark-grey-color)");
-      expect(color.resolveColor).toHaveBeenCalledWith(undefined, "var(--bubble-icon-background-color)");
-    });
-  });
-
-  describe("deprecated configuration support", () => {
-    it("should support deprecated 'entity' instead of 'source'", () => {
-      // Setup test with deprecated 'entity' config
-      mockThis.config.icon_border_progress[0] = {
-        button: "main-button",
-        entity: "sensor.progress", // deprecated - should use 'source'
-        start: 0,
-        end: 100,
-      };
-
-      // Reset config.resolveConfig to use the actual implementation logic
-      config.resolveConfig.mockImplementation((sources, defaultValue) => {
-        for (const source of sources) {
-          const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-          let value = source.config;
-          for (const key of keys) {
-            value = value?.[key];
-          }
-          if (value !== undefined) return value;
-        }
-        return defaultValue;
-      });
-
-      // Ensure entity has expected value
-      mockHass.states["sensor.progress"].state = "50";
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify the SVG helper was called (meaning deprecated config worked)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress from deprecated entity
-        "rgb(255, 255, 0)", // color from stops
-        expect.any(String), // remaining color (default)
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should support deprecated 'remainingcolor' instead of 'remaining_color'", () => {
-      // Setup test with deprecated 'remainingcolor' config
-      mockThis.config.icon_border_progress[0] = {
-        button: "main-button",
-        source: "sensor.progress",
-        start: 0,
-        end: 100,
-        remainingcolor: "sensor.background", // deprecated - should use 'remaining_color'
-      };
-
-      // Reset config.resolveConfig to use the actual implementation logic
-      config.resolveConfig.mockImplementation((sources, defaultValue) => {
-        for (const source of sources) {
-          const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-          let value = source.config;
-          for (const key of keys) {
-            value = value?.[key];
-          }
-          if (value !== undefined) return value;
-        }
-        return defaultValue;
-      });
-
-      // Ensure entities have expected values
-      mockHass.states["sensor.progress"].state = "50";
-      mockHass.states["sensor.background"].state = "red";
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "sensor.background") return "red";
-        return defaultColor;
-      });
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify the SVG helper was called with deprecated remaining color
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // color from stops
-        "red", // remaining color from deprecated config
-
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-
-    it("should support deprecated 'backcolor' instead of 'background_color'", () => {
-      // Setup test with deprecated 'backcolor' config
-      mockThis.config.icon_border_progress[0] = {
-        button: "main-button",
-        source: "sensor.progress",
-        start: 0,
-        end: 100,
-        backcolor: "sensor.background", // deprecated - should use 'background_color'
-      };
-
-      // Reset config.resolveConfig to use the actual implementation logic
-      config.resolveConfig.mockImplementation((sources, defaultValue) => {
-        for (const source of sources) {
-          const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-          let value = source.config;
-          for (const key of keys) {
-            value = value?.[key];
-          }
-          if (value !== undefined) return value;
-        }
-        return defaultValue;
-      });
-
-      // Ensure entities have expected values
-      mockHass.states["sensor.progress"].state = "50";
-      mockHass.states["sensor.background"].state = "green";
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "sensor.background") return "green";
-        return defaultColor;
-      });
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify the background is applied (using deprecated config)
-      expect(mockElement.style.background).toBe("green");
-      // Also verify SVG helper was called
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalled();
-    });
-  });
-
-  describe("condition handling", () => {
-    it("should skip processing when condition is false", () => {
-      mockThis.config.icon_border_progress[0].condition = [
-        {
-          condition: "state",
-          entity: "sensor.enabled",
-          state: "on",
-        },
-      ];
-
-      condition.checkAllConditions.mockReturnValue(false);
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // When condition is false, SVG helper should not be called (progress is cleaned up)
-      expect(strokeDashProgress.createProgressBorder).not.toHaveBeenCalled();
-      // But cleanup should be called
-      expect(strokeDashProgress.removeProgressBorder).toHaveBeenCalledWith(mockElement);
-    });
-
-    it("should clean up intervals when condition is false", () => {
-      // set up
-      mockThis.config.icon_border_progress[0].condition = [
-        {
-          condition: "state",
-          entity: "sensor.enabled",
-          state: "on",
-        },
-      ];
-      mockElement.dataset.progress_update_interval = "123";
-      jest.spyOn(global, "clearInterval");
-
-      condition.checkAllConditions.mockReturnValue(false);
-
-      // exercise
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // verify
-      // When condition is false, SVG helper should not be called (progress is cleaned up)
-      expect(strokeDashProgress.createProgressBorder).not.toHaveBeenCalled();
-      // But cleanup should be called
-      expect(strokeDashProgress.removeProgressBorder).toHaveBeenCalledWith(mockElement);
-      expect(mockElement.dataset.progress_update_interval).toBeUndefined();
-      expect(clearInterval).toHaveBeenCalledWith(123);
-    });
-
-    it("should process when condition is true", () => {
-      mockThis.config.icon_border_progress[0].condition = [
-        {
-          condition: "state",
-          entity: "sensor.enabled",
-          state: "on",
-        },
-      ];
-
-      condition.checkAllConditions.mockReturnValue(true);
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // When condition is true, SVG helper should be called to apply progress
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // color from stops
-        expect.any(String), // remaining color
-        { animationDuration: 800, borderRadiusOverride: undefined, offsetPercent: 0, strokeWidth: 3 },
-      );
-    });
-  });
-
-  describe("effects handling", () => {
-    it("should apply effects when configured", () => {
-      mockThis.config.icon_border_progress[0].effects = [{ effect: "pulse", duration: 1000 }];
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      expect(effects.applyEffects).toHaveBeenCalledWith(mockElement, [{ effect: "pulse", duration: 1000 }]);
-      // Also verify SVG helper was called (progress is applied)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalled();
-    });
-
-    it("should handle missing effects gracefully", () => {
-      delete mockThis.config.icon_border_progress[0].effects;
-
-      expect(() => {
-        icon_border_progress.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-
-      // Should still apply progress, just without effects
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalled();
-    });
-  });
-
-  describe("multiple button configurations", () => {
-    it("should handle multiple button configurations", () => {
-      const secondElement = document.createElement("div");
-      secondElement.className = "bubble-secondary";
-      mockCard.appendChild(secondElement);
-
-      mockThis.config.icon_border_progress.push({
-        button: "secondary",
-        source: "sensor.progress",
-        start: "sensor.start",
-        end: "sensor.end",
-      });
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify SVG helper was called for both elements
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledTimes(2);
-      // Check that both elements were processed
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        expect.any(Number),
-        expect.any(String),
-        expect.any(String),
-        expect.any(Object),
-      );
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        secondElement,
-        expect.any(Number),
-        expect.any(String),
-        expect.any(String),
-        expect.any(Object),
-      );
-    });
-
-    it("should handle missing button configuration gracefully", () => {
-      mockConfig.icon_border_progress.push({
-        // Missing button property
-        source: "sensor.progress",
-      });
-
-      expect(() => {
-        icon_border_progress.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-    });
-  });
-
-  describe("edge cases", () => {
-    it("should handle empty configuration array", () => {
-      mockConfig.icon_border_progress = [];
-
-      expect(() => {
-        icon_border_progress.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-    });
-
-    it("should handle undefined configuration", () => {
-      mockThis.config.icon_border_progress = undefined;
-
-      expect(() => {
-        icon_border_progress.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-    });
-
-    it("should handle elements with no initial background style", () => {
-      // Setup - Element with undefined background style (not just empty string)
-      delete mockElement.style.background; // Remove the property entirely
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - Should store empty string as original background when background is undefined
-      expect(mockElement.dataset.originalBackground).toBe(""); // The || "" fallback should be triggered
-      expect(mockElement.style.background).toBeTruthy(); // Should have new background applied
-
-      // Verify SVG helper was called
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalled();
-    });
-
-    it("should not overwrite already stored original background", () => {
-      // Setup - Manually set the dataset property to simulate it already being set
-      Object.defineProperty(mockElement.dataset, "originalBackground", {
-        value: "rgb(255, 0, 0)",
-        writable: true,
-        configurable: true,
-      });
-      mockElement.style.background = "blue"; // Current background is different
-
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - Should NOT overwrite the already stored original background (hits the false branch of line 22)
-      expect(mockElement.dataset.originalBackground).toBe("rgb(255, 0, 0)"); // Should remain unchanged
-      expect(mockElement.style.background).toBeTruthy(); // Should have new background applied
-
-      // Verify SVG helper was called
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalled();
-    });
-  });
-
-  describe("Border Radius Override Configuration", () => {
-    it("should pass border_radius override to SVG helper when specified", () => {
-      // Setup - Configuration with border_radius override
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.progress",
-          border_radius: 15, // Override with 15px
-        },
-      ];
-
-      mockHass.states["sensor.progress"] = { state: "50" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called with border_radius override
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        50, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "var(--dark-grey-color)", // remaining color
-        expect.objectContaining({
-          strokeWidth: 3,
-          animationDuration: 800,
-          offsetPercent: 0,
-          borderRadiusOverride: 15, // Should pass the override
+    it("supports compound conditions", () => {
+      h().setState("sensor.other", "on");
+      render(
+        conditional({
+          condition: [
+            { condition: "and", conditions: [enabled, { condition: "state", entity_id: "sensor.other", state: "on" }] },
+          ],
         }),
       );
-    });
+      expect(svg()).not.toBeNull();
 
-    it("should pass string border_radius override to SVG helper", () => {
-      // Setup - Configuration with string border_radius override
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.progress",
-          border_radius: "50%", // Override with percentage
-        },
-      ];
-
-      mockHass.states["sensor.progress"] = { state: "75" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called with string border_radius override
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        75, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "var(--dark-grey-color)", // remaining color
-        expect.objectContaining({
-          strokeWidth: 3,
-          animationDuration: 800,
-          offsetPercent: 0,
-          borderRadiusOverride: "50%", // Should pass the string override
-        }),
-      );
-    });
-
-    it("should not pass border_radius override when not specified", () => {
-      // Setup - Configuration without border_radius override
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.progress",
-        },
-      ];
-
-      mockHass.states["sensor.progress"] = { state: "25" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called without border_radius override (undefined)
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        25, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "var(--dark-grey-color)", // remaining color
-        expect.objectContaining({
-          strokeWidth: 3,
-          animationDuration: 800,
-          offsetPercent: 0,
-          borderRadiusOverride: undefined, // Should be undefined
-        }),
-      );
-    });
-
-    it("should handle border_radius zero value correctly", () => {
-      // Setup - Configuration with border_radius 0 (force square)
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.progress",
-          border_radius: 0, // Explicit zero
-        },
-      ];
-
-      mockHass.states["sensor.progress"] = { state: "90" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called with 0 border_radius override
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        90, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "var(--dark-grey-color)", // remaining color
-        expect.objectContaining({
-          strokeWidth: 3,
-          animationDuration: 800,
-          offsetPercent: 0,
-          borderRadiusOverride: 0, // Should pass 0 explicitly
-        }),
-      );
-    });
-
-    it("should combine border_radius with start_angle", () => {
-      // Setup - Configuration with both border_radius and start_angle
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.progress",
-          border_radius: 12,
-          start_angle: 90, // Right side start
-        },
-      ];
-
-      mockHass.states["sensor.progress"] = { state: "60" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called with both overrides
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        60, // progress value
-        "rgb(255, 255, 0)", // progress color
-        "var(--dark-grey-color)", // remaining color
-        expect.objectContaining({
-          strokeWidth: 3,
-          animationDuration: 800,
-          offsetPercent: 0,
-          borderRadiusOverride: 12, // Should pass border radius override
-        }),
-      );
-    });
-
-    it("should handle multiple buttons with different border_radius values", () => {
-      // Setup - Multiple configurations with different border_radius
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main",
-          source: "sensor.cpu",
-          border_radius: 8,
-        },
-        {
-          button: "sub-button-1",
-          source: "sensor.memory",
-          border_radius: "50%",
-        },
-        {
-          button: "sub-button-2",
-          source: "sensor.disk",
-          // No border_radius override
-        },
-      ];
-
-      // Mock elements for different buttons
-      const subButton1Element = document.createElement("div");
-      const subButton2Element = document.createElement("div");
-
-      mockCard.querySelector = jest.fn().mockImplementation((selector) => {
-        if (selector === ".bubble-icon-container") return mockElement; // main
-        if (selector === ".bubble-sub-button-1") return subButton1Element;
-        if (selector === ".bubble-sub-button-2") return subButton2Element;
-        return null;
-      });
-
-      mockHass.states["sensor.cpu"] = { state: "30" };
-      mockHass.states["sensor.memory"] = { state: "70" };
-      mockHass.states["sensor.disk"] = { state: "85" };
-
-      // Exercise - Execute the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - SVG helper called three times with different border_radius values
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledTimes(3);
-
-      // First call: main button with border_radius 8
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenNthCalledWith(
-        1,
-        mockElement,
-        30,
-        "rgb(255, 255, 0)",
-        "var(--dark-grey-color)",
-        expect.objectContaining({
-          borderRadiusOverride: 8,
-        }),
-      );
-
-      // Second call: sub-button-1 with border_radius "50%"
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenNthCalledWith(
-        2,
-        subButton1Element,
-        70,
-        "rgb(255, 255, 0)",
-        "var(--dark-grey-color)",
-
-        expect.objectContaining({
-          borderRadiusOverride: "50%",
-        }),
-      );
-
-      // Third call: sub-button-2 without border_radius override
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenNthCalledWith(
-        3,
-        subButton2Element,
-        85,
-        "rgb(255, 255, 0)",
-        "var(--dark-grey-color)",
-        expect.objectContaining({
-          borderRadiusOverride: undefined,
-        }),
-      );
+      h().setState("sensor.other", "off");
+      rerender();
+      expect(svg()).toBeNull();
     });
   });
 
-  describe("Background Color Setting Logic", () => {
-    it("should NOT set background when neither background_color nor backcolor is configured", () => {
-      // Setup - Configuration without any background color properties
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main-button",
-          source: "sensor.progress",
-          // Intentionally no background_color or backcolor
-        },
-      ];
+  describe("effects", () => {
+    it("adds effect classes while their condition holds", () => {
+      const config = [{ button: "main", source: "sensor.progress", effects: [{ effect: "glow", condition: enabled }] }];
+      render(config);
+      expect([...main().classList]).toEqual(expect.arrayContaining(["progress-effect-glow", "has-effect"]));
 
-      // Spy on the background style setter
-      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
-
-      // Exercise - Run the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - Background setter should NOT have been called
-      expect(backgroundSetter).not.toHaveBeenCalled();
-
-      // Cleanup
-      backgroundSetter.mockRestore();
-    });
-
-    it("should set background when background_color is configured", () => {
-      // Setup - Configuration with background_color
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main-button",
-          source: "sensor.progress",
-          background_color: "#ff0000",
-        },
-      ];
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "#ff0000") return "rgb(255, 0, 0)";
-        return defaultColor;
-      });
-
-      // Spy on the background style setter
-      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
-
-      // Exercise - Run the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - Background setter SHOULD have been called with the resolved color
-      expect(backgroundSetter).toHaveBeenCalledWith("rgb(255, 0, 0)");
-
-      // Cleanup
-      backgroundSetter.mockRestore();
-    });
-
-    it("should set background when backcolor is configured (deprecated)", () => {
-      // Setup - Configuration with deprecated backcolor
-      mockThis.config.icon_border_progress = [
-        {
-          button: "main-button",
-          source: "sensor.progress",
-          backcolor: "#00ff00",
-        },
-      ];
-
-      // Override color resolution for this test
-      color.resolveColor.mockImplementation((colorValue, defaultColor) => {
-        if (colorValue === "#00ff00") return "rgb(0, 255, 0)";
-        return defaultColor;
-      });
-
-      // Spy on the background style setter
-      const backgroundSetter = jest.spyOn(mockElement.style, "background", "set");
-
-      // Exercise - Run the function
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - Background setter SHOULD have been called with the resolved color
-      expect(backgroundSetter).toHaveBeenCalledWith("rgb(0, 255, 0)");
-
-      // Cleanup
-      backgroundSetter.mockRestore();
+      h().setState("sensor.enable", "off");
+      rerender();
+      expect(main().classList.contains("progress-effect-glow")).toBe(false);
     });
   });
 
-  describe("timer interval management", () => {
-    beforeEach(() => {
-      // Mock timer functions for these tests
-      jest.useFakeTimers();
-      jest.spyOn(global, "setInterval");
-      jest.spyOn(global, "clearInterval");
+  describe("timers", () => {
+    // 100s timer finishing 50s after the pinned clock → 50% elapsed.
+    const timer = (state, attributes = {}) =>
+      h().setState("timer.cook", { state, attributes: { duration: "0:01:40", ...attributes } });
+    const ticker = () => main().dataset.progress_update_interval;
 
-      // Reset timer helper mock
-      timer.isActiveTimer.mockReturnValue(false);
+    it("shows elapsed progress of an active timer and advances it every second", () => {
+      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      render([{ button: "main", source: "timer.cook" }]);
+      expect(dash()).toBe("0 0 150 150");
+      expect(ticker()).toBeDefined();
 
-      // Set up hass mock implementation for timer domain detection
-      hass.getDomain.mockImplementation((entity) => {
-        if (entity && entity.startsWith("timer.")) return "timer";
-        if (entity && entity.startsWith("sensor.")) return "sensor";
-        return "unknown";
-      });
+      h().tick(10_000);
+      expect(dash()).toBe("0 0 180 120");
     });
 
-    afterEach(() => {
-      jest.runOnlyPendingTimers();
-      jest.useRealTimers();
-      jest.restoreAllMocks();
+    it.each([
+      ["paused, from remaining", "paused", { remaining: "0:00:25" }, "0 0 225 75"],
+      ["idle, as empty", "idle", {}, "0 300"],
+      ["active without finishes_at, as empty", "active", {}, "0 300"],
+    ])("shows a timer that is %s", (_, state, attributes, expected) => {
+      timer(state, attributes);
+      render([{ button: "main", source: "timer.cook" }]);
+      expect(dash()).toBe(expected);
     });
 
-    it("should set interval for active timer without existing interval", () => {
-      // Setup - Configure for active timer
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-      timer.isActiveTimer.mockReturnValue(true);
-
-      // Ensure no existing interval
-      expect(mockElement.dataset.progress_update_interval).toBeUndefined();
-
-      // Exercise - Run module
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater should be called with correct parameters
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-
-      // Verify - the update function passed should be updateProgressDisplay with correct arguments
-      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
-
-      // Reset mocks to test the update function
-      jest.clearAllMocks();
-
-      // Exercise - Call the update function
-      updateFunction();
-
-      // Verify - updateProgressDisplay functionality should be executed
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        expect.any(Number), // progress value
-        expect.any(String), // progress color
-        expect.any(String), // remaining color
-        expect.any(Object), // options
-      );
-    });
-    it("should not set duplicate interval for active timer with existing interval", () => {
-      // Setup - Configure for active timer with existing interval
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-      timer.isActiveTimer.mockReturnValue(true);
-      mockElement.dataset.progress_update_interval = "123"; // Existing interval ID
-
-      // Exercise - Run module
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - setInterval should NOT be called since interval already exists
-      expect(setInterval).not.toHaveBeenCalled();
-
-      // Verify - existing data attribute should remain unchanged
-      expect(mockElement.dataset.progress_update_interval).toBe("123");
+    it("runs no ticker for non-timer sources", () => {
+      render([{ button: "main", source: "sensor.progress" }]);
+      expect(ticker()).toBeUndefined();
     });
 
-    it("should clear interval for inactive timer with existing interval", () => {
-      // Setup - Configure for inactive timer with existing interval
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-      timer.isActiveTimer.mockReturnValue(false); // Timer is not active
-      mockElement.dataset.progress_update_interval = "456"; // Existing interval ID
+    it("stops the ticker when the timer is no longer active", () => {
+      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      render([{ button: "main", source: "timer.cook" }]);
 
-      // Exercise - Run module
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater should be called to clean up interval
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
+      timer("idle");
+      rerender();
+      expect(ticker()).toBeUndefined();
+      expect(jest.getTimerCount()).toBe(0);
     });
 
-    it("should clear interval for any non-active-timer entity with existing interval", () => {
-      // Setup - Configure for sensor (non-timer) with existing interval
-      // Note: Current implementation clears intervals for ANY entity that's not an active timer
-      mockThis.config.icon_border_progress[0].source = "sensor.progress";
-      timer.isActiveTimer.mockReturnValue(false); // Not an active timer
-      mockElement.dataset.progress_update_interval = "789"; // Existing interval ID
+    it("stops the ticker when no config matches", () => {
+      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      render([{ button: "main", source: "timer.cook", condition: [enabled] }]);
 
-      // Exercise - Run module
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater should be called to clean up interval
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(
-        mockElement,
-        "sensor.progress",
-        expect.any(Function),
-      );
+      h().setState("sensor.enable", "off");
+      rerender();
+      expect(ticker()).toBeUndefined();
+      expect(jest.getTimerCount()).toBe(0);
     });
 
-    it("should handle timer state transition from active to inactive", () => {
-      // Setup - Configure for timer
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-
-      // First run - active timer, no existing interval
-      timer.isActiveTimer.mockReturnValue(true);
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater was called for active timer
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-
-      // Reset mocks for second run
-      jest.clearAllMocks();
-
-      // Second run - timer becomes inactive
-      timer.isActiveTimer.mockReturnValue(false);
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater was called again for inactive timer
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-    });
-
-    it("should handle timer state transition from inactive to active", () => {
-      // Setup - Configure for timer that starts inactive
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-
-      // First run - inactive timer
-      timer.isActiveTimer.mockReturnValue(false);
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater should be called for inactive timer
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-
-      // Reset mocks for second run
-      jest.clearAllMocks();
-
-      // Second run - timer becomes active
-      timer.isActiveTimer.mockReturnValue(true);
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater should be called again for active timer
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-
-      // Verify - the update function passed should work correctly
-      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
-
-      // Reset mocks to test the update function
-      jest.clearAllMocks();
-
-      // Exercise - Call the update function
-      updateFunction();
-
-      // Verify - updateProgressDisplay functionality should be executed
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        expect.any(Number), // progress value
-        expect.any(String), // progress color
-        expect.any(String), // remaining color
-        expect.any(Object), // options
-      );
-    });
-
-    it("should call updateProgressDisplay with correct parameters in interval", () => {
-      // Setup - Configure for active timer
-      mockThis.config.icon_border_progress[0].source = "timer.cooking";
-      timer.isActiveTimer.mockReturnValue(true);
-
-      // Exercise - Run module to set up interval
-      icon_border_progress.call(mockThis, mockCard, mockHass);
-
-      // Verify - manageTimerUpdater was called and capture the callback function
-      expect(timerUpdater.manageTimerUpdater).toHaveBeenCalledWith(mockElement, "timer.cooking", expect.any(Function));
-
-      // Get the callback function from manageTimerUpdater call
-      const updateFunction = timerUpdater.manageTimerUpdater.mock.calls[0][2];
-
-      // Reset mocks to test the callback
-      jest.clearAllMocks();
-
-      // Exercise - Execute the update callback
-      updateFunction();
-
-      // Verify - updateProgressDisplay functionality was executed
-      expect(strokeDashProgress.createProgressBorder).toHaveBeenCalledWith(
-        mockElement,
-        expect.any(Number), // progress value
-        expect.any(String), // progress color
-        expect.any(String), // remaining color
-        expect.any(Object), // options
-      );
+    it("keeps one ticker per button across renders", () => {
+      timer("active", { finishes_at: "2025-07-01T12:00:50Z" });
+      render([{ button: "main", source: "timer.cook" }]);
+      rerender();
+      rerender();
+      expect(jest.getTimerCount()).toBe(1);
     });
   });
 });

@@ -16,7 +16,7 @@ bubble-card-modules/
 │   └── ISSUE_TEMPLATE/         # Bug report templates
 ├── modules/                    # Module implementations
 │   ├── helpers/                # Shared helper functions
-│   │   ├── *.js               # Individual helper modules
+│   │   ├── entity|ui|utils/   # Helper modules, grouped by concern
 │   │   ├── README.md          # Helper documentation
 │   │   └── __tests__/         # Helper unit tests
 │   ├── module_name/           # Individual module (see Module Architecture)
@@ -34,6 +34,7 @@ bubble-card-modules/
 │   │       └── __tests__/     # Build script tests
 │   ├── py/                    # Python utilities
 │   └── *.sh                   # Shell scripts for setup/reports
+├── testing/                   # Shared test fixtures (Card harness, Jest global setup)
 ├── reports/                   # Generated test reports
 │   ├── test-report.html       # Human-readable test results
 │   └── junit.xml              # CI/CD compatible test results
@@ -57,8 +58,7 @@ modules/module_name/
 ├── styles.css           # Module-specific CSS
 ├── README.md            # Documentation with YAML examples
 ├── __tests__/
-│   ├── code.test.js     # Unit tests (heavy mocking)
-│   └── integration.test.js # Integration tests (minimal mocking)
+│   └── code.test.js     # Module tests through the Card harness
 ├── CONFIG_OPTIONS.md    # Auto-generated from schema
 └── dist/                # Built artifacts (auto-generated)
 ```
@@ -78,7 +78,7 @@ modules/module_name/
 
 #### TDD Process:
 
-1. Write failing test first (integration tests for real scenarios)
+1. Write a failing test first, through the module interface (Card harness)
 2. Run tests to confirm they fail
 3. Implement minimal code to make tests pass
 4. Refactor while keeping tests green
@@ -86,28 +86,40 @@ modules/module_name/
 
 ### 2. Testing Strategy
 
-**Unit Tests** (`code.test.js`): Heavy mocking, fast feedback, edge cases
-**Integration Tests** (`integration.test.js`): Minimal mocking, real DOM + JSDOM, real YAML configs
+Test every module **through its interface**: the module function, run the way Bubble Card runs it.
+Mock only what is truly external: Home Assistant (`hass`) and the browser APIs jsdom lacks.
 
-**Test Structure** (3-section pattern):
+**Module tests** (`modules/<module>/__tests__/code.test.js`) use the **Card harness** (`testing/cardHarness.js`):
 
 ```javascript
-it("should describe the expected behavior", () => {
-  // Setup - Arrange test data and mocks
-  const config = {
-    /* test configuration */
-  };
-  mockHass.states["entity.id"] = { state: "value" };
+import { my_module } from "../code.js";
+import { useCardHarness } from "../../../testing/cardHarness.js";
 
-  // Exercise - Execute the functionality being tested
-  module_function.call(mockThis, mockCard, mockHass);
+const h = useCardHarness({ states: { "sensor.progress": "75" } });
 
-  // Verify - Assert expected outcomes
-  expect(mockElement.classList.add).toHaveBeenCalledWith("expected-class");
+it("draws 75% progress", () => {
+  h().run(my_module, [{ button: "main", source: "sensor.progress" }]);
+  expect(h().$(".progress-path").getAttribute("stroke-dasharray")).toBe("0 0 225 75");
 });
 ```
 
-### 4. DOM Manipulation Pattern
+The harness mirrors Bubble Card's `code:` scope: `this` is the card (with `config`), `hass` is global,
+and `onTeardown`/`hasChanged` are present in `"3.3+"` mode and absent in `"legacy"` mode. It builds card DOM
+with upstream class names, stubs `getComputedStyle`/`getBoundingClientRect`/`requestAnimationFrame`, and pins
+the clock (`now`, default `2025-07-01T12:00:00Z`) with fake timers. Jest runs with `TZ=UTC`.
+
+**Helper tests** (`modules/helpers/**/__tests__/`) test pure logic at the helper's own interface. Use real
+`hass` states via `useHass(states)` instead of mocking `hass.js` or other helpers.
+
+**Conventions:**
+
+- Don't mock helper modules (`jest.unstable_mockModule`) from module tests; assert on the DOM the module produces.
+- Prefer `it.each` tables for variations; name each case by the behaviour it pins.
+- Assert exact values (dash arrays, positions, CSS custom properties), not just "truthy".
+- No comments that restate the code (`// Setup`, `// Exercise`, `// Verify`).
+- When a test pins known-wrong behaviour, say so in a one-line comment and track the fix separately.
+
+### 3. DOM Manipulation Pattern
 
 ```javascript
 // ALWAYS clean up first, then conditionally apply
@@ -121,7 +133,7 @@ if (checkAllConditions(config.condition)) {
 }
 ```
 
-### 5. Key Helper Functions
+### 4. Key Helper Functions
 
 Import from `../helpers/` - see `modules/helpers/README.md` for complete list:
 
@@ -130,7 +142,7 @@ Import from `../helpers/` - see `modules/helpers/README.md` for complete list:
 - `resolveColor(color, defaultColor)` - Color resolution with CSS vars
 - `applyEffects(element, effects)` - Visual effects application
 
-### 6. Error Handling Standards
+### 5. Error Handling Standards
 
 - **Missing DOM elements**: Continue processing other configurations
 - **Invalid entity states**: Use fallback values (0, empty string, etc.)
@@ -141,7 +153,6 @@ Import from `../helpers/` - see `modules/helpers/README.md` for complete list:
 
 ```bash
 npm test                 # All tests with HTML/JUnit reports
-npm run test:report      # Tests + open reports summary
 npm run create-module    # Generate new module scaffold
 npm run build           # Build all modules
 npm run format          # Format all code
@@ -150,7 +161,7 @@ npm run format          # Format all code
 ## Key Success Metrics
 
 1. **TDD compliance** - tests written before code
-2. **Comprehensive DOM verification** in integration tests
+2. **Exact DOM verification** through the module interface
 3. **Real configuration testing** using README examples
 4. **Graceful error handling** for all edge cases
 

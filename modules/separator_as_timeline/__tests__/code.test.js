@@ -1,935 +1,395 @@
 import { jest } from "@jest/globals";
+import { separator_as_timeline } from "../code.js";
+import { useCardHarness } from "../../../testing/cardHarness.js";
 
-// Global reference for mocks to access
-let mockHass;
+// Clock pinned to 2025-07-01 12:00 UTC (TZ=UTC), so "now" sits at 50% of the day.
+const h = useCardHarness({
+  type: "separator",
+  computedStyle: { height: "2px" },
+  states: {
+    "sensor.sun_next_rising": "2025-07-01T06:15:00+00:00",
+    "sensor.sun_next_setting": "2025-07-01T19:45:00+00:00",
+    "sensor.sun_next_dawn": "2025-07-01T05:30:00+00:00",
+    "sensor.sun_next_dusk": "2025-07-01T20:30:00+00:00",
+    "sensor.work_start": "09:00",
+    "sensor.work_end": "17:30",
+    "input_datetime.lunch_start": "12:30:00",
+    "input_datetime.lunch_end": "13:30:00",
+  },
+});
 
-// Mock all the helper dependencies first
-jest.unstable_mockModule("../../helpers/ui/color.js", () => ({
-  resolveColor: jest.fn((color, defaultColor) => {
-    if (typeof color === "string" && color.startsWith("sensor.")) {
-      if (color === "sensor.timeline_color") return "blue";
-      if (color === "sensor.marker_color") return "red";
-      return defaultColor;
-    }
-    return color || defaultColor;
-  }),
-}));
+const render = (config) => h().run(separator_as_timeline, config);
+const wrapper = () => h().$(".bubble-line-wrapper");
+const segments = (selector = "") => h().$$(`.timeline-segment${selector}`);
+const icons = (selector = "") => h().$$(`.timeline-icon${selector}`);
+const segmentFor = (label) => segments().find((s) => s.dataset.tooltip.startsWith(`${label}:`));
+const pct = (value) => parseFloat(value);
 
-jest.unstable_mockModule("../../helpers/utils/config.js", () => ({
-  resolveConfig: jest.fn((sources, defaultValue) => {
-    for (const source of sources) {
-      const keys = Array.isArray(source.path) ? source.path : source.path.split(".");
-      let value = source.config;
-      for (const key of keys) {
-        value = value?.[key];
-      }
-      if (value !== undefined) return value;
-    }
-    return defaultValue;
-  }),
-}));
+let warn;
+beforeEach(() => {
+  warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => warn.mockRestore());
 
-jest.unstable_mockModule("../../helpers/utils/strings.js", () => ({
-  suffix: jest.fn((value, defaultSuffix) => {
-    if (typeof value === "string" && value.includes("px")) return value;
-    return `${value}${defaultSuffix}`;
-  }),
-}));
+describe("separator_as_timeline", () => {
+  describe("setup", () => {
+    it("does nothing without config", () => {
+      h().run(separator_as_timeline, undefined);
+      expect(wrapper()).toBeNull();
+    });
 
-jest.unstable_mockModule("../../helpers/entity/hass.js", () => ({
-  getState: jest.fn(),
-}));
+    it("does nothing without a .bubble-line", () => {
+      h().$(".bubble-line").remove();
+      render({ ranges: [] });
+      expect(wrapper()).toBeNull();
+    });
 
-// Import the module after mocks are set up
-const { separator_as_timeline } = await import("../code.js");
+    it("wraps the line once, copying its height, and adds one tooltip", () => {
+      render({ ranges: [] });
+      render({ ranges: [] });
 
-// Import mocks
-const { resolveColor } = await import("../../helpers/ui/color.js");
-const { resolveConfig } = await import("../../helpers/utils/config.js");
-const { suffix } = await import("../../helpers/utils/strings.js");
-const { getState } = await import("../../helpers/entity/hass.js");
+      expect(h().$$(".bubble-line-wrapper")).toHaveLength(1);
+      expect(wrapper().style.height).toBe("2px");
+      expect(h().$(".bubble-line").classList.contains("wrapped")).toBe(true);
+      expect(h().$$(".timeline-tooltip")).toHaveLength(1);
+    });
 
-describe("separator_as_timeline - Unit Tests", () => {
-  let mockCard, mockThis, mockElement, mockWrapper;
+    it("reuses an existing wrapper without re-wrapping", () => {
+      const line = h().$(".bubble-line");
+      const existing = document.createElement("div");
+      existing.className = "bubble-line-wrapper";
+      line.replaceWith(existing);
+      existing.appendChild(line);
 
-  beforeEach(() => {
-    // Reset all mocks
-    jest.clearAllMocks();
+      render({ ranges: [] });
 
-    // Setup mock DOM elements
-    mockElement = {
-      classList: {
-        add: jest.fn(),
-        remove: jest.fn(),
-      },
-      style: {
-        background: "",
-        left: "",
-        width: "",
-        color: "",
-        border: "",
-        borderRadius: "",
-        borderTopLeftRadius: "",
-        borderBottomLeftRadius: "",
-        borderTopRightRadius: "",
-        borderBottomRightRadius: "",
-        filter: "",
-        setProperty: jest.fn(),
-        removeProperty: jest.fn(),
-        height: "2px",
-      },
-      closest: jest.fn(),
-      querySelector: jest.fn(),
-      querySelectorAll: jest.fn(() => []),
-      parentNode: {
-        insertBefore: jest.fn(),
-      },
-      appendChild: jest.fn(),
-      addEventListener: jest.fn(),
-      dataset: {},
-      innerText: "",
-      setAttribute: jest.fn(),
-    };
+      expect(wrapper()).toBe(existing);
+      expect(line.classList.contains("wrapped")).toBe(false);
+    });
 
-    mockWrapper = {
-      querySelector: jest.fn(),
-      querySelectorAll: jest.fn(() => []),
-      appendChild: jest.fn(),
-      style: {
-        height: "",
-        setProperty: jest.fn(),
-      },
-    };
+    it.each([
+      ["empty array", { ranges: [] }],
+      ["empty object", { ranges: {} }],
+      ["null", { ranges: null }],
+      ["missing", {}],
+    ])("renders no segments when ranges is %s", (_, config) => {
+      render(config);
+      expect(segments()).toHaveLength(0);
+    });
 
-    mockCard = {
-      querySelector: jest.fn().mockReturnValue(mockElement),
-    };
-
-    mockThis = {
-      config: {
-        separator_as_timeline: {},
-      },
-    };
-
-    mockHass = {
-      states: {},
-    };
-
-    // Setup default mock returns for helpers
-    getState.mockReturnValue(null);
-    resolveColor.mockImplementation((color) => color);
-    suffix.mockImplementation((value, defaultSuffix) => `${value}${defaultSuffix}`);
-
-    // Mock global functions
-    global.document = {
-      createElement: jest.fn(() => mockElement),
-    };
-
-    global.getComputedStyle = jest.fn().mockReturnValue({
-      height: "2px",
+    it("clears previous segments and icons on every render", () => {
+      const config = { ranges: [{ start: "09:00", end: "17:00", icon: "mdi:work", color: "blue" }] };
+      render(config);
+      render(config);
+      expect(segments()).toHaveLength(1);
+      expect(icons()).toHaveLength(1);
     });
   });
 
-  afterEach(() => {
-    delete global.document;
-    delete global.getComputedStyle;
-  });
+  describe("segments", () => {
+    it("positions a range as a percentage of the day", () => {
+      render({ ranges: [{ label: "Work", start: "09:00", end: "17:00", color: "blue" }] });
 
-  describe("Configuration handling", () => {
-    it("should return early if no config is provided", () => {
-      // Setup
-      mockThis.config = {};
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(mockCard.querySelector).not.toHaveBeenCalled();
+      const [seg] = segments();
+      expect(pct(seg.style.left)).toBeCloseTo(37.5);
+      expect(pct(seg.style.width)).toBeCloseTo(33.333);
+      expect(seg.style.background).toBe("var(--blue-color)");
+      expect(seg.classList.contains("group-Work")).toBe(true);
+      expect(seg.dataset.tooltip).toBe("Work: 09:00 → 17:00");
     });
 
-    it("should return early if no .bubble-line element found", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = { show_time_ticks: true };
-      mockCard.querySelector.mockReturnValue(null);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(mockCard.querySelector).toHaveBeenCalledWith(".bubble-line");
+    it("accepts ranges in the editor's numbered-object shape", () => {
+      render({
+        ranges: { 0: { label: "A", start: "01:00", end: "02:00" }, 1: { label: "B", start: "03:00", end: "04:00" } },
+      });
+      expect(segments().map((s) => s.dataset.tooltip)).toEqual(["A: 01:00 → 02:00", "B: 03:00 → 04:00"]);
     });
 
-    it("should use default configuration values", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {};
-      mockElement.closest.mockReturnValue(null);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that defaults are used
-      expect(mockElement.closest).toHaveBeenCalledWith(".bubble-line-wrapper");
-    });
-  });
-
-  describe("Wrapper initialization", () => {
-    it("should create wrapper if it doesn't exist", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {};
-      mockElement.closest.mockReturnValue(null);
-      const mockWrapper = { ...mockElement };
-      global.document.createElement.mockReturnValue(mockWrapper);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(global.document.createElement).toHaveBeenCalledWith("div");
-      expect(mockWrapper.classList.add).toHaveBeenCalledWith("wrapped");
-      expect(mockElement.parentNode.insertBefore).toHaveBeenCalledWith(mockWrapper, mockElement);
-      expect(mockWrapper.appendChild).toHaveBeenCalledWith(mockElement);
-    });
-
-    it("should use existing wrapper if it exists", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {};
-      mockElement.closest.mockReturnValue(mockWrapper);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(global.document.createElement).toHaveBeenCalledWith("div"); // Only for tooltip
-      expect(mockElement.classList.add).not.toHaveBeenCalledWith("wrapped");
-    });
-
-    it("should create tooltip if it doesn't exist", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {};
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(null);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(mockWrapper.querySelector).toHaveBeenCalledWith(".timeline-tooltip");
-      expect(global.document.createElement).toHaveBeenCalledWith("div");
-    });
-  });
-
-  describe("Time range processing", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should process array-based ranges", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
+    it("splits a range that crosses midnight into two segments, each with an icon", () => {
+      render({
         ranges: [
-          {
-            label: "Work",
-            start: "09:00",
-            end: "17:00",
-            color: "blue",
-          },
+          { label: "Night Shift", start: "22:00", end: "06:00", color: "purple", icon: "mdi:moon-waning-crescent" },
         ],
-      };
+      });
 
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Since timeUtils functions are local, verify DOM manipulation instead
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("blue");
+      const [late, early] = segments(".group-Night-Shift");
+      expect(pct(late.style.left)).toBeCloseTo(91.667);
+      expect(pct(late.style.width)).toBeCloseTo(8.333);
+      expect(pct(early.style.left)).toBe(0);
+      expect(pct(early.style.width)).toBeCloseTo(25);
+      expect(icons().map((i) => i.getAttribute("icon"))).toEqual([
+        "mdi:moon-waning-crescent",
+        "mdi:moon-waning-crescent",
+      ]);
     });
 
-    it("should process object-based ranges", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: {
-          work: {
-            label: "Work",
-            start: "09:00",
-            end: "17:00",
-            color: "blue",
-          },
-        },
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Object ranges should be processed same as array ranges
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("blue");
+    it("squares segment corners by default", () => {
+      render({ ranges: [{ start: "01:00", end: "03:00" }] });
+      expect(segments()[0].style.borderRadius).toBe("0");
     });
 
-    it("should handle entity-based start times", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            start_entity: "sensor.work_start",
-            end: "17:00",
-            color: "blue",
-          },
-        ],
-      };
-      getState.mockReturnValue("09:30");
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(getState).toHaveBeenCalledWith("sensor.work_start", false);
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-    });
-
-    it("should handle entity-based end times with attributes", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            start: "09:00",
-            end_entity: "sensor.work_schedule",
-            end_attribute: "end_time",
-            color: "blue",
-          },
-        ],
-      };
-      getState.mockReturnValue("17:30");
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that entity with attribute is queried correctly
-      expect(getState).toHaveBeenCalledWith("sensor.work_schedule[end_time]", false);
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-    });
-  });
-
-  describe("Segment rendering", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should create segments for normal time ranges", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            label: "Work",
-            start: "09:00",
-            end: "17:00",
-            color: "blue",
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that segments are created and appended
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      // Verify that range processing created DOM elements with appropriate styling
-      const appendCalls = mockWrapper.appendChild.mock.calls;
-      expect(appendCalls.length).toBeGreaterThan(0);
-      expect(resolveColor).toHaveBeenCalledWith("blue");
-    });
-
-    it("should handle wrap-around time ranges", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            label: "Night",
-            start: "22:00",
-            end: "06:00",
-            color: "purple",
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Should create segments for wrap-around (multiple DOM elements)
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("purple");
-    });
-
-    it("should apply rounded edges when configured", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
+    it("rounds inner corners only when rounded_edges is on", () => {
+      render({
         rounded_edges: true,
         ranges: [
-          {
-            start: "09:00",
-            end: "17:00",
-            color: "blue",
-          },
+          { label: "Edge", start: "00:00", end: "06:00" },
+          { label: "Mid", start: "09:00", end: "10:00" },
+          { label: "End", start: "18:00", end: "00:00" },
         ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that elements are created with rounded edge styling
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("blue");
-    });
-  });
-
-  describe("Icon handling", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should create icons when specified", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            start: "09:00",
-            end: "17:00",
-            icon: "mdi:work",
-            color: "blue",
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that icon elements are created
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("blue");
-    });
-
-    it("should apply icon styling from config", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        icon_settings: {
-          icon_color: "red",
-          icon_size: "20px",
-        },
-        ranges: [
-          {
-            start: "09:00",
-            end: "17:00",
-            icon: "mdi:work",
-            color: "blue",
-          },
-        ],
-      };
-      resolveConfig.mockReturnValue("red");
-      suffix.mockReturnValue("20px");
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that styling helpers are called
-      expect(resolveConfig).toHaveBeenCalled();
-      expect(suffix).toHaveBeenCalled();
-    });
-  });
-
-  describe("Time ticks and markers", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should create time ticks when enabled", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        show_time_ticks: true,
-        ranges: [],
-      };
-      mockWrapper.querySelector.mockReturnValueOnce(mockElement).mockReturnValueOnce(null); // tooltip exists, tick doesn't
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that time tick elements are created
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-    });
-
-    it("should create current time marker when enabled", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        show_current_time: true,
-        marker_color: "red",
-        ranges: [],
-      };
-      mockWrapper.querySelector.mockReturnValueOnce(mockElement).mockReturnValueOnce(null); // tooltip exists, marker doesn't
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify
-      expect(mockWrapper.style.setProperty).toHaveBeenCalledWith("--marker-color", "red");
-      expect(mockWrapper.style.setProperty).toHaveBeenCalledWith(
-        "--timeline-marker-left",
-        expect.stringMatching(/\d+(\.\d+)?%/),
-      );
-    });
-
-    it("should not create time ticks when disabled", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        show_time_ticks: false,
-        ranges: [],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Function should execute without errors when time ticks disabled
-      expect(mockWrapper.appendChild).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("Tooltip functionality", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should set tooltip content with range information", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            label: "Work",
-            start: "09:00",
-            end: "17:00",
-            color: "blue",
-            source_entities: "sensor.work_schedule",
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that tooltips are configured
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-      expect(resolveColor).toHaveBeenCalledWith("blue");
-    });
-  });
-
-  describe("Active highlighting and glow effects", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should apply glow effects to active icons when highlight_active is enabled", () => {
-      // Setup - Current time falls within a range that has an icon
-      const now = new Date();
-      // Set range from 2 hours ago to 2 hours from now
-      const startHour = (now.getHours() - 2 + 24) % 24;
-      const endHour = (now.getHours() + 2) % 24;
-
-      mockThis.config.separator_as_timeline = {
-        highlight_active: true,
-        ranges: [
-          {
-            start: `${startHour.toString().padStart(2, "0")}:00`,
-            end: `${endHour.toString().padStart(2, "0")}:00`,
-            icon: "mdi:test",
-            color: "blue",
-          },
-        ],
-      };
-
-      // Mock current time queries
-      const mockIcons = [mockElement];
-      mockWrapper.querySelectorAll.mockImplementation((selector) => {
-        if (selector.includes(".timeline-icon.group-")) return mockIcons;
-        return [];
       });
 
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Glow effect should be applied
-      expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(expect.stringMatching(/\.timeline-icon\.group-/));
-      expect(mockElement.style).toHaveProperty("filter");
-    });
-
-    it("should remove glow effects when highlight_active is disabled", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        highlight_active: false,
-        ranges: [
-          {
-            start: "10:00",
-            end: "14:00",
-            icon: "mdi:test",
-            color: "blue",
-          },
-        ],
-      };
-
-      const mockIcons = [mockElement];
-      mockWrapper.querySelectorAll.mockImplementation((selector) => {
-        if (selector.includes(".timeline-icon.group-")) return mockIcons;
-        return [];
-      });
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Filter should be cleared (empty string)
-      expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(expect.stringMatching(/\.timeline-icon\.group-/));
-    });
-
-    it("should handle ranges without icons for active highlighting", () => {
-      // Setup - Range without icon but within current time
-      const now = new Date();
-      const currentHour = now.getHours();
-
-      mockThis.config.separator_as_timeline = {
-        highlight_active: true,
-        ranges: [
-          {
-            start: `${currentHour.toString().padStart(2, "0")}:00`,
-            end: `${((currentHour + 1) % 24).toString().padStart(2, "0")}:00`,
-            color: "blue",
-            // No icon property
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Should execute without errors
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-    });
-  });
-
-  describe("Advanced configuration scenarios", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
-    });
-
-    it("should handle deprecated icon configuration paths", () => {
-      // Setup - Use deprecated config paths (not icon_settings)
-      mockThis.config.separator_as_timeline = {
-        icon_color: "red",
-        icon_outline_color: "blue",
-        ranges: [
-          {
-            start: "10:00",
-            end: "14:00",
-            icon: "mdi:test",
-            color: "green",
-          },
-        ],
-      };
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Should handle deprecated config paths through resolveConfig
-      expect(resolveConfig).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({
-            metadata: expect.objectContaining({
-              deprecated: true,
-            }),
-          }),
-        ]),
-        expect.any(String),
-      );
-    });
-
-    it("should handle mixed entity and static configurations", () => {
-      // Setup - Complex mix of entity and static values
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            start_entity: "sensor.work_start",
-            end: "17:00",
-            label: "Work",
-            color: "blue",
-          },
-          {
-            start: "19:00",
-            end_entity: "sensor.sleep_time",
-            end_attribute: "bedtime",
-            label: "Evening",
-            color: "purple",
-          },
-        ],
-      };
-
-      getState.mockImplementation((entity) => {
-        if (entity === "sensor.work_start") return "09:00";
-        if (entity === "sensor.sleep_time[bedtime]") return "22:30"; // Template literal bug
-        return null;
-      });
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Both entity queries should be made
-      expect(getState).toHaveBeenCalledWith("sensor.work_start", false);
-      expect(getState).toHaveBeenCalledWith("sensor.sleep_time[bedtime]", false);
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
-    });
-
-    it("should handle empty or null range configurations", () => {
-      // Setup - Various edge cases
-      const testCases = [
-        { ranges: [] }, // Empty array
-        { ranges: {} }, // Empty object
-        { ranges: null }, // Null
-        {}, // No ranges property
+      const corners = (s) => [
+        s.style.borderTopLeftRadius,
+        s.style.borderBottomLeftRadius,
+        s.style.borderTopRightRadius,
+        s.style.borderBottomRightRadius,
       ];
-
-      testCases.forEach((config, index) => {
-        // Reset mocks
-        jest.clearAllMocks();
-        mockThis.config.separator_as_timeline = config;
-
-        // Exercise & Verify - Should not throw errors
-        expect(() => {
-          separator_as_timeline.call(mockThis, mockCard, mockHass);
-        }).not.toThrow();
-      });
+      expect(corners(segmentFor("Edge"))).toEqual(["0", "0", "4px", "4px"]);
+      expect(corners(segmentFor("Mid"))).toEqual(["4px", "4px", "4px", "4px"]);
+      const [end] = segments(".group-End");
+      expect(corners(end)).toEqual(["4px", "4px", "0", "0"]);
     });
 
-    it("should handle ranges with missing time values", () => {
-      // Setup - Ranges with missing or invalid times
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            // Missing start and end times
-            label: "Invalid",
-            color: "red",
-          },
-          {
-            start: null,
-            end: undefined,
-            label: "Null times",
-            color: "blue",
-          },
-        ],
-      };
+    it("appends source entities to the tooltip", () => {
+      render({ ranges: [{ label: "S", start: "08:00", end: "09:00", source_entities: "sensor.a,sensor.b" }] });
+      expect(segments()[0].dataset.tooltip).toBe("S: 08:00 → 09:00\nSources: sensor.a,sensor.b");
+    });
 
-      // Exercise & Verify - Should handle gracefully
-      expect(() => {
-        separator_as_timeline.call(mockThis, mockCard, mockHass);
-      }).not.toThrow();
-
-      expect(mockWrapper.appendChild).toHaveBeenCalled(); // Segments should still be created
+    it("resolves the segment colour from an entity", () => {
+      h().setState("sensor.schedule_color", "#4caf50");
+      render({ ranges: [{ start: "08:00", end: "09:00", color: "sensor.schedule_color" }] });
+      expect(segments()[0].style.background).toBe("rgb(76, 175, 80)");
     });
   });
 
-  describe("Event handling and highlighting logic", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
+  describe("time sources", () => {
+    it.each([
+      ["HH:MM", "12:30", "13:30", "12:30 → 13:30"],
+      ["HH:MM:SS", "12:30:00", "13:30:00", "12:30 → 13:30"],
+      ["ISO timestamp", "2025-04-26T02:00:00+00:00", "2025-04-26T04:30:00+00:00", "02:00 → 04:30"],
+      ["minutes since midnight", "600", "720", "10:00 → 12:00"],
+      ["invalid values", "invalid-time", "nope", "00:00 → 00:00"],
+    ])("parses %s", (_, start, end, expected) => {
+      render({ ranges: [{ label: "T", start, end }] });
+      expect(segments()[0].dataset.tooltip).toBe(`T: ${expected}`);
     });
 
-    it("should handle icon event listeners and highlighting", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        highlight_active: false, // This will hit the else branch (lines 288-289)
+    it("reads start and end from entity states", () => {
+      render({
         ranges: [
-          {
-            start: "10:00",
-            end: "14:00",
-            icon: "mdi:test",
-            color: "blue",
-          },
+          { label: "Work", start_entity: "sensor.work_start", end_entity: "sensor.work_end" },
+          { label: "Lunch", start_entity: "input_datetime.lunch_start", end_entity: "input_datetime.lunch_end" },
+          { label: "School run", start_entity: "sensor.sun_next_rising", end: "09:00" },
         ],
-      };
-
-      const mockIcons = [mockElement];
-      mockWrapper.querySelectorAll.mockImplementation((selector) => {
-        if (selector.includes(".timeline-icon.group-")) return mockIcons;
-        if (selector.includes(".group-")) return [mockElement];
-        return [];
       });
 
-      // Mock addEventListener to capture event handlers
-      const eventHandlers = {};
-      mockElement.addEventListener = jest.fn((event, handler) => {
-        eventHandlers[event] = handler;
-      });
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify event listeners were added
-      expect(mockElement.addEventListener).toHaveBeenCalledWith("mouseenter", expect.any(Function));
-      expect(mockElement.addEventListener).toHaveBeenCalledWith("mouseleave", expect.any(Function));
-
-      // Test mouseenter handler (lines 276-277)
-      if (eventHandlers.mouseenter) {
-        eventHandlers.mouseenter();
-        expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".group-undefined");
-      }
-
-      // Test mouseleave handler (lines 279-280)
-      if (eventHandlers.mouseleave) {
-        eventHandlers.mouseleave();
-        expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".group-undefined");
-      }
-
-      // Verify highlight_active = false branch was hit (lines 288-289)
-      expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".timeline-icon.group-undefined");
+      expect(segmentFor("Work").dataset.tooltip).toBe("Work: 09:00 → 17:30");
+      expect(segmentFor("Lunch").dataset.tooltip).toBe("Lunch: 12:30 → 13:30");
+      expect(segmentFor("School run").dataset.tooltip).toBe("School run: 06:15 → 09:00");
     });
 
-    it("should handle highlight_active true branch", () => {
-      // Setup - Current time within range to trigger isActive = true
-      const now = new Date();
-      const currentHour = now.getHours();
-
-      mockThis.config.separator_as_timeline = {
-        highlight_active: true,
+    it("reads start and end from entity attributes", () => {
+      h().setStates({
+        "sensor.schedule": { state: "active", attributes: { start_time: "08:45", end_time: "17:15" } },
+        "input_datetime.meeting": { state: "14:30", attributes: { custom_end: "15:30" } },
+      });
+      render({
         ranges: [
           {
-            start: `${currentHour.toString().padStart(2, "0")}:00`,
-            end: `${((currentHour + 1) % 24).toString().padStart(2, "0")}:00`,
-            icon: "mdi:active",
-            color: "orange",
+            label: "Work",
+            start_entity: "sensor.schedule",
+            start_attribute: "start_time",
+            end_entity: "sensor.schedule",
+            end_attribute: "end_time",
+          },
+          {
+            label: "Meeting",
+            start_entity: "input_datetime.meeting",
+            end_entity: "input_datetime.meeting",
+            end_attribute: "custom_end",
           },
         ],
-      };
-
-      const mockIcons = [mockElement];
-      mockWrapper.querySelectorAll.mockImplementation((selector) => {
-        if (selector.includes(".timeline-icon.group-")) return mockIcons;
-        return [];
       });
 
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify the highlight_active true branch (lines 284-287)
-      expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".timeline-icon.group-undefined");
+      expect(segmentFor("Work").dataset.tooltip).toBe("Work: 08:45 → 17:15");
+      expect(segmentFor("Meeting").dataset.tooltip).toBe("Meeting: 14:30 → 15:30");
     });
 
-    it("should handle segment event listeners", () => {
-      // Setup
-      mockThis.config.separator_as_timeline = {
-        ranges: [
-          {
-            start: "10:00",
-            end: "14:00",
-            color: "blue",
-            label: "Test",
-          },
-        ],
-      };
-
-      const mockSegments = [mockElement];
-      mockWrapper.querySelectorAll.mockImplementation((selector) => {
-        if (selector.includes(".group-Test")) return mockSegments;
-        return [];
-      });
-
-      // Mock addEventListener to capture event handlers for segments
-      const segmentEventHandlers = {};
-      global.document.createElement.mockReturnValue({
-        className: "",
-        style: mockElement.style,
-        dataset: {},
-        addEventListener: jest.fn((event, handler) => {
-          segmentEventHandlers[event] = handler;
-        }),
-      });
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify segment event listeners were added
-      expect(global.document.createElement).toHaveBeenCalledWith("div");
-
-      // Test segment mouseenter handler (lines 216-218)
-      if (segmentEventHandlers.mouseenter) {
-        segmentEventHandlers.mouseenter();
-        expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".group-Test");
-      }
-
-      // Test segment mouseleave handler (lines 219-221)
-      if (segmentEventHandlers.mouseleave) {
-        segmentEventHandlers.mouseleave();
-        expect(mockWrapper.querySelectorAll).toHaveBeenCalledWith(".group-Test");
-      }
+    it.each([
+      ["a missing entity", { start_entity: "sensor.nonexistent", end: "17:00" }, "00:00 → 17:00"],
+      [
+        "a missing attribute",
+        { start_entity: "sensor.work_start", start_attribute: "nope", end: "14:00" },
+        "00:00 → 14:00",
+      ],
+      ["no times at all", {}, "00:00 → 00:00"],
+    ])("treats %s as midnight", (_, range, expected) => {
+      render({ ranges: [{ label: "T", ...range }] });
+      expect(segments()[0].dataset.tooltip).toBe(`T: ${expected}`);
     });
   });
 
-  describe("Time parsing edge cases", () => {
-    beforeEach(() => {
-      mockElement.closest.mockReturnValue(mockWrapper);
-      mockWrapper.querySelector.mockReturnValue(mockElement); // tooltip exists
+  describe("icons", () => {
+    const iconRange = { label: "Work", start: "09:00", end: "17:00", icon: "mdi:work" };
+
+    it("renders no icon for a range without one", () => {
+      render({ ranges: [{ start: "09:00", end: "17:00" }] });
+      expect(icons()).toHaveLength(0);
     });
 
-    it("should handle numeric time format (minutes since midnight)", () => {
-      // Setup - Create a config that will trigger parseTimeString with numeric values
-      mockThis.config = {
-        separator_as_timeline: {
-          ranges: [
-            {
-              start_time: "600", // 10:00 AM in minutes (lines 62-63)
-              end_time: "720", // 12:00 PM in minutes
-              label: "Morning",
-              color: "blue",
-            },
-          ],
-        },
-      };
+    it("centres the icon on its segment and applies default styling", () => {
+      render({ ranges: [iconRange] });
 
-      mockCard.querySelector.mockReturnValue(mockElement);
-
-      // Exercise
-      separator_as_timeline.call(mockThis, mockCard, mockHass);
-
-      // Verify - Check that wrapper.appendChild was called (segments were created)
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
+      const [icon] = icons(".group-Work");
+      expect(icon.tagName).toBe("HA-ICON");
+      expect(icon.getAttribute("icon")).toBe("mdi:work");
+      expect(pct(icon.style.left)).toBeCloseTo(54.167);
+      expect(icon.style.color).toBe("var(--primary-text-color)");
+      expect(icon.style.background).toBe("var(--bubble-icon-background-color)");
+      expect(icon.style.border).toBe("1px solid var(--card-background-color)");
+      expect(icon.style.getPropertyValue("--icon-size")).toBe("18px");
+      expect(icon.style.getPropertyValue("--mdc-icon-size")).toBe("16px");
+      expect(wrapper().style.getPropertyValue("--icon-group-Work-active-color")).toBe("var(--primary-color)");
     });
 
-    it("should handle error in parseTimeString gracefully", () => {
-      // Setup - Force an error in parseInt by providing invalid data structure
-      // We'll create a malformed time string that causes parseTimeString to throw
-      const mockConfig = {
-        separator_as_timeline: {
-          ranges: [
-            {
-              start_time: {}, // This will cause parseInt to throw when accessed
-              end_time: "12:00",
-              label: "Error Test",
-              color: "red",
-            },
-          ],
+    it("applies global icon_settings, overridden per range", () => {
+      render({
+        icon_settings: { icon_color: "orange", icon_background_color: "black", icon_size: "20px" },
+        ranges: [
+          iconRange,
+          { ...iconRange, label: "Night", icon_settings: { icon_color: "white", icon_size: "16px" } },
+        ],
+      });
+
+      const [work] = icons(".group-Work");
+      const [night] = icons(".group-Night");
+      expect(work.style.color).toBe("var(--orange-color)");
+      expect(work.style.getPropertyValue("--icon-size")).toBe("20px");
+      expect(night.style.color).toBe("var(--white-color)");
+      expect(night.style.background).toBe("var(--black-color)");
+      expect(night.style.getPropertyValue("--icon-size")).toBe("16px");
+    });
+
+    it.each([
+      ["range level", { ranges: [{ ...iconRange, icon_color: "green" }] }],
+      ["top level", { icon_color: "green", ranges: [iconRange] }],
+    ])("still honours deprecated icon keys at %s, with a warning", (_, config) => {
+      render(config);
+      expect(icons()[0].style.color).toBe("var(--green-color)");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Use "icon_settings.icon_color" instead'));
+    });
+
+    const nowRange = { ...iconRange, label: "Now", start: "11:00", end: "13:00" };
+
+    it("glows icons of the range containing now when highlight_active is on", () => {
+      render({ highlight_active: true, ranges: [nowRange, { ...iconRange, start: "01:00", end: "02:00" }] });
+      expect(icons(".group-Now")[0].style.filter).toBe("drop-shadow(0 0 5px var(--icon-group-Now-active-color))");
+      expect(icons(".group-Work")[0].style.filter).toBe("");
+    });
+
+    // Current behaviour: only top-level highlight_active is read (schema default false). The editor writes
+    // icon_settings.highlight_active, which is ignored. Tracked separately.
+    it.each([
+      ["by default", {}],
+      ["when set only under icon_settings", { icon_settings: { highlight_active: true } }],
+    ])("does not glow %s", (_, extra) => {
+      render({ ...extra, ranges: [nowRange] });
+      expect(icons()[0].style.filter).toBe("");
+    });
+  });
+
+  describe("hover", () => {
+    const config = {
+      ranges: [
+        { label: "Flight", start: "01:00", end: "02:00", icon: "mdi:airplane" },
+        { label: "Flight", start: "03:00", end: "04:00" },
+        { label: "Relax", start: "15:00", end: "18:00" },
+      ],
+    };
+    const highlighted = () =>
+      h()
+        .$$(".highlighted")
+        .map((e) => e.className);
+    const tooltip = () => h().$(".timeline-tooltip");
+
+    it.each([
+      ["segment", () => segments(".group-Flight")[1]],
+      ["icon", () => icons(".group-Flight")[0]],
+    ])("hovering a %s highlights its whole group and shows the tooltip", (_, target) => {
+      render(config);
+
+      target().dispatchEvent(new Event("mouseenter"));
+      expect(highlighted()).toHaveLength(3);
+      expect(highlighted().every((c) => c.includes("group-Flight"))).toBe(true);
+      expect(tooltip().style.opacity).toBe("1");
+      expect(tooltip().innerText).toMatch(/^Flight: /);
+
+      target().dispatchEvent(new Event("mouseleave"));
+      expect(highlighted()).toHaveLength(0);
+      expect(tooltip().style.opacity).toBe("0");
+    });
+  });
+
+  describe("ticks and marker", () => {
+    const tickTexts = () =>
+      h()
+        .$$(".timeline-tick")
+        .map((t) => t.innerText);
+
+    it("shows five ticks and the current-time marker by default", () => {
+      render({ marker_color: "red", ranges: [] });
+
+      expect(tickTexts()).toEqual(["00:00", "06:00", "12:00", "18:00", "00:00"]);
+      expect(h().$$(".timeline-marker")).toHaveLength(1);
+      expect(wrapper().style.getPropertyValue("--timeline-marker-left")).toBe("50%");
+      expect(wrapper().style.getPropertyValue("--marker-color")).toBe("var(--red-color)");
+    });
+
+    it("does not duplicate ticks or marker across renders", () => {
+      render({ ranges: [] });
+      render({ ranges: [] });
+      expect(tickTexts()).toHaveLength(5);
+      expect(h().$$(".timeline-marker")).toHaveLength(1);
+    });
+
+    it("hides ticks and marker when turned off", () => {
+      render({ show_time_ticks: false, show_current_time: false, ranges: [] });
+      expect(tickTexts()).toHaveLength(0);
+      expect(h().$(".timeline-marker")).toBeNull();
+    });
+  });
+
+  describe("time formatting", () => {
+    it("applies global_settings to ticks and tooltips", () => {
+      render({
+        time_format: { global_settings: { use_24_hour: false, append_suffix: true, pad_hours: false } },
+        ranges: [{ label: "Study", start: "15:30", end: "18:00" }],
+      });
+      expect(h().$(".timeline-tick").innerText).toBe("12:00AM");
+      expect(segmentFor("Study").dataset.tooltip).toBe("Study: 3:30PM → 6:00PM");
+    });
+
+    it("lets a section override the global settings only when override is true", () => {
+      render({
+        time_format: {
+          global_settings: { use_24_hour: true },
+          timeline: { override: true, use_24_hour: false, append_suffix: true, show_minutes: false, pad_hours: false },
+          tooltip: { override: false, show_minutes: false },
         },
-      };
+        ranges: [{ label: "Study", start: "15:30", end: "18:00" }],
+      });
+      expect(
+        h()
+          .$$(".timeline-tick")
+          .map((t) => t.innerText),
+      ).toEqual(["12AM", "6AM", "12PM", "6PM", "12AM"]);
+      expect(segmentFor("Study").dataset.tooltip).toBe("Study: 15:30 → 18:00");
+    });
 
-      // Override toString to force an error
-      mockConfig.separator_as_timeline.ranges[0].start_time.toString = () => {
-        throw new Error("Forced error");
-      };
-
-      mockThis.config = mockConfig;
-      mockCard.querySelector.mockReturnValue(mockElement);
-
-      // Exercise - Should not throw and handle gracefully (line 68)
-      expect(() => separator_as_timeline.call(mockThis, mockCard, mockHass)).not.toThrow();
-
-      // Verify - Should still process other parts
-      expect(mockWrapper.appendChild).toHaveBeenCalled();
+    it("still honours deprecated top-level time_format keys, with a warning", () => {
+      render({ time_format: { show_minutes: false }, ranges: [] });
+      expect(h().$(".timeline-tick").innerText).toBe("00");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('"time_format.global_settings.show_minutes"'));
     });
   });
 });
