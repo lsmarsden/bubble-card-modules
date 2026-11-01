@@ -105,6 +105,21 @@ export function separator_as_timeline(card, hass) {
   // Clear old segments
   wrapper.querySelectorAll(".timeline-segment, .timeline-icon").forEach((e) => e.remove());
 
+  const highlightActive = resolveConfig(
+    [
+      { config: config.icon_settings, path: "highlight_active" },
+      {
+        config: config,
+        path: "highlight_active",
+        metadata: {
+          deprecated: true,
+          replacedWith: "icon_settings.highlight_active",
+        },
+      },
+    ],
+    defaults.icon_settings.highlight_active,
+  );
+
   // 4. ===== Render Segments =====
   const ranges = Array.isArray(config.ranges) ? config.ranges : Object.values(config.ranges || {});
   const now = new Date();
@@ -246,7 +261,7 @@ export function separator_as_timeline(card, hass) {
     });
 
     // Apply glow to icons if active
-    if (getConfig("highlight_active") && isActive) {
+    if (highlightActive && isActive) {
       wrapper.querySelectorAll(`.timeline-icon.${group}`).forEach((e) => {
         e.style.filter = `drop-shadow(0 0 5px var(--icon-${group}-active-color))`;
       });
