@@ -9,6 +9,17 @@ import { jest } from "@jest/globals";
 
 const DEFAULT_NOW = "2025-07-01T12:00:00Z";
 
+// Bubble Card's hasChanged signature (src/tools/module-gate.js, v3.4.3): values joined, arrays by value.
+function gateSignature(values) {
+  let out = "";
+  for (const value of values) {
+    if (Array.isArray(value)) out += value.join(",");
+    else if (value !== null && value !== undefined) out += String(value);
+    out += "\u0001";
+  }
+  return out;
+}
+
 function buildCard(type, subButtons) {
   const card = document.createElement("div");
   card.className = "bubble-card";
@@ -65,7 +76,18 @@ export function createCardHarness(options = {}) {
   const card = buildCard(type, subButtons);
   document.body.appendChild(card);
 
-  const hass = { states: {} };
+  // hass.states records which entities are read, as Bubble Card's tracking proxy registers render dependencies.
+  const reads = new Set();
+  const trackedStates = new Proxy(
+    {},
+    {
+      get(target, key, receiver) {
+        if (typeof key === "string") reads.add(key);
+        return Reflect.get(target, key, receiver);
+      },
+    },
+  );
+  const hass = { states: trackedStates };
   const host = { config: {} };
   const teardowns = new Map();
   const gates = new Map();
@@ -95,7 +117,7 @@ export function createCardHarness(options = {}) {
     global.onTeardown = jest.fn((fn) => teardowns.set(currentModule, fn));
     global.hasChanged = jest.fn((label, ...values) => {
       const key = `${currentModule}::${label}`;
-      const signature = JSON.stringify(values);
+      const signature = gateSignature(values);
       if (gates.get(key) === signature) return false;
       gates.set(key, signature);
       return true;
@@ -128,6 +150,30 @@ export function createCardHarness(options = {}) {
       currentModule = moduleFn.name;
       moduleFn.call(host, card, hass);
       return harness;
+    },
+
+    /** Entity ids read through `hass.states` while `fn` runs. */
+    readsDuring(fn) {
+      reads.clear();
+      fn();
+      return [...reads];
+    },
+
+    /**
+     * DOM mutations (attributes, classes, nodes) made anywhere in the document while `fn` runs, described as
+     * `"<type> <attribute> on <class or tag>"`. jsdom records no mutation for an inline style set to its current value.
+     */
+    writesDuring(fn) {
+      const observer = new MutationObserver(() => {});
+      observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+      const describe = (record) =>
+        `${record.type} ${record.attributeName ?? ""} on ${record.target.getAttribute?.("class") || record.target.nodeName}`;
+      try {
+        fn();
+        return observer.takeRecords().map(describe);
+      } finally {
+        observer.disconnect();
+      }
     },
 
     $(selector) {
