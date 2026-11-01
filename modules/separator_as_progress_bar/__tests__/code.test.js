@@ -393,6 +393,11 @@ describe.each(sourceAndArtifact("separator_as_progress_bar", separator_as_progre
         render({ ...bar(), condition });
         expect(line().classList.contains("bubble-line-progress")).toBe(true);
       });
+
+      it("hides the bar when an exists condition's entity is missing", () => {
+        render({ ...bar(), condition: { condition: "exists", entity: "sensor.missing" } });
+        expect(line().classList.contains("bubble-line-progress")).toBe(false);
+      });
     });
   },
 );

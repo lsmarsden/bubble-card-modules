@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.7.2
+
+<details><summary>See Changes</summary>
+
+- Fixed `exists` conditions always passing. They now fail when the entity (or attribute) doesn't exist.
+
+</details>
+
 ### v1.7.1
 
 <details><summary>See Changes</summary>

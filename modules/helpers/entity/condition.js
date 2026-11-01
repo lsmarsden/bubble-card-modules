@@ -44,7 +44,7 @@ function evaluateSingleCondition(condObj) {
       return true;
     }
     case "exists":
-      return getState(condObj) !== undefined;
+      return getState(condObj, false) !== undefined;
     case "and":
       if (!Array.isArray(condObj.conditions)) return false;
       return condObj.conditions.every((sc) => evaluateSingleCondition(sc));
