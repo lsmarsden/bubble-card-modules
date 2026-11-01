@@ -1,9 +1,9 @@
 import { jest } from "@jest/globals";
 import { separator_as_progress_bar } from "../code.js";
-import { createCardHarness, useCardHarness } from "../../../testing/cardHarness.js";
+import { useCardHarness } from "../../../testing/cardHarness.js";
 import { sourceAndArtifact } from "../../../testing/artifact.js";
 
-const h = useCardHarness({
+const h = useCardHarness(() => ({
   type: "separator",
   computedStyle: { "--bubble-icon-border-radius": "4px" },
   states: {
@@ -12,7 +12,8 @@ const h = useCardHarness({
     "sensor.saros_10_current_room": "Living Room",
     "sensor.precise": "33.333",
   },
-});
+  mode: harnessMode,
+}));
 
 const render = (config) => h().run(moduleFn, config);
 const rerender = () => h().run(moduleFn);
@@ -23,13 +24,14 @@ const width = () => prop(line(), "--progress-width");
 const bar = (config = {}) => ({ source: "sensor.task_progress", progress_style: { ...config } });
 const cleaning = { condition: "state", entity: "sensor.saros_10_status", state: "cleaning" };
 
-let moduleFn;
+let moduleFn, harnessMode;
 
 describe.each(sourceAndArtifact("separator_as_progress_bar", separator_as_progress_bar))(
   "separator_as_progress_bar (%s)",
-  (_, fn) => {
+  (_, fn, mode) => {
     beforeAll(() => {
       moduleFn = fn;
+      harnessMode = mode;
     });
 
     describe("setup", () => {
@@ -181,30 +183,26 @@ describe.each(sourceAndArtifact("separator_as_progress_bar", separator_as_progre
         expect(jest.getTimerCount()).toBe(0);
       });
 
-      it("stops ticking once the card leaves the page, on Bubble Card versions without onTeardown", () => {
-        h().cleanup();
-        const legacy = createCardHarness({ type: "separator", mode: "legacy" });
-        try {
-          legacy.setState("timer.wash", {
-            state: "active",
-            attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
-          });
-          legacy.run(moduleFn, timerBar());
-          expect(jest.getTimerCount()).toBe(1);
-
-          legacy.disconnect();
-          legacy.tick(1_000);
-          expect(jest.getTimerCount()).toBe(0);
-        } finally {
-          legacy.cleanup();
-        }
-      });
-
-      it("stops ticking when Bubble Card tears the card down", () => {
+      it("stops ticking once the card leaves the page", () => {
+        h().setState("timer.wash", {
+          state: "active",
+          attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+        });
         render(timerBar());
-        h().teardown();
+        expect(jest.getTimerCount()).toBe(1);
+
+        h().disconnect();
+        h().tick(1_000);
         expect(jest.getTimerCount()).toBe(0);
       });
+
+      if (mode === "3.3+") {
+        it("stops ticking when Bubble Card tears the card down", () => {
+          render(timerBar());
+          h().teardown();
+          expect(jest.getTimerCount()).toBe(0);
+        });
+      }
     });
 
     describe("colours", () => {
@@ -398,6 +396,162 @@ describe.each(sourceAndArtifact("separator_as_progress_bar", separator_as_progre
         render({ ...bar(), condition: { condition: "exists", entity: "sensor.missing" } });
         expect(line().classList.contains("bubble-line-progress")).toBe(false);
       });
+    });
+
+    describe("style passes", () => {
+      const config = () => ({
+        source: "sensor.task_progress",
+        start: "sensor.start",
+        condition: [cleaning],
+        progress_style: {
+          color_stops: [{ percent: 0, color: "sensor.bar_colour" }],
+          outline: { style: "solid", width: 1, color: "sensor.outline_colour" },
+          shine_settings: { show_shine: true, condition: { ...cleaning } },
+          orb_settings: { show_orb: true, orb_color: "sensor.orb_colour" },
+        },
+        above_text: { text: "Cleaning {room}", placeholders: { room: "sensor.saros_10_current_room" } },
+        below_text: { text: "{pct}%", placeholders: { pct: "sensor.task_progress" }, condition: cleaning },
+      });
+      beforeEach(() =>
+        h().setStates({
+          "sensor.start": "0",
+          "sensor.bar_colour": "#ff0000",
+          "sensor.outline_colour": "#00ff00",
+          "sensor.orb_colour": "#0000ff",
+        }),
+      );
+      const text = (position) => wrapper().querySelector(`.bubble-line-text.${position}-text`);
+
+      // A pass that changes nothing: what it read through hass, and what it wrote to the DOM.
+      const quietPass = () => {
+        let writes;
+        const reads = h().readsDuring(() => (writes = h().writesDuring(rerender)));
+        return { reads, writes };
+      };
+
+      it("writes nothing when nothing changed, but still reads every entity it depends on", () => {
+        render(config());
+        const { reads, writes } = quietPass();
+
+        expect(writes).toEqual([]);
+        expect(reads).toEqual(
+          expect.arrayContaining([
+            "sensor.task_progress",
+            "sensor.start",
+            "sensor.saros_10_status",
+            "sensor.bar_colour",
+            "sensor.outline_colour",
+            "sensor.orb_colour",
+            "sensor.saros_10_current_room",
+          ]),
+        );
+        expect(width()).toBe("75cqw");
+        expect(text("above").innerText).toBe("Cleaning Living Room");
+      });
+
+      it("writes nothing when nothing changed while the condition hides the bar", () => {
+        render(config());
+        h().setState("sensor.saros_10_status", "docked");
+        rerender();
+
+        expect(quietPass().writes).toEqual([]);
+        expect(line().classList.contains("bubble-line-progress")).toBe(false);
+      });
+
+      it.each([
+        ["the progress entity", () => h().setState("sensor.task_progress", "40"), () => expect(width()).toBe("40cqw")],
+        [
+          "a colour entity",
+          () => h().setState("sensor.bar_colour", "#00ffff"),
+          () => expect(prop(line(), "--bubble-line-progress-color")).toBe("#00ffff"),
+        ],
+        [
+          "the outline colour entity",
+          () => h().setState("sensor.outline_colour", "#ffffff"),
+          () => expect(prop(line(), "--bubble-line-progress-outline")).toBe("solid 1px #ffffff"),
+        ],
+        [
+          "a text placeholder entity",
+          () => h().setState("sensor.saros_10_current_room", "Kitchen"),
+          () => expect(text("above").innerText).toBe("Cleaning Kitchen"),
+        ],
+        [
+          "the theme's border radius",
+          () => global.getComputedStyle.mockReturnValue({ getPropertyValue: () => "" }),
+          () => expect(line().classList.contains("has-bubble-border-radius")).toBe(false),
+        ],
+      ])("redraws when %s changes", (_, change, expectRedrawn) => {
+        render(config());
+        rerender();
+        change();
+        rerender();
+        expectRedrawn();
+      });
+
+      it.each([
+        ["its bar", () => line().querySelector(".bubble-line-progress-bar").remove(), ".bubble-line-progress-orb"],
+        [
+          "its shine",
+          () => line().querySelector(".bubble-line-progress-shine").remove(),
+          ".bubble-line-progress-shine",
+        ],
+        ["its text", () => text("below").remove(), ".below-text"],
+        ["its class", () => line().classList.remove("bubble-line-progress"), ".bubble-line-progress"],
+        ["its height", () => wrapper().style.removeProperty("--bubble-line-height"), ".bubble-line-progress"],
+      ])("redraws %s after something else removed it", (_, strip, selector) => {
+        render(config());
+        strip();
+        rerender();
+
+        expect(wrapper().querySelectorAll(selector)).toHaveLength(1);
+        expect(prop(wrapper(), "--bubble-line-height")).toBe("6px");
+      });
+
+      it("redraws its progress after something else cleared it", () => {
+        render(config());
+        line().style.removeProperty("--progress-width");
+        line().style.removeProperty("--bubble-line-progress-color");
+        rerender();
+
+        expect(width()).toBe("75cqw");
+        expect(prop(line(), "--bubble-line-progress-color")).toBe("#ff0000");
+      });
+
+      describe("with an active timer", () => {
+        beforeEach(() =>
+          h().setState("timer.wash", {
+            state: "active",
+            attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+          }),
+        );
+
+        it("keeps it ticking after a pass that changed nothing", () => {
+          render({ source: "timer.wash", progress_style: {} });
+          expect(quietPass().writes).toEqual([]);
+
+          h().tick(10_000);
+          expect(width()).toBe("60cqw");
+        });
+
+        if (mode === "3.3+") {
+          it("restarts the ticker when Bubble Card re-runs a torn-down card that changed nothing", () => {
+            render({ source: "timer.wash", progress_style: {} });
+            h().teardown();
+            rerender();
+
+            h().tick(10_000);
+            expect(width()).toBe("60cqw");
+          });
+        }
+      });
+
+      if (mode === "3.3+") {
+        it("redraws whenever Bubble Card's hasChanged says something changed", () => {
+          render(config());
+          global.hasChanged.mockReturnValue(true);
+          expect(quietPass().writes).not.toEqual([]);
+        });
+      }
     });
   },
 );

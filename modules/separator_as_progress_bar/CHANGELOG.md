@@ -1,5 +1,17 @@
 # Changelog
 
+### v1.2.2
+
+<details><summary>See Changes</summary>
+
+- Faster pop-ups and dashboards: on style passes where nothing the bar depends on changed (progress, colours,
+  conditions, text, the theme's border radius), the module no longer redraws it. Uses Bubble Card's `hasChanged` on
+  v3.3.0+, and the same check stored on the card on older versions. Entities are still read on every pass, so the card
+  keeps updating when they change, and timer progress keeps ticking.
+- The bar, its shine, orb and text are redrawn if something else removes them.
+
+</details>
+
 ### v1.2.1
 
 <details><summary>See Changes</summary>

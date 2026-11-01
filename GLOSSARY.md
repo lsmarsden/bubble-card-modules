@@ -12,6 +12,11 @@ Domain terms used in code, tests and docs. Use these names; don't invent synonym
 - **Button**: the element a module targets on a button card: `main` / `main-button` (the main icon container) or
   `sub-button-N`.
 - **Separator line**: the `.bubble-line` of a separator card, wrapped by modules in a `.bubble-line-wrapper`.
+- **Gate**: the check that lets a module skip its DOM writes on a style pass where nothing they depend on changed
+  (`modules/helpers/utils/gate.js`: `writeIfChanged`, `hasInputsChanged`). Uses `hasChanged` on 3.3.0+ and an identical
+  fallback stored on the card instance before that. A module reads every input first (entities, colours, conditions,
+  sizes, the clock), then gates only the writes. Each gate also compares the DOM it owns (nodes it created, styles and
+  classes it sets), so it redraws whatever something else removed.
 
 ## Progress
 
@@ -43,6 +48,10 @@ Checked against Bubble Card v3.4.3 (`src/modules/module-documentation.md`, `src/
   `onTeardown` (3.3.0+), `hasChanged` (3.3.0+), `renderTemplate`.
 - Referencing a name the installed version lacks throws and Bubble Card skips the whole module: guard newer names
   with `typeof name === "function"`, and make the fallback behave the same.
+- `hasChanged(label, ...values)` (3.3.0+): true the first time and whenever a value changed since that label was last
+  asked. One memory per label per module per card, emptied when the card is rebuilt. Values are joined into a
+  signature: arrays by value, `null`/`undefined` as `""`, anything else with `String()` (so pass objects as JSON).
+  Never throws. Bubble Card never memoises `code:` with side effects, so a gate is the only way to skip work.
 - `onTeardown(fn)`: one registration per module per card (the last wins), run once when the card is torn down, which
   includes being moved in the DOM. Fallback for older versions: check `element.isConnected` inside timers.
 - `checkConditionsMet(conditions, hass)`: upstream's condition evaluator, in scope in every stable release with modules
