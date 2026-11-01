@@ -1,71 +1,33 @@
-import { jest } from "@jest/globals";
+import { applyEffects } from "../effects.js";
+import { useHass } from "../../../../testing/cardHarness.js";
 
-jest.unstable_mockModule("../../entity/condition.js", () => ({
-  checkAllConditions: jest.fn(),
-}));
+useHass({ "sensor.on": "on", "sensor.off": "off" });
 
-const { applyEffects } = await import("../effects.js");
-const condition = await import("../../entity/condition.js");
+const on = { condition: "state", entity: "sensor.on", state: "on" };
+const off = { condition: "state", entity: "sensor.off", state: "on" };
+let element;
+beforeEach(() => {
+  element = document.createElement("div");
+});
+const classes = () => [...element.classList];
 
-describe("applyEffects()", () => {
-  let mockElement;
-
-  beforeEach(() => {
-    mockElement = {
-      classList: {
-        add: jest.fn(),
-        remove: jest.fn(),
-      },
-    };
-    jest.clearAllMocks();
+describe("applyEffects", () => {
+  it.each([
+    ["no effects", {}],
+    ["an entry without effect", { a: { effect: null, condition: on } }],
+  ])("does nothing for %s", (_, effects) => {
+    applyEffects(element, effects);
+    expect(classes()).toEqual([]);
   });
 
-  it("does nothing when effects is empty", () => {
-    applyEffects(mockElement, {});
-    expect(mockElement.classList.add).not.toHaveBeenCalled();
-    expect(mockElement.classList.remove).not.toHaveBeenCalled();
-  });
-  it("does nothing when no effect defined", () => {
-    const effects = {
-      effect1: { effect: null, condition: {} },
-    };
-    applyEffects(mockElement, effects);
-    expect(mockElement.classList.add).not.toHaveBeenCalled();
-    expect(mockElement.classList.remove).not.toHaveBeenCalled();
+  it("adds a class per effect whose condition holds (or has none)", () => {
+    applyEffects(element, [{ effect: "pulse", condition: on }, { effect: "glow", condition: off }, { effect: "spin" }]);
+    expect(classes()).toEqual(["progress-effect-pulse", "has-effect", "progress-effect-spin"]);
   });
 
-  it("applies multiple effects when conditions are true", () => {
-    const effects = {
-      effect1: { effect: "pulse", condition: {} },
-      effect2: { effect: "glow", condition: {} },
-      effect3: { effect: "spin", condition: {} },
-    };
-    condition.checkAllConditions.mockReturnValueOnce(true).mockReturnValueOnce(false).mockReturnValueOnce(true);
-
-    applyEffects(mockElement, effects);
-    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-pulse", "has-effect");
-    expect(mockElement.classList.add).not.toHaveBeenCalledWith("progress-effect-glow", "has-effect");
-    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-spin", "has-effect");
-    expect(mockElement.classList.add).toHaveBeenCalledTimes(2);
-  });
-
-  it("adds effect when condition is true", () => {
-    condition.checkAllConditions.mockReturnValue(true);
-    const effects = {
-      pulseEffect: { effect: "pulse", condition: {} },
-    };
-    applyEffects(mockElement, effects);
-    expect(mockElement.classList.add).toHaveBeenCalledWith("progress-effect-pulse", "has-effect");
-    expect(mockElement.classList.remove).not.toHaveBeenCalled();
-  });
-
-  it("removes effect when condition is false", () => {
-    condition.checkAllConditions.mockReturnValue(false);
-    const effects = {
-      pulseEffect: { effect: "pulse", condition: {} },
-    };
-    applyEffects(mockElement, effects);
-    expect(mockElement.classList.remove).toHaveBeenCalledWith("progress-effect-pulse");
-    expect(mockElement.classList.add).not.toHaveBeenCalled();
+  it("removes an effect's class once its condition stops holding, leaving has-effect", () => {
+    element.classList.add("progress-effect-glow", "has-effect");
+    applyEffects(element, { glow: { effect: "glow", condition: off } });
+    expect(classes()).toEqual(["has-effect"]);
   });
 });

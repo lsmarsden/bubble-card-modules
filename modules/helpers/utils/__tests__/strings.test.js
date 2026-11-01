@@ -1,11 +1,14 @@
-import { jest } from "@jest/globals";
+import { renderTextTemplate, suffix, prefix, formatNumber } from "../strings.js";
+import { useHass } from "../../../../testing/cardHarness.js";
 
-jest.unstable_mockModule("../../entity/hass.js", () => ({
-  getState: jest.fn(),
-}));
-
-const { renderTextTemplate, suffix, prefix, formatNumber } = await import("../strings.js");
-const hass = await import("../../entity/hass.js");
+useHass({
+  "sensor.time": "12:00",
+  "sensor.temperature": { state: 25.0003688 },
+  "sensor.humidity": { state: 75.5 },
+  "sensor.precise": { state: 22.7532 },
+  "climate.mode": "heating",
+  "sensor.attrs": { state: "on", attributes: { level: 42 } },
+});
 
 describe("suffix()", () => {
   it("adds the suffix if missing", () => {
@@ -119,134 +122,30 @@ describe("formatNumber()", () => {
 });
 
 describe("renderTextTemplate()", () => {
-  beforeEach(() => {
-    hass.getState.mockReset();
-  });
-
-  it("returns empty string if textTemplate is null or missing text", () => {
-    expect(renderTextTemplate(null)).toBe("");
-    expect(renderTextTemplate({})).toBe("");
-  });
-
-  it("returns original text if no placeholders are provided", () => {
-    expect(renderTextTemplate({ text: "Hello World" })).toBe("Hello World");
-  });
-
-  it("substitutes a single placeholder using getState", () => {
-    hass.getState.mockReturnValueOnce("12:00");
-    const template = {
-      text: "Time: {time}",
-      placeholders: {
-        time: "sensor.time",
+  it.each([
+    ["null", null, ""],
+    ["a template without text", {}, ""],
+    ["text without placeholders", { text: "Hello World" }, "Hello World"],
+    ["a state", { text: "Time: {time}", placeholders: { time: "sensor.time" } }, "Time: 12:00"],
+    ["an attribute", { text: "{lvl}%", placeholders: { lvl: "sensor.attrs[level]" } }, "42%"],
+    ["a raw value", { text: "{v}", placeholders: { v: "plain" } }, "plain"],
+    ["a null placeholder as empty", { text: "[{v}]", placeholders: { v: null } }, "[]"],
+    ["a repeated placeholder", { text: "{m} is {m}", placeholders: { m: "climate.mode" } }, "heating is heating"],
+    ["unused placeholders", { text: "Battery ok.", placeholders: { level: "sensor.battery" } }, "Battery ok."],
+    [
+      "an undefined placeholder as empty",
+      { text: "Time: {time}{other}", placeholders: { time: "sensor.time" } },
+      "Time: 12:00",
+    ],
+    [
+      "numbers to two decimals, integers bare",
+      {
+        text: "{t}°C, {h}%, {p} in {m}",
+        placeholders: { t: "sensor.temperature", h: "sensor.humidity", p: "sensor.precise", m: "climate.mode" },
       },
-    };
-    expect(renderTextTemplate(template)).toBe("Time: 12:00");
-  });
-
-  it("substitutes multiple placeholders using getState", () => {
-    hass.getState.mockReturnValueOnce("20°C").mockReturnValueOnce("50%");
-
-    const template = {
-      text: "Temp: {temp}, Humidity: {humidity}",
-      placeholders: {
-        temp: "sensor.temperature",
-        humidity: "sensor.humidity",
-      },
-    };
-    expect(renderTextTemplate(template)).toBe("Temp: 20°C, Humidity: 50%");
-  });
-
-  it("uses empty string for unresolved placeholders", () => {
-    hass.getState.mockReturnValueOnce(undefined);
-    const template = {
-      text: "Time: {time}{other}",
-      placeholders: {
-        time: "sensor.missing",
-      },
-    };
-    expect(renderTextTemplate(template)).toBe("Time: ");
-  });
-
-  it("ignores placeholders not used in text", () => {
-    const template = {
-      text: "Battery ok.",
-      placeholders: {
-        level: "sensor.battery_level",
-      },
-    };
-    expect(renderTextTemplate(template)).toBe("Battery ok.");
-  });
-
-  it("replaces the same placeholder multiple times if repeated", () => {
-    hass.getState.mockReturnValueOnce("cool");
-    const template = {
-      text: "{mode} mode is {mode}",
-      placeholders: {
-        mode: "sensor.ac_mode",
-      },
-    };
-    expect(renderTextTemplate(template)).toBe("cool mode is cool");
-    expect(hass.getState).toHaveBeenCalledTimes(1);
-  });
-
-  describe("number formatting in templates", () => {
-    it("formats integer values in placeholders", () => {
-      hass.getState.mockReturnValueOnce(25.0003688);
-      const template = {
-        text: "Temperature: {temp}°C",
-        placeholders: {
-          temp: "sensor.temperature",
-        },
-      };
-      expect(renderTextTemplate(template)).toBe("Temperature: 25°C");
-    });
-
-    it("formats float values to 2 decimal places in placeholders", () => {
-      hass.getState.mockReturnValueOnce(25.502985);
-      const template = {
-        text: "Temperature: {temp}°C",
-        placeholders: {
-          temp: "sensor.temperature",
-        },
-      };
-      expect(renderTextTemplate(template)).toBe("Temperature: 25.50°C");
-    });
-
-    it("handles multiple numeric placeholders with different formatting", () => {
-      hass.getState.mockReturnValueOnce(25.0003688).mockReturnValueOnce(75.5);
-
-      const template = {
-        text: "Temp: {temp}°C, Humidity: {humidity}%",
-        placeholders: {
-          temp: "sensor.temperature",
-          humidity: "sensor.humidity",
-        },
-      };
-      expect(renderTextTemplate(template)).toBe("Temp: 25°C, Humidity: 75.50%");
-    });
-
-    it("leaves non-numeric values unformatted in placeholders", () => {
-      hass.getState.mockReturnValueOnce("heating");
-      const template = {
-        text: "Mode: {mode}",
-        placeholders: {
-          mode: "climate.mode",
-        },
-      };
-      expect(renderTextTemplate(template)).toBe("Mode: heating");
-    });
-
-    it("handles mixed numeric and non-numeric placeholders", () => {
-      hass.getState.mockReturnValueOnce(22.7532).mockReturnValueOnce("auto");
-
-      const template = {
-        text: "{temp}°C in {mode} mode",
-        placeholders: {
-          temp: "sensor.temperature",
-          mode: "climate.mode",
-        },
-      };
-      expect(renderTextTemplate(template)).toBe("22.75°C in auto mode");
-    });
+      "25°C, 75.50%, 22.75 in heating",
+    ],
+  ])("renders %s", (_, template, expected) => {
+    expect(renderTextTemplate(template)).toBe(expected);
   });
 });
