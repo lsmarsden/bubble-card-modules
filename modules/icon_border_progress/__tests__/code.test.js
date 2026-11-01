@@ -1,15 +1,16 @@
 import { jest } from "@jest/globals";
 import { icon_border_progress } from "../code.js";
-import { createCardHarness, useCardHarness } from "../../../testing/cardHarness.js";
+import { useCardHarness } from "../../../testing/cardHarness.js";
 import { sourceAndArtifact } from "../../../testing/artifact.js";
 
 // jsdom has no SVG geometry: path length falls back to 300, so N% progress draws "0 0 3N 300-3N".
 // Clock pinned to 2025-07-01T12:00:00Z.
-const h = useCardHarness({
+const h = useCardHarness(() => ({
   rect: { width: 40, height: 40 },
   computedStyle: { borderRadius: "50%" },
   states: { "sensor.progress": "75", "sensor.enable": "on" },
-});
+  mode: harnessMode,
+}));
 
 const render = (config) => h().run(moduleFn, config);
 const rerender = () => h().run(moduleFn);
@@ -28,11 +29,14 @@ beforeEach(() => {
 });
 afterEach(() => warn.mockRestore());
 
-let moduleFn;
+let moduleFn, harnessMode;
 
-describe.each(sourceAndArtifact("icon_border_progress", icon_border_progress))("icon_border_progress (%s)", (_, fn) => {
+const variants = sourceAndArtifact("icon_border_progress", icon_border_progress);
+
+describe.each(variants)("icon_border_progress (%s)", (_, fn, mode) => {
   beforeAll(() => {
     moduleFn = fn;
+    harnessMode = mode;
   });
 
   describe("targeting", () => {
@@ -276,6 +280,11 @@ describe.each(sourceAndArtifact("icon_border_progress", icon_border_progress))("
       rerender();
       expect(main().classList.contains("progress-effect-glow")).toBe(false);
     });
+
+    it("ignores an effect without a name", () => {
+      render([{ button: "main", source: "sensor.progress", effects: [{ condition: enabled }] }]);
+      expect(main().classList.contains("has-effect")).toBe(false);
+    });
   });
 
   describe("timers", () => {
@@ -377,35 +386,146 @@ describe.each(sourceAndArtifact("icon_border_progress", icon_border_progress))("
       expect(dash()).toBe("0 0 60 240");
     });
 
-    it("releases every ticker when Bubble Card tears the card down", () => {
-      activeTimer();
-      render([
-        { button: "main", source: "timer.cook" },
-        { button: "sub-button-1", source: "timer.cook" },
-      ]);
-      expect(h().teardownCount()).toBe(1);
+    if (mode === "3.3+") {
+      it("releases every ticker when Bubble Card tears the card down", () => {
+        activeTimer();
+        render([
+          { button: "main", source: "timer.cook" },
+          { button: "sub-button-1", source: "timer.cook" },
+        ]);
+        expect(h().teardownCount()).toBe(1);
 
-      h().teardown();
+        h().teardown();
+        expect(tickers()).toBe(0);
+      });
+    }
+
+    it("stops ticking once the card leaves the page", () => {
+      activeTimer();
+      render([{ button: "main", source: "timer.cook" }]);
+      expect(tickers()).toBe(1);
+
+      h().disconnect();
+      h().tick(1_000);
       expect(tickers()).toBe(0);
     });
+  });
 
-    it("stops ticking once the card leaves the page, on Bubble Card versions without onTeardown", () => {
-      h().cleanup();
-      const legacy = createCardHarness({ mode: "legacy", rect: { width: 40, height: 40 } });
-      try {
-        legacy.setState("timer.cook", {
+  describe("style passes", () => {
+    const config = () => [
+      {
+        button: "main",
+        source: "sensor.progress",
+        start: "sensor.min",
+        background_color: "sensor.bg",
+        condition: [enabled],
+        effects: [{ effect: "glow", condition: { condition: "state", entity_id: "sensor.glow", state: "on" } }],
+      },
+    ];
+    beforeEach(() => h().setStates({ "sensor.min": "0", "sensor.bg": "#0000ff", "sensor.glow": "on" }));
+
+    // A pass that changes nothing: what it read through hass, and what it wrote to the DOM.
+    const quietPass = () => {
+      let writes;
+      const reads = h().readsDuring(() => (writes = h().writesDuring(rerender)));
+      return { reads, writes };
+    };
+
+    it("writes nothing when nothing changed, but still reads every entity it depends on", () => {
+      render(config());
+      const { reads, writes } = quietPass();
+
+      expect(writes).toEqual([]);
+      expect(reads).toEqual(
+        expect.arrayContaining(["sensor.progress", "sensor.min", "sensor.bg", "sensor.enable", "sensor.glow"]),
+      );
+      expect(dash()).toBe("0 0 225 75");
+    });
+
+    it("writes nothing when nothing changed while no config matches", () => {
+      render(config());
+      h().setState("sensor.enable", "off");
+      rerender();
+
+      expect(quietPass().writes).toEqual([]);
+      expect(svg()).toBeNull();
+    });
+
+    it.each([
+      ["the progress entity", () => h().setState("sensor.progress", "50"), () => expect(dash()).toBe("0 0 150 150")],
+      [
+        "a background colour entity",
+        () => h().setState("sensor.bg", "#ff0000"),
+        () => expect(main().style.background).toBe("rgb(255, 0, 0)"),
+      ],
+      [
+        "an effect condition",
+        () => h().setState("sensor.glow", "off"),
+        () => expect(main().classList.contains("progress-effect-glow")).toBe(false),
+      ],
+      [
+        "the button's size",
+        () => jest.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ width: 60, height: 40 }),
+        () => expect(svg().getAttribute("viewBox")).toBe("0 0 60 40"),
+      ],
+    ])("redraws when %s changes", (_, change, expectRedrawn) => {
+      render(config());
+      rerender();
+      change();
+      rerender();
+      expectRedrawn();
+    });
+
+    it.each([
+      ["its border", () => svg().remove(), () => expect(dash()).toBe("0 0 225 75")],
+      [
+        "its background",
+        () => (main().style.background = "red"),
+        () => expect(main().style.background).toBe("rgb(0, 0, 255)"),
+      ],
+      [
+        "its effect class",
+        () => main().classList.remove("progress-effect-glow"),
+        () => expect(main().classList.contains("progress-effect-glow")).toBe(true),
+      ],
+    ])("redraws %s after something else removed it", (_, strip, expectRedrawn) => {
+      render(config());
+      strip();
+      rerender();
+      expectRedrawn();
+    });
+
+    it("keeps an active timer ticking after a pass that changed nothing", () => {
+      h().setState("timer.cook", {
+        state: "active",
+        attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
+      });
+      render([{ button: "main", source: "timer.cook" }]);
+      expect(quietPass().writes).toEqual([]);
+
+      h().tick(10_000);
+      expect(dash()).toBe("0 0 180 120");
+    });
+
+    if (mode === "3.3+") {
+      it("restarts the ticker when Bubble Card re-runs a torn-down card that changed nothing", () => {
+        h().setState("timer.cook", {
           state: "active",
           attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
         });
-        legacy.run(moduleFn, [{ button: "main", source: "timer.cook" }]);
-        expect(tickers()).toBe(1);
+        render([{ button: "main", source: "timer.cook" }]);
+        h().teardown();
+        rerender();
 
-        legacy.disconnect();
-        legacy.tick(1_000);
-        expect(tickers()).toBe(0);
-      } finally {
-        legacy.cleanup();
-      }
-    });
+        h().tick(10_000);
+        expect(dash()).toBe("0 0 180 120");
+      });
+
+      it("redraws whenever Bubble Card's hasChanged says something changed", () => {
+        render(config());
+        global.hasChanged.mockReturnValue(true);
+        expect(quietPass().writes).not.toEqual([]);
+      });
+    }
   });
 });

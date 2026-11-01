@@ -59,10 +59,17 @@ export function artifactModule(moduleId) {
   }[moduleId];
 }
 
-/** `describe.each` rows running a suite against the module source and its built artifact. */
+/** Bubble Card versions the Card harness can mimic: with `onTeardown`/`hasChanged` (3.3.0+) and without. */
+export const HARNESS_MODES = ["3.3+", "legacy"];
+
+/**
+ * `describe.each` rows `[label, fn, mode]` running a suite against the module source and its built artifact, each on
+ * Bubble Card 3.3+ and on older versions (pass `mode` to the Card harness).
+ */
 export function sourceAndArtifact(moduleId, sourceFn) {
-  return [
+  const builds = [
     ["source", sourceFn],
     ["built artifact", artifactModule(moduleId)],
   ];
+  return builds.flatMap(([build, fn]) => HARNESS_MODES.map((mode) => [`${build}, Bubble Card ${mode}`, fn, mode]));
 }

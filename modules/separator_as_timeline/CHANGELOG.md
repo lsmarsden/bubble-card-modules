@@ -1,5 +1,18 @@
 # Changelog
 
+### v1.6.1
+
+<details><summary>See Changes</summary>
+
+- Faster pop-ups and dashboards: the timeline is redrawn only when something it shows changed (range times and colours,
+  config, or the current minute, which moves the marker and the active highlight), instead of on every style pass. Uses
+  Bubble Card's `hasChanged` on v3.3.0+, and the same check stored on the card on older versions. Entities are still
+  read on every pass, so the card keeps updating when they change.
+- Fixed a hovered range losing its highlight when the card re-rendered with nothing changed.
+- Segments, icons, ticks and the marker are redrawn if something else removes them.
+
+</details>
+
 ### v1.6.0
 
 <details><summary>See Changes</summary>
