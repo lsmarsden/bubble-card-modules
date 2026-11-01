@@ -49,10 +49,7 @@ export async function createFileFromTemplate(
   await fs.writeFile(file, content, "utf8");
 }
 
-function replacePlaceholders(
-  template: string,
-  values: Record<string, string>,
-): string {
+function replacePlaceholders(template: string, values: Record<string, string>): string {
   return template.replace(/\${{(.*?)}}|\{\{(.*?)}}/g, (_, key1, key2, key3) => {
     const key = (key1 || key2 || key3).trim();
     return values[key] || "";

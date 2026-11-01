@@ -23,18 +23,16 @@ bubble-card-modules/
 │   └── templates/             # Module generation templates
 ├── scripts/                   # Build and development tools
 │   ├── ts/                    # TypeScript build scripts
-│   │   ├── build_modules.ts   # Parallel module builder
+│   │   ├── build/buildModule.ts # Module build: folder -> module YAML (esbuild bundle, validation, Jinja guard)
+│   │   ├── build_modules.ts   # CLI: builds every module, writes dist/ and docs
+│   │   ├── paths.ts           # Project paths
 │   │   ├── generate_module.ts # New module scaffolding
 │   │   ├── generate_docs.ts   # Schema documentation generator
 │   │   ├── share_module.ts    # Module sharing utilities
-│   │   └── helpers/           # Build script utilities
-│   │       ├── extractors.ts  # Function extraction logic
-│   │       ├── files.ts       # File system operations
-│   │       ├── logging.ts     # Colored console output
-│   │       └── __tests__/     # Build script tests
+│   │   └── helpers/           # File system and logging utilities
 │   ├── py/                    # Python utilities
 │   └── *.sh                   # Shell scripts for setup/reports
-├── testing/                   # Shared test fixtures (Card harness, Jest global setup)
+├── testing/                   # Card harness, built-artifact loader, Jest global setup
 ├── reports/                   # Generated test reports
 │   ├── test-report.html       # Human-readable test results
 │   └── junit.xml              # CI/CD compatible test results
@@ -107,6 +105,10 @@ The harness mirrors Bubble Card's `code:` scope: `this` is the card (with `confi
 and `onTeardown`/`hasChanged` are present in `"3.3+"` mode and absent in `"legacy"` mode. It builds card DOM
 with upstream class names, stubs `getComputedStyle`/`getBoundingClientRect`/`requestAnimationFrame`, and pins
 the clock (`now`, default `2025-07-01T12:00:00Z`) with fake timers. Jest runs with `TZ=UTC`.
+
+Every module suite runs twice via `describe.each(sourceAndArtifact(id, fn))` (`testing/artifact.js`): against the
+source, and against the **built artifact** (the YAML users install), compiled the way Bubble Card compiles `code:`.
+Jest's global setup builds all modules once per run. A failure only in the artifact run means the build broke the module.
 
 **Helper tests** (`modules/helpers/**/__tests__/`) test pure logic at the helper's own interface. Use real
 `hass` states via `useHass(states)` instead of mocking `hass.js` or other helpers.

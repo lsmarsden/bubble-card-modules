@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import { icon_border_progress } from "../code.js";
 import { createCardHarness, useCardHarness } from "../../../testing/cardHarness.js";
+import { sourceAndArtifact } from "../../../testing/artifact.js";
 
 // jsdom has no SVG geometry: path length falls back to 300, so N% progress draws "0 0 3N 300-3N".
 // Clock pinned to 2025-07-01T12:00:00Z.
@@ -10,8 +11,8 @@ const h = useCardHarness({
   states: { "sensor.progress": "75", "sensor.enable": "on" },
 });
 
-const render = (config) => h().run(icon_border_progress, config);
-const rerender = () => h().run(icon_border_progress);
+const render = (config) => h().run(moduleFn, config);
+const rerender = () => h().run(moduleFn);
 const main = () => h().$(".bubble-icon-container");
 const sub = (n) => h().$(`.bubble-sub-button-${n}`);
 const svg = (el = main()) => el.querySelector(".stroke-dash-aligned-svg");
@@ -27,7 +28,13 @@ beforeEach(() => {
 });
 afterEach(() => warn.mockRestore());
 
-describe("icon_border_progress", () => {
+let moduleFn;
+
+describe.each(sourceAndArtifact("icon_border_progress", icon_border_progress))("icon_border_progress (%s)", (_, fn) => {
+  beforeAll(() => {
+    moduleFn = fn;
+  });
+
   describe("targeting", () => {
     it.each([
       ["main", () => main()],
@@ -390,7 +397,7 @@ describe("icon_border_progress", () => {
           state: "active",
           attributes: { duration: "0:01:40", finishes_at: "2025-07-01T12:00:50Z" },
         });
-        legacy.run(icon_border_progress, [{ button: "main", source: "timer.cook" }]);
+        legacy.run(moduleFn, [{ button: "main", source: "timer.cook" }]);
         expect(tickers()).toBe(1);
 
         legacy.disconnect();

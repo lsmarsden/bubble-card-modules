@@ -2,6 +2,7 @@ const config = {
   preset: "ts-jest/presets/default-esm",
   testEnvironment: "jsdom",
   globalSetup: "./testing/globalSetup.js",
+  globalTeardown: "./testing/globalTeardown.js",
   testMatch: ["**/__tests__/**/*.(test|spec).[jt]s"],
   moduleFileExtensions: ["ts", "js"],
   collectCoverage: true,

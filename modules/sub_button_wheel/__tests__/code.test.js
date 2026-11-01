@@ -1,10 +1,11 @@
 import { jest } from "@jest/globals";
 import { sub_button_wheel } from "../code.js";
 import { useCardHarness } from "../../../testing/cardHarness.js";
+import { sourceAndArtifact } from "../../../testing/artifact.js";
 
 const h = useCardHarness({ subButtons: 8, now: null });
 
-const render = (config) => h().run(sub_button_wheel, config);
+const render = (config) => h().run(moduleFn, config);
 const wheel = (opener = "main", n = 4, extra = {}) => ({
   wheel_opener: opener,
   wheel_buttons: Array.from({ length: n }, (_, i) => ({ sub_button: String(i + 1) })),
@@ -31,7 +32,13 @@ beforeEach(() => {
 });
 afterEach(() => warn.mockRestore());
 
-describe("sub_button_wheel", () => {
+let moduleFn;
+
+describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_button_wheel (%s)", (_, fn) => {
+  beforeAll(() => {
+    moduleFn = fn;
+  });
+
   describe("building the wheel", () => {
     it("moves the sub-buttons and opener into a wheel menu behind an overlay", () => {
       render([wheel()]);

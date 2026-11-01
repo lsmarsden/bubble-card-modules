@@ -9,7 +9,7 @@ across modules.
 To use these, import them in the `code.js` file within a module, and use them as you normally would:
 
 ```javascript
-import { resolveColor } from "../helpers/color";
+import { resolveColor } from "../helpers/ui/color.js";
 
 function module_id(card, hass) {
   // use the helper function as normal
@@ -19,10 +19,12 @@ function module_id(card, hass) {
 }
 ```
 
-When building the final module using `npm run build`, all helper imports will be injected into the final `code` section of the YAML
-above the main module code.
+When building the final module using `npm run build`, the module's `code.js` and every helper it imports are bundled
+with [esbuild](https://esbuild.github.io/): only the helpers actually used are included, unminified so the result stays
+readable in Bubble Card's editor. Helpers can be functions, constants or classes, and may import other helpers.
 
-For example, the above JavaScript snippet would be built into the following YAML:
+The bundle is wrapped so Bubble Card runs it as a JavaScript template in the module's `code`, with `this` bound to the
+card:
 
 ```yaml
 module_id:
@@ -31,20 +33,24 @@ module_id:
   # Other YAML config...
   code: |-
     ${(() => {
-    /**
-     * ======== IMPORTED HELPER FUNCTIONS =========
-     */
-
-    function resolveColor(color) {
+    const __bubble_card_this = this;
+    // modules/helpers/ui/color.js
+    function resolveColor(color, defaultColor) {
       // logic from helper function
     }
 
-    /**
-     * ======== MAIN MODULE CODE =========
-     */
+    // modules/module_id/code.js
+    function module_id(card, hass) {
+      // module code
+    }
 
-
-    // all module code from inside module_id(card, hass) function
-
+    module_id.call(__bubble_card_this, card, hass);
+    return "";
     })()}
+
+    /* module styles */
 ```
+
+Helpers read Bubble Card's scope names (`hass`, and on 3.3.0+ `onTeardown`/`hasChanged`) as free variables; see the
+runtime contract in [`GLOSSARY.md`](../../GLOSSARY.md). The build fails if the output contains `{{` or `{%`, which
+Bubble Card would send to Home Assistant as a Jinja template.
