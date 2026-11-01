@@ -8,7 +8,10 @@ useHass({
   "sensor.text": "abc",
   "sensor.five": "5",
   "sensor.ten": "10",
-  "sensor.attrs": { state: "on", attributes: { mode: "eco" } },
+  "sensor.attrs": { state: "on", attributes: { mode: "eco", level: 3 } },
+  "sensor.empty": "",
+  "sensor.negative": "-1",
+  "sensor.percent": "50%",
 });
 
 const state = (entity, value) => ({ condition: "state", entity, state: value });
@@ -27,6 +30,8 @@ describe("checkAllConditions", () => {
     ["a number", 123, false],
     ["an object without condition", { entity: "sensor.on" }, false],
     ["an unknown condition type", { condition: "unsupported", entity: "sensor.on" }, false],
+    ["a single condition object", isOn, true],
+    ["a list containing null", [null], false],
   ])("given %s → %s", (_, input, expected) => {
     expect(checkAllConditions(input)).toBe(expected);
   });
@@ -37,6 +42,7 @@ describe("checkAllConditions", () => {
     ["state in a list", state("sensor.on", ["on", "active"]), true],
     ["state not in a list", state("sensor.off", ["on", "active"]), false],
     ["a missing entity", state("sensor.missing", "on"), false],
+    ["a missing entity, even for state unavailable", state("sensor.missing", "unavailable"), false],
     [
       "an attribute (entity_id + attribute)",
       { condition: "state", entity_id: "sensor.attrs", attribute: "mode", state: "eco" },
@@ -57,12 +63,20 @@ describe("checkAllConditions", () => {
     ["at the lower bound", { above: 6, below: 10 }, false],
     ["entity thresholds", { above: "sensor.five", below: "sensor.ten" }, true],
     ["non-numeric thresholds, ignored", { above: "foo", below: "bar" }, true],
+    ["an entity[attribute] threshold", { below: "sensor.attrs[level]" }, false],
+    ["a threshold with a unit, read as its leading number", { above: "40%" }, false],
   ])("numeric_state: %s → %s", (_, thresholds, expected) => {
     expect(checkAllConditions(numeric("sensor.value", thresholds))).toBe(expected);
   });
 
-  it("numeric_state: fails for a non-numeric state", () => {
-    expect(checkAllConditions(numeric("sensor.text", { above: 5 }))).toBe(false);
+  it.each([
+    ["a non-numeric state", numeric("sensor.text", { above: 5 }), false],
+    ["an empty state", numeric("sensor.empty", { below: 1 }), false],
+    ["a state with a unit, read as its leading number", numeric("sensor.percent", { above: 40 }), true],
+    ["an empty-string threshold, ignored", numeric("sensor.negative", { above: "" }), true],
+    ["an attribute (entity + attribute)", { ...numeric("sensor.attrs", { above: 2 }), attribute: "level" }, true],
+  ])("numeric_state: %s → %s", (_, condition, expected) => {
+    expect(checkAllConditions(condition)).toBe(expected);
   });
 
   it.each([
@@ -71,6 +85,13 @@ describe("checkAllConditions", () => {
     ["no entity", undefined, false],
   ])("exists: %s → %s", (_, entity, expected) => {
     expect(checkAllConditions({ condition: "exists", entity })).toBe(expected);
+  });
+
+  it.each([
+    ["an existing attribute", "mode", true],
+    ["a missing attribute", "missing", false],
+  ])("exists: %s → %s", (_, attribute, expected) => {
+    expect(checkAllConditions({ condition: "exists", entity: "sensor.attrs", attribute })).toBe(expected);
   });
 
   it.each([
@@ -83,6 +104,8 @@ describe("checkAllConditions", () => {
     ["or: empty", "or", [], false],
     ["or: not a list", "or", null, false],
     ["not: negates a list's first entry", "not", [isOff], true],
+    ["not: ignores entries after the first", "not", [isOff, isOn], true],
+    ["not: negates exists", "not", [{ condition: "exists", entity: "sensor.missing" }], true],
     ["not: negates a single condition", "not", isOn, false],
     ["not: null", "not", null, false],
     ["not: missing", "not", undefined, false],
