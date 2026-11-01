@@ -4,12 +4,12 @@ import { applyEffects } from "../helpers/ui/effects.js";
 import { toArray } from "../helpers/utils/arrays.js";
 import { resolveConfig } from "../helpers/utils/config.js";
 import { createProgressBorder, removeProgressBorder } from "../helpers/ui/progressBorder.js";
-import { calculateProgressValue } from "../helpers/entity/progress.js";
-import { manageTimerUpdater } from "../helpers/ui/timerUpdater.js";
+import { showProgress, stopProgress } from "../helpers/entity/progress.js";
 
 export function icon_border_progress(card, hass) {
   // this allows IDEs to parse the file normally - will be removed automatically during build.
   const { icon_border_progress: config } = this.config;
+  const progressCtx = { host: this, onTeardown: typeof onTeardown === "function" ? onTeardown : undefined };
 
   function getElementSelector(button) {
     if (button === "main-button" || button === "main") {
@@ -74,15 +74,12 @@ export function icon_border_progress(card, hass) {
     });
   }
 
-  function updateProgressDisplay(progressSource, buttonConfig, buttonElement) {
-    const progressValue = calculateProgressValue(progressSource, buttonConfig);
-    const inverted = buttonConfig?.invert || false;
-    const adjustedProgress = inverted ? 100 - progressValue : progressValue;
+  function renderProgress(percent, buttonConfig, buttonElement) {
     const colorStops = buttonConfig.color_stops || [];
-    const progressColor = resolveColorFromStops(adjustedProgress, colorStops, buttonConfig.interpolate_colors);
+    const progressColor = resolveColorFromStops(percent, colorStops, buttonConfig.interpolate_colors);
     const colors = resolveColorConfigs(buttonConfig);
 
-    applyProgressStyling(buttonElement, adjustedProgress, progressColor, colors, buttonConfig);
+    applyProgressStyling(buttonElement, percent, progressColor, colors, buttonConfig);
   }
 
   // group button configs by button name
@@ -113,11 +110,7 @@ export function icon_border_progress(card, hass) {
     if (!matchingConfig) {
       // No matching conditions found, cleanup styling
       cleanupProgressStyling(buttonElement);
-      const updateIntervalId = buttonElement.dataset.progress_update_interval;
-      if (updateIntervalId) {
-        buttonElement.removeAttribute("data-progress_update_interval");
-        clearInterval(Number(updateIntervalId));
-      }
+      stopProgress(progressCtx, buttonElement);
       return;
     }
 
@@ -133,10 +126,15 @@ export function icon_border_progress(card, hass) {
       },
     ]);
 
-    manageTimerUpdater(buttonElement, progressSource, () => {
-      updateProgressDisplay(progressSource, matchingConfig, buttonElement);
-    });
-    updateProgressDisplay(progressSource, matchingConfig, buttonElement);
+    const progressOptions = {
+      source: progressSource,
+      start: matchingConfig.start,
+      end: matchingConfig.end,
+      invert: matchingConfig.invert,
+    };
+    showProgress(progressCtx, buttonElement, progressOptions, (percent) =>
+      renderProgress(percent, matchingConfig, buttonElement),
+    );
     applyEffects(buttonElement, matchingConfig.effects || []);
   });
 }

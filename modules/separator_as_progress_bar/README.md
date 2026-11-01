@@ -25,7 +25,8 @@ bar with multiple styling and animation options.
 
 ---
 
-- Bind to any numeric entity or attribute as the source for progress
+- Bind to any numeric entity or attribute as the source for progress, with an optional custom `start`/`end` range
+- Show the elapsed progress of `timer` entities, updated every second while the timer runs
 - Define progress colors at specific percentage stops, with optional smooth interpolation between them
 - Fully customizable progress bar appearance: height, outline, background, and color transitions
 - Support for conditional and templated text above and below the progress bar using entity values

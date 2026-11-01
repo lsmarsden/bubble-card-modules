@@ -1,5 +1,16 @@
 # Changelog
 
+### v1.7.1
+
+<details><summary>See Changes</summary>
+
+- Fixed timer progress briefly reverting to a previous configuration's colours after a condition switched configurations
+  (or to a previous timer after the source changed).
+- Timer updates now stop when Bubble Card rebuilds or removes the card (e.g. each time a pop-up opens), instead of
+  running in the background. Uses Bubble Card's `onTeardown` on v3.3.0+, and stops automatically on older versions.
+
+</details>
+
 ### v1.7.0
 
 <details><summary>See Changes</summary>

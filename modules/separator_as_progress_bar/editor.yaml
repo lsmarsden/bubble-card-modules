@@ -12,6 +12,21 @@ editor:
     label: "✨Source entity"
     selector:
       entity: {}
+  - type: expandable
+    label: "Custom start/end values (optional)"
+    schema:
+      - type: constant
+        value: Use these to override the default 0-100 progress range. Ignored for timers.
+      - name: start
+        label: "✨Start value of entity"
+        selector:
+          number:
+            default: 0
+      - name: end
+        label: "✨End value of entity"
+        selector:
+          number:
+            default: 100
   - name: invert
     label: "Invert progress (bar decreases as progress completes)"
     default: false

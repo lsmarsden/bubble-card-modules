@@ -6,8 +6,20 @@ description: "Main config object"
 properties:
   source:
     type: string
-    description: The entity or attribute source.
+    description: The entity, attribute or timer source.
     format: entity[attribute]
+  start:
+    oneOf:
+      - type: number
+      - type: string
+    description: "Start value for progress range (default: 0). Ignored for timers."
+    default: 0
+  end:
+    oneOf:
+      - type: number
+      - type: string
+    description: "End value for progress range (default: 100). Ignored for timers."
+    default: 100
   invert:
     type: boolean
     description: Invert the progress bar (bar decreases as progress completes)
