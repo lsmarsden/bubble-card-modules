@@ -304,20 +304,40 @@ describe.each(sourceAndArtifact("separator_as_timeline", separator_as_timeline))
 
       const nowRange = { ...iconRange, label: "Now", start: "11:00", end: "13:00" };
 
-      it("glows icons of the range containing now when highlight_active is on", () => {
-        render({ highlight_active: true, ranges: [nowRange, { ...iconRange, start: "01:00", end: "02:00" }] });
-        expect(icons(".group-Now")[0].style.filter).toBe("drop-shadow(0 0 5px var(--icon-group-Now-active-color))");
+      const glow = "drop-shadow(0 0 5px var(--icon-group-Now-active-color))";
+
+      it("glows only the icons of the range containing now", () => {
+        render({ ranges: [nowRange, { ...iconRange, start: "01:00", end: "02:00" }] });
+        expect(icons(".group-Now")[0].style.filter).toBe(glow);
         expect(icons(".group-Work")[0].style.filter).toBe("");
       });
 
-      // Current behaviour: only top-level highlight_active is read (schema default false). The editor writes
-      // icon_settings.highlight_active, which is ignored. Tracked separately.
       it.each([
-        ["by default", {}],
-        ["when set only under icon_settings", { icon_settings: { highlight_active: true } }],
-      ])("does not glow %s", (_, extra) => {
+        ["glows by default", {}, glow],
+        ["glows when icon_settings.highlight_active is on", { icon_settings: { highlight_active: true } }, glow],
+        [
+          "does not glow when icon_settings.highlight_active is off",
+          { icon_settings: { highlight_active: false } },
+          "",
+        ],
+        [
+          "prefers icon_settings.highlight_active over the deprecated top-level key",
+          { highlight_active: true, icon_settings: { highlight_active: false } },
+          "",
+        ],
+      ])("%s", (_, extra, filter) => {
         render({ ...extra, ranges: [nowRange] });
-        expect(icons()[0].style.filter).toBe("");
+        expect(icons()[0].style.filter).toBe(filter);
+        expect(warn).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        [true, glow],
+        [false, ""],
+      ])("still honours deprecated top-level highlight_active: %s, with a warning", (highlight_active, filter) => {
+        render({ highlight_active, ranges: [nowRange] });
+        expect(icons()[0].style.filter).toBe(filter);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('Use "icon_settings.highlight_active" instead'));
       });
     });
 

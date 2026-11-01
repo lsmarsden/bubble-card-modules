@@ -1,5 +1,19 @@
 # Changelog
 
+### v1.6.0
+
+<details><summary>See Changes</summary>
+
+- Fixed the editor's **Highlight active period** toggle having no effect. `highlight_active` now lives in
+  `icon_settings`, where the editor already saves it.
+- Changed: the active period is now highlighted by default, matching what the editor has always shown. Previously
+  nothing was highlighted unless you set top-level `highlight_active: true` in YAML. To keep the old look, set
+  `icon_settings.highlight_active: false`.
+- Deprecated top-level `highlight_active`. It still works, with a warning, when `icon_settings.highlight_active` is not
+  set. Move it into `icon_settings`.
+
+</details>
+
 ### v1.5.0
 
 <details><summary>See Changes</summary>

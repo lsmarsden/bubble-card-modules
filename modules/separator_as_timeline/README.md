@@ -138,8 +138,8 @@ separator_as_timeline:
     icon_outline_color: yellow
     icon_active_color: orange
     icon_size: 20px
+    highlight_active: true
   show_time_ticks: true
-  highlight_active: true
   ranges:
     "0":
       label: Sunset
