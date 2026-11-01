@@ -39,6 +39,13 @@ describe("icon_border_progress", () => {
       expect(target().style.position).toBe("relative");
     });
 
+    it("draws a 3px border that animates over 800ms", () => {
+      render([{ button: "main", source: "sensor.progress" }]);
+      expect(path().getAttribute("stroke-width")).toBe("3");
+      expect(main().querySelector(".bg-path").getAttribute("stroke-width")).toBe("3");
+      expect(path().style.transition).toBe("all 800ms ease-out");
+    });
+
     it("draws independently on several buttons", () => {
       h().setStates({ "sensor.a": "20", "sensor.b": "60" });
       render([
@@ -224,6 +231,15 @@ describe("icon_border_progress", () => {
       h().setState("sensor.mode", "c");
       rerender();
       expect(dash()).toBe("0 0 225 75");
+    });
+
+    it("supports numeric_state conditions", () => {
+      render(conditional({ condition: [{ condition: "numeric_state", entity: "sensor.progress", above: 50 }] }));
+      expect(svg()).not.toBeNull();
+
+      h().setState("sensor.progress", "40");
+      rerender();
+      expect(svg()).toBeNull();
     });
 
     it("supports compound conditions", () => {
