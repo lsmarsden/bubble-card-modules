@@ -122,3 +122,11 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
   (`getState` falls back to the raw condition object); `separator_as_timeline` editor writes
   `icon_settings.highlight_active` but code reads top-level `highlight_active` (schema default false, editor default true).
 - Timezone-dependent timeline failure was a test issue, not a bug: a range crossing midnight intentionally renders two icons.
+- **Candidate 1 done** (`da076a5`, pushed): `showProgress`/`stopProgress` in `modules/helpers/entity/progress.js`;
+  `timer.js` and `timerUpdater.js` deleted; `icon_border_progress` 1.7.1, `separator_as_progress_bar` 1.2.0;
+  `GLOSSARY.md` added. Ticker registry lives on `this._progressTickers` (a Map keyed by element); each pass replaces the
+  ticker's `update` closure so ticks use that pass's `hass` and config.
+- **Found during candidate 1**: the regex extractor only followed same-file calls one level deep, so the built
+  modules would have lacked `readSourcePercent`/`readTimerPercent` (ReferenceError, whole module skipped). Minimal fix
+  in `extractors.ts` (recurse instead of eager extraction); other modules' built output byte-identical. Strengthens the
+  case for candidate 2's artifact tests.
