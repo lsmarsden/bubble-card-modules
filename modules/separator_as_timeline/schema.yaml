@@ -22,12 +22,16 @@ properties:
     description: Color of the current time marker.
   highlight_active:
     type: boolean
-    default: false
-    description: Highlight segment icon when current time is within the segment period
+    description: "[DEPRECATED] Use 'icon_settings.highlight_active' instead"
   icon_settings:
     $ref: "#/definitions/iconSettings"
     type: object
     description: Global icon settings.
+    properties:
+      highlight_active:
+        type: boolean
+        default: true
+        description: Highlight segment icon when current time is within the segment period
   time_format:
     properties:
       global_settings:

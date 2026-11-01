@@ -18,6 +18,7 @@
   - [12.4. Property `icon_image_size`](#124-property-icon_image_size)
   - [12.5. Property `icon_outline_color`](#125-property-icon_outline_color)
   - [12.6. Property `icon_active_color`](#126-property-icon_active_color)
+  - [12.7. Property `highlight_active`](#127-property-highlight_active)
 - [13. Property `time_format`](#13-property-time_format)
   - [13.1. Property `global_settings`](#131-property-global_settings)
     - [13.1.1. Property `use_24_hour`](#1311-property-use_24_hour)
@@ -77,7 +78,7 @@
 | - [show_time_ticks](#show_time_ticks)                           | boolean | false   | Show time ticks on the timeline                                                                               |
 | - [show_current_time](#show_current_time)                       | boolean | true    | Show the current time marker on the timeline.                                                                 |
 | - [marker_color](#marker_color)                                 | string  | -       | Color of the current time marker.                                                                             |
-| - [highlight_active](#highlight_active)                         | boolean | false   | Highlight segment icon when current time is within the segment period                                         |
+| - [highlight_active](#highlight_active)                         | boolean | -       | [DEPRECATED] Use 'icon_settings.highlight_active' instead                                                     |
 | - [icon_settings](#icon_settings)                               | object  | -       | Global icon settings.                                                                                         |
 | - [time_format](#time_format)                                   | object  | -       | -                                                                                                             |
 | - [ranges](#ranges)                                             | object  | -       | List of time ranges to display on the timeline                                                                |
@@ -164,11 +165,11 @@
 
 ## 11. Property `highlight_active`
 
-| **Type** | **Default** | **Description**                                                       |
-| -------- | ----------- | --------------------------------------------------------------------- |
-| boolean  | false       | Highlight segment icon when current time is within the segment period |
+| **Type** | **Default** | **Description**                                           |
+| -------- | ----------- | --------------------------------------------------------- |
+| boolean  | -           | [DEPRECATED] Use 'icon_settings.highlight_active' instead |
 
-**Description:** Highlight segment icon when current time is within the segment period
+**Description:** [DEPRECATED] Use 'icon_settings.highlight_active' instead
 
 ## 12. Property `icon_settings`
 
@@ -178,14 +179,15 @@
 
 **Description:** Global icon settings.
 
-| Property                                                        | Type    | Default | Description                                        |
-| --------------------------------------------------------------- | ------- | ------- | -------------------------------------------------- |
-| - [icon_color](#icon_settings_icon_color)                       | string  | -       | Icon colour                                        |
-| - [icon_background_color](#icon_settings_icon_background_color) | string  | -       | Icon background colour                             |
-| - [icon_size](#icon_settings_icon_size)                         | integer | 18      | Icon total size in pixels                          |
-| - [icon_image_size](#icon_settings_icon_image_size)             | integer | 16      | Icon image size in pixels (max value is icon_size) |
-| - [icon_outline_color](#icon_settings_icon_outline_color)       | string  | -       | Icon outline colour                                |
-| - [icon_active_color](#icon_settings_icon_active_color)         | string  | -       | Icon active glow colour                            |
+| Property                                                        | Type    | Default | Description                                                           |
+| --------------------------------------------------------------- | ------- | ------- | --------------------------------------------------------------------- |
+| - [icon_color](#icon_settings_icon_color)                       | string  | -       | Icon colour                                                           |
+| - [icon_background_color](#icon_settings_icon_background_color) | string  | -       | Icon background colour                                                |
+| - [icon_size](#icon_settings_icon_size)                         | integer | 18      | Icon total size in pixels                                             |
+| - [icon_image_size](#icon_settings_icon_image_size)             | integer | 16      | Icon image size in pixels (max value is icon_size)                    |
+| - [icon_outline_color](#icon_settings_icon_outline_color)       | string  | -       | Icon outline colour                                                   |
+| - [icon_active_color](#icon_settings_icon_active_color)         | string  | -       | Icon active glow colour                                               |
+| - [highlight_active](#icon_settings_highlight_active)           | boolean | true    | Highlight segment icon when current time is within the segment period |
 
 ### 12.1. Property `icon_color`
 
@@ -234,6 +236,14 @@
 | string   | -           | Icon active glow colour |
 
 **Description:** Icon active glow colour
+
+### 12.7. Property `highlight_active`
+
+| **Type** | **Default** | **Description**                                                       |
+| -------- | ----------- | --------------------------------------------------------------------- |
+| boolean  | true        | Highlight segment icon when current time is within the segment period |
+
+**Description:** Highlight segment icon when current time is within the segment period
 
 ## 13. Property `time_format`
 
