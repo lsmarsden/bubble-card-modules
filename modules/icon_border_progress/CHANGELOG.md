@@ -1,5 +1,17 @@
 # Changelog
 
+### v1.7.3
+
+<details><summary>See Changes</summary>
+
+- Faster pop-ups and dashboards: on style passes where nothing the border depends on changed (progress, colours,
+  conditions, button size and shape), the module no longer redraws it. Uses Bubble Card's `hasChanged` on v3.3.0+, and
+  the same check stored on the card on older versions. Entities are still read on every pass, so the card keeps
+  updating when they change, and timer progress keeps ticking.
+- The border, background and effect classes are redrawn if something else removes or overwrites them.
+
+</details>
+
 ### v1.7.2
 
 <details><summary>See Changes</summary>

@@ -3,7 +3,7 @@ import { sub_button_wheel } from "../code.js";
 import { useCardHarness } from "../../../testing/cardHarness.js";
 import { sourceAndArtifact } from "../../../testing/artifact.js";
 
-const h = useCardHarness({ subButtons: 8, now: null });
+const h = useCardHarness(() => ({ subButtons: 8, now: null, mode: harnessMode }));
 
 const render = (config) => h().run(moduleFn, config);
 const wheel = (opener = "main", n = 4, extra = {}) => ({
@@ -32,11 +32,12 @@ beforeEach(() => {
 });
 afterEach(() => warn.mockRestore());
 
-let moduleFn;
+let moduleFn, harnessMode;
 
-describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_button_wheel (%s)", (_, fn) => {
+describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_button_wheel (%s)", (_, fn, mode) => {
   beforeAll(() => {
     moduleFn = fn;
+    harnessMode = mode;
   });
 
   describe("building the wheel", () => {
@@ -95,6 +96,19 @@ describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_butt
       render([wheel()]);
       expect(h().$$(".wheel-menu")).toHaveLength(1);
       expect(h().$$(".wheel-overlay")).toHaveLength(1);
+    });
+
+    // The opener's wheel-open-button class already gates the build per element, so hasChanged would add nothing.
+    it("writes nothing on later passes, and rebuilds for a new opener element", () => {
+      render([wheel()]);
+      expect(h().writesDuring(() => render([wheel()]))).toEqual([]);
+
+      const fresh = document.createElement("div");
+      fresh.className = "bubble-icon-container";
+      h().card.appendChild(fresh);
+      opener().remove();
+      render([wheel()]);
+      expect(fresh.classList.contains("wheel-open-button")).toBe(true);
     });
 
     it("builds several wheels, skipping invalid ones", () => {

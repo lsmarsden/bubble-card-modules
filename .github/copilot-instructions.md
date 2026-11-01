@@ -102,12 +102,16 @@ it("draws 75% progress", () => {
 ```
 
 The harness mirrors Bubble Card's `code:` scope: `this` is the card (with `config`), `hass` is global,
-and `onTeardown`/`hasChanged` are present in `"3.3+"` mode and absent in `"legacy"` mode. It builds card DOM
+and `onTeardown`/`hasChanged` are present in `"3.3+"` mode (with upstream's `hasChanged` semantics) and absent in
+`"legacy"` mode. `readsDuring(fn)` lists the entities read through `hass.states`, as Bubble Card's tracking proxy
+registers them; `writesDuring(fn)` lists the DOM mutations. Together they test a gated pass: no writes, every read. It builds card DOM
 with upstream class names, stubs `getComputedStyle`/`getBoundingClientRect`/`requestAnimationFrame`, and pins
 the clock (`now`, default `2025-07-01T12:00:00Z`) with fake timers. Jest runs with `TZ=UTC`.
 
-Every module suite runs twice via `describe.each(sourceAndArtifact(id, fn))` (`testing/artifact.js`): against the
-source, and against the **built artifact** (the YAML users install), compiled the way Bubble Card compiles `code:`.
+Every module suite runs four times via `describe.each(sourceAndArtifact(id, fn))` (`testing/artifact.js`, rows
+`[label, fn, mode]`): against the source and against the **built artifact** (the YAML users install), compiled the way
+Bubble Card compiles `code:`, each in both harness modes. Pass `mode` to the harness; guard tests of 3.3+-only
+behaviour (e.g. `onTeardown`) with `if (mode === "3.3+")`.
 Jest's global setup builds all modules once per run. A failure only in the artifact run means the build broke the module.
 
 **Helper tests** (`modules/helpers/**/__tests__/`) test pure logic at the helper's own interface. Use real
@@ -124,15 +128,26 @@ Jest's global setup builds all modules once per run. A failure only in the artif
 ### 3. DOM Manipulation Pattern
 
 ```javascript
-// ALWAYS clean up first, then conditionally apply
-element.classList.remove("progress-border", "has-bubble-border-radius");
-element.style.background = "";
-element.style.removeProperty("--custom-background-color");
+// 1. Read every input, every pass: entities (through hass, which registers the card's render dependency),
+//    resolved colours, condition results, sizes, the clock.
+const show = checkAllConditions(config.condition);
+const color = resolveColor(config.color);
 
-// Then apply new state if conditions met
-if (checkAllConditions(config.condition)) {
-  // Apply styling
-}
+// 2. Gate the writes. Inside, ALWAYS clean up first, then conditionally apply.
+writeIfChanged(
+  ctx,
+  "main",
+  [show, color],
+  () => [element.className, element.style.getPropertyValue("--custom-background-color")], // DOM the write owns
+  () => {
+    element.classList.remove("progress-border");
+    element.style.removeProperty("--custom-background-color");
+    if (show) {
+      element.classList.add("progress-border");
+      element.style.setProperty("--custom-background-color", color);
+    }
+  },
+);
 ```
 
 ### 4. Key Helper Functions
@@ -146,6 +161,10 @@ Import from `../helpers/` - see `modules/helpers/README.md` for complete list:
 - `showProgress(ctx, element, options, render)` / `stopProgress(ctx, element)` - Progress reading: percent from a
   progress source (entity, timer, `start`/`end`, `override`, `invert`), kept current by a ticker for active timers.
   Pass `ctx = { host: this, onTeardown: typeof onTeardown === "function" ? onTeardown : undefined }`.
+- `writeIfChanged(ctx, label, inputs, owned, write)` - Gate: runs `write` only when `inputs` or the DOM `owned()`
+  reads changed. Read every input before it, on every pass; call `showProgress` on every pass too. Pass
+  `ctx = { host: this, module: "<module_id>", hasChanged: typeof hasChanged === "function" ? hasChanged : undefined }`
+  (it can be the same object as Progress reading's).
 
 See `GLOSSARY.md` for domain terms and the Bubble Card runtime contract (names in `code:` scope, `onTeardown`, Jinja).
 
