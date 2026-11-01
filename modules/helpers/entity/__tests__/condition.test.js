@@ -65,11 +65,10 @@ describe("checkAllConditions", () => {
     expect(checkAllConditions(numeric("sensor.text", { above: 5 }))).toBe(false);
   });
 
-  // Current behaviour: getState falls back to the raw condition object, so `exists` never fails. Tracked separately.
   it.each([
     ["an existing entity", "sensor.on", true],
-    ["a missing entity", "sensor.missing", true],
-    ["no entity", undefined, true],
+    ["a missing entity", "sensor.missing", false],
+    ["no entity", undefined, false],
   ])("exists: %s → %s", (_, entity, expected) => {
     expect(checkAllConditions({ condition: "exists", entity })).toBe(expected);
   });
