@@ -16,14 +16,22 @@ const diff = (before: string, after: string) => `-${before}\n+${after}`;
 
 const update: StorePlan = {
   id: "demo_mod",
+  name: "Demo",
   status: "update",
   version: "v1.2.3",
   live: live("v1.2.1"),
   post: "new post\n```yaml\n```",
   comment: "the comment",
 };
-const fresh: StorePlan = { id: "new_mod", status: "new", version: "v1.0.0", post: "first post" };
-const current: StorePlan = { id: "done_mod", status: "up-to-date", version: "v2.0.0", live: live("v2.0.0") };
+const fresh: StorePlan = { id: "new_mod", name: "New", status: "new", version: "v1.0.0", post: "first post" };
+const current: StorePlan = {
+  id: "done_mod",
+  name: "Done",
+  status: "up-to-date",
+  version: "v2.0.0",
+  live: live("v2.0.0"),
+  post: "same post",
+};
 
 describe("renderPreview", () => {
   it("lists what publishing would do for each module", () => {

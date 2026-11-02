@@ -40,18 +40,27 @@ describe("planStoreUpdate", () => {
   it("posts a module the store doesn't have yet", () => {
     expect(planStoreUpdate(module, undefined, changelog)).toEqual({
       id: "demo_mod",
+      name: "Demo Module",
       status: "new",
       version: "v1.2.3",
       post: renderStorePost(module),
     });
   });
 
-  it("leaves a post that already shows this version alone", () => {
+  it("leaves a post that already shows this version alone, keeping the post for a forced republish", () => {
     expect(planStoreUpdate(module, live("v1.2.3"), changelog)).toEqual({
       id: "demo_mod",
+      name: "Demo Module",
       status: "up-to-date",
       version: "v1.2.3",
       live: live("v1.2.3"),
+      post: renderStorePost(module),
+    });
+  });
+
+  it("uses the post it is given, such as the one attached to the release", () => {
+    expect(planStoreUpdate(module, live("v1.2.1"), changelog, "released post")).toMatchObject({
+      post: "released post",
     });
   });
 
