@@ -57,7 +57,7 @@ export function sub_button_wheel(card, hass) {
           this.applyCircularArcLayout(buttonConfigs, buttonElements, 1.0, layoutRadius);
           break;
         case "fixed-position":
-          this.applyFixedPositionLayout(buttonConfigs, buttonElements, layoutRadius);
+          this.applyFixedPositionLayout(buttonConfigs, buttonElements, layoutRadius, true);
           break;
         case "double-ring":
           this.applyDoubleRingLayout(buttonConfigs, buttonElements, layoutRadius);
@@ -127,13 +127,14 @@ export function sub_button_wheel(card, hass) {
       }
     }
 
-    applyFixedPositionLayout(buttonConfigs, buttonElements, radius) {
+    applyFixedPositionLayout(buttonConfigs, buttonElements, radius, slotFromPosition = false) {
       // Uses standard 8-button positions regardless of actual button count
       const totalPositions = 8; // Fixed 8-position template
 
       buttonElements.forEach((button, index) => {
-        // Use index directly as position in 8-button layout
-        const { x, y } = this.calculateCirclePosition(index, totalPositions, radius);
+        // fixed-position: `position` names the slot (1 = top, then clockwise). Otherwise fill slots in order.
+        const slot = slotFromPosition ? buttonConfigs[index].position - 1 : index;
+        const { x, y } = this.calculateCirclePosition(slot, totalPositions, radius);
         button.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
@@ -250,12 +251,14 @@ export function sub_button_wheel(card, hass) {
     glassRing.className = "glass-ring";
     wheelMenu.appendChild(glassRing);
 
-    const orderedButtonConfigs = processButtonPositions([...wheelButtonsConfig]);
+    const orderedButtonConfigs = processButtonPositions(wheelButtonsConfig);
     // assume 36px as there are no variables in buttons until reported otherwise
     // if main button it will cause 6px difference in sizing due to the main icon
     // being 42px, but it will be centered anyway
     const buttonSize = 36;
+    // Buttons that exist, and their configs at the same index (missing sub-buttons are skipped from both).
     const wheelButtons = [];
+    const wheelButtonConfigs = [];
 
     orderedButtonConfigs.forEach((buttonConfig) => {
       const button = card.querySelector(getElementSelector(buttonConfig.sub_button));
@@ -267,6 +270,7 @@ export function sub_button_wheel(card, hass) {
       button.classList.add("wheel-button");
       wheelMenu.appendChild(button);
       wheelButtons.push(button);
+      wheelButtonConfigs.push(buttonConfig);
     });
 
     wheelMenu.style.width = `${buttonSize}px`;
@@ -281,7 +285,7 @@ export function sub_button_wheel(card, hass) {
 
     // Apply layout positioning directly to buttons
     const layoutManager = new WheelLayoutManager(buttonSize, wheelConfig);
-    const glassRingRadius = layoutManager.applyLayout(layout, orderedButtonConfigs, wheelButtons);
+    const glassRingRadius = layoutManager.applyLayout(layout, wheelButtonConfigs, wheelButtons);
 
     // Set glass ring size based on calculated radius
     const glassRingDiameter = glassRingRadius * 2;
@@ -289,7 +293,7 @@ export function sub_button_wheel(card, hass) {
     glassRing.style.height = `${glassRingDiameter}px`;
 
     const animationManager = new WheelAnimationManager(wheelConfig);
-    animationManager.applyAnimation(orderedButtonConfigs, wheelButtons);
+    animationManager.applyAnimation(wheelButtonConfigs, wheelButtons);
     const animationOptions = animationManager.getAnimationOptions();
     glassRing.style.transitionDelay = `${animationOptions.delay}s`;
     glassRing.style.transitionDuration = `${animationOptions.duration}s`;
@@ -315,7 +319,7 @@ export function sub_button_wheel(card, hass) {
       closeWheel();
     };
 
-    orderedButtonConfigs.forEach((buttonConfig, index) => {
+    wheelButtonConfigs.forEach((buttonConfig, index) => {
       if (shouldCloseOnClick(buttonConfig, wheelConfig)) {
         const button = wheelButtons[index];
 
@@ -364,15 +368,15 @@ export function sub_button_wheel(card, hass) {
       }
     }
 
-    // Assign positions to unpositioned buttons in config order
-    unpositionedButtons.forEach((buttonConfig, index) => {
-      if (index < availablePositions.length) {
-        buttonConfig.position = availablePositions[index];
-      }
-    });
+    // Assign positions to unpositioned buttons in config order. Copies, because Home Assistant passes the config
+    // frozen: writing into it silently does nothing in Bubble Card (and throws in strict mode).
+    const autoPositionedButtons = unpositionedButtons.map((buttonConfig, index) => ({
+      ...buttonConfig,
+      position: availablePositions[index],
+    }));
 
     // Combine and sort by position
-    const allButtons = [...explicitButtons, ...unpositionedButtons];
+    const allButtons = [...explicitButtons, ...autoPositionedButtons];
     return allButtons.sort((a, b) => a.position - b.position);
   }
 

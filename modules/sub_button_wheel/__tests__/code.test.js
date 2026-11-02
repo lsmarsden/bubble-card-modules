@@ -151,6 +151,66 @@ describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_butt
       render([{ wheel_opener: "main", wheel_buttons: [{ sub_button: "1", position: 10 }, { sub_button: "2" }] }]);
       expect(order()).toEqual(["2", "1"]);
     });
+
+    // Home Assistant hands modules a frozen config: positions must not be written back into it.
+    it("orders buttons the same with the frozen config Home Assistant passes", () => {
+      const freeze = (value) => {
+        if (value && typeof value === "object") Object.values(value).forEach(freeze);
+        return Object.freeze(value);
+      };
+      render(
+        freeze([
+          {
+            wheel_opener: "main",
+            wheel_buttons: [
+              { sub_button: "1" },
+              { sub_button: "2", position: 1 },
+              { sub_button: "3" },
+              { sub_button: "4", position: 3 },
+            ],
+          },
+        ]),
+      );
+      expect(order()).toEqual(["2", "1", "4", "3"]);
+    });
+  });
+
+  describe("fixed positions", () => {
+    const fixed = (wheel_buttons) =>
+      render([{ wheel_opener: "main", layout_options: { wheel_layout: "fixed-position" }, wheel_buttons }]);
+
+    it("places each button in the template slot its position names (1 = top, clockwise)", () => {
+      fixed([{ sub_button: "1", position: 4 }, { sub_button: "2" }, { sub_button: "3", position: 6 }]);
+      // sub-button 2 takes the first free slot (1, top); 4 and 6 are 135° and 225° clockwise from the top.
+      expect(positions()).toEqual([
+        [0, -54],
+        [38, 38],
+        [-38, 38],
+      ]);
+    });
+
+    it("matches the README example", () => {
+      fixed([
+        { sub_button: "1", position: 1 },
+        { sub_button: "2", position: 3 },
+        { sub_button: "3", position: 4 },
+        { sub_button: "4", position: 2 },
+      ]);
+      expect(positions()).toEqual([
+        [0, -54],
+        [38, -38],
+        [54, 0],
+        [38, 38],
+      ]);
+    });
+
+    it("keeps each configured button's slot when another sub-button is missing", () => {
+      fixed([
+        { sub_button: "99", position: 1 },
+        { sub_button: "1", position: 3 },
+      ]);
+      expect(positions()).toEqual([[54, 0]]);
+    });
   });
 
   describe("layouts", () => {
@@ -371,6 +431,20 @@ describe.each(sourceAndArtifact("sub_button_wheel", sub_button_wheel))("sub_butt
         click(sub(2));
         expect(menu().classList.contains("active")).toBe(true);
         click(sub(1));
+        expect(menu().classList.contains("active")).toBe(false);
+      });
+
+      it("applies close_on_click to the right button when an earlier sub-button is missing", () => {
+        render([
+          {
+            wheel_opener: "main",
+            wheel_buttons: [{ sub_button: "99" }, { sub_button: "1" }, { sub_button: "2", close_on_click: true }],
+          },
+        ]);
+        open();
+        click(sub(1));
+        expect(menu().classList.contains("active")).toBe(true);
+        click(sub(2));
         expect(menu().classList.contains("active")).toBe(false);
       });
 
