@@ -1,5 +1,15 @@
 # Changelog
 
+### v1.7.4
+
+<details><summary>See Changes</summary>
+
+- Fixed the module's documentation link (shown with the module in Bubble Card), which pointed to a page that doesn't
+  exist.
+- The module store post is now generated from each release, with screenshots.
+
+</details>
+
 ### v1.7.3
 
 <details><summary>See Changes</summary>
