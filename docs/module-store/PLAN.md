@@ -80,7 +80,7 @@ No secret, publishes nothing.
 - [x] First real run (PR #35) found all four posts: icon_border_progress v1.7.0, separator_as_progress_bar v1.1.1,
       separator_as_timeline v1.5.0, sub_button_wheel v1.3.0. All four would update; comments list the missed versions.
 
-### 3. Publisher, dry run by default, sandbox first — PR #37 open
+### 3. Publisher, dry run by default, sandbox first — merged (PR #37); rehearsal pending
 
 - [x] Release job attaches `STORE_POST.md` to each GitHub release (`PlannedRelease.assets`); publishing downloads it
       (`fetchReleasePost`), so a re-run republishes exactly what was released.
@@ -94,8 +94,8 @@ No secret, publishes nothing.
       fails if a new version isn't shown.
 - [x] `publish-store.yml`: manual, target `sandbox` only, GITHUB_TOKEN with `discussions: write`. Sandbox = this repo's
       "Share your Modules" category (enabled by lsmarsden 2026-11-02).
-- [ ] Patch release all four modules (ships the module link fix, gives every module a release with STORE_POST.md;
-      needed before even a dry run works).
+- [x] Patch released all four modules (PR #38): icon_border_progress 1.7.4, separator_as_progress_bar 1.2.3,
+      separator_as_timeline 1.6.2, sub_button_wheel 1.3.3. Every release has STORE_POST.md; tag image links resolve.
 - [ ] Rehearse in the sandbox: dry run → `seed` + `publish` (should comment + update all four, verify passes) → re-run
       (should do nothing) → `force` re-run (should do nothing: bodies match).
 
@@ -111,6 +111,8 @@ No secret, publishes nothing.
 
 ## Log
 
+- 2026-11-02: #37 (publisher) and #38 (patch releases) merged; releases carry STORE_POST.md. Sandbox rehearsal
+  commands given to lsmarsden (dry run with seed → seed + publish → re-run → forced re-run).
 - 2026-11-02: #35 merged (preview found all four posts: 1.7.0, 1.1.1, 1.5.0, 1.3.0). #36 merged (weekly parser sync;
   needs "Allow GitHub Actions to create and approve pull requests" for its PR step). Step 3 opened as #37.
 - 2026-11-02: PR #34 merged. Step 2 (PR #35) built test-first; the sandbox here can't call the GitHub API directly,
