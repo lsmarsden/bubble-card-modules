@@ -100,13 +100,17 @@ No secret, publishes nothing.
       discussions #40–#43 from the live posts (#1525 v1.7.0, #1518 v1.1.1, #1426 v1.5.0, #1728 v1.3.0), commented and
       updated each, verification passed; re-run and forced re-run: "nothing to do" for all four.
 
-### 4. Real store, behind approval
+### 4. Real store, behind approval — PR #44 open
 
-- [ ] `module-store` environment: deployment branch `main`, required reviewer lsmarsden, secret `MODULE_STORE_TOKEN`
-      (classic PAT, `public_repo`). **Needs:** token created by lsmarsden; `gh` commands to be provided.
-- [ ] After publishing, re-read through the store's endpoint + vendored parser; fail if the store wouldn't show the
-      new version.
-- [ ] First run: patch-release all four modules (ships the link fix, catches up the stale posts).
+- [x] `store` target in publish-store.yml (job `store`, `environment: module-store`, `GH_TOKEN` from
+      `MODULE_STORE_TOKEN`, `STORE_REPOSITORY: Clooos/Bubble-Card`, author defaults to the module creator) — PR #44.
+- [ ] `module-store` environment: deployment branch `main`, required reviewer lsmarsden (id 44576399), secret
+      `MODULE_STORE_TOKEN` (classic PAT, `public_repo`, with expiry). `gh` commands given 2026-11-02; waiting on
+      lsmarsden.
+- [ ] Dry run against the real store (`-f target=store`), then publish (`-f publish=true`).
+- [x] After publishing, re-read through the store's endpoint + vendored parser; fail if the store wouldn't show the
+      new version (built in step 3, `publish_store.ts`).
+- [x] Patch-released all four modules (PR #38) so the first publish catches up the stale posts.
 - [ ] Hook into `release.yaml` after the release job, waiting on the environment approval (the "button").
 - [ ] New modules: create the post on first release (title `[JS+Editor Module] <name>`).
 
