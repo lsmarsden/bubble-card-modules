@@ -1,4 +1,4 @@
-// Copies Bubble Card's module store parser into testing/upstream/bubble-card so the store post contract tests run
+// Copies Bubble Card's module store parser into scripts/ts/upstream/bubble-card, so the store post tests and preview run
 // against the code the store itself runs. Usage:
 //
 //   git clone --depth 1 --branch v3.4.3 https://github.com/Clooos/Bubble-Card /tmp/bubble-card
@@ -13,7 +13,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { projectRoot } from "../paths";
 
-const outDir = path.join(projectRoot, "testing", "upstream", "bubble-card");
+const outDir = path.join(projectRoot, "scripts", "ts", "upstream", "bubble-card");
 
 const SHIMMED = {
   "src/modules/utils.js": ["_cleanMarkdown", "_slugify", "_normalizeVersionInput", "_compareVersions"],
