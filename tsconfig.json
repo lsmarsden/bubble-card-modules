@@ -1,15 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "Node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "types": ["node", "jest"],
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist_scripts",
-    "rootDir": "scripts"
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
   },
   "include": ["scripts/**/*.ts"]
 }

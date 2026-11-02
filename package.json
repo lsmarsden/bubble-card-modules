@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Custom modules for Bubble Card",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "create-module": "tsx scripts/ts/generate_module.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -15,29 +18,27 @@
     "format": "prettier --write \"**/*.{js,yaml,md}\"",
     "format:check": "prettier --check \"**/*.{js,yaml,md}\"",
     "clean": "rm -rf modules/*/dist coverage reports",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@jest/globals": "^30.5.2",
-    "inquirer": "^12.6.0",
-    "js-yaml": "^4.1.0"
+    "inquirer": "^14.2.5",
+    "js-yaml": "^5.5.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.15.2",
-    "chalk": "^5.4.1",
-    "esbuild": "^0.25.12",
+    "@types/node": "^26.6.6",
+    "chalk": "^6.0.1",
+    "esbuild": "^0.28.2",
     "husky": "^9.1.7",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "jest-html-reporter": "^4.4.2",
-    "jsdom": "^26.1.0",
-    "lint-staged": "^16.1.2",
-    "prettier": "^3.5.3",
-    "ts-jest": "^29.4.15",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.3"
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "**/*.{js,ts,yaml,yml,md,json}": [

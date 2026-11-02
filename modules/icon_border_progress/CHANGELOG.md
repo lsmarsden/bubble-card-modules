@@ -36,8 +36,9 @@
 <details><summary>See Changes</summary>
 
 - Added ability to define multiple configurations for the same button.
-Define separate configuration blocks with conditions, and the configuration matching the condition will be used.
-If multiple configurations match, the first one in the list will be used.
+  Define separate configuration blocks with conditions, and the configuration matching the condition will be used.
+  If multiple configurations match, the first one in the list will be used.
+
 </details>
 
 ### v1.6.0

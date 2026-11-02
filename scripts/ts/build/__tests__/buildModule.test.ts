@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import yaml from "js-yaml";
+import { dump, load } from "js-yaml";
 import { buildModule, findModuleFolders } from "../buildModule";
 
 let root: string;
@@ -15,7 +15,7 @@ const write = (file: string, content: string) => {
   fs.writeFileSync(path.join(root, file), content);
 };
 const moduleYaml = (info: Record<string, unknown> = {}) =>
-  yaml.dump({
+  dump({
     module_info: {
       id: "demo_mod",
       name: "Demo",
@@ -30,7 +30,7 @@ const moduleYaml = (info: Record<string, unknown> = {}) =>
     },
   });
 const listing = () => fs.readdirSync(root, { recursive: true, withFileTypes: false }).map(String).sort();
-const definition = async () => (yaml.load((await buildModule(moduleDir)).yaml) as Record<string, any>).demo_mod;
+const definition = async () => (load((await buildModule(moduleDir)).yaml) as Record<string, any>).demo_mod;
 
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), "build-module-"));

@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import yaml from "js-yaml";
+import { load } from "js-yaml";
 import { findModuleFolders, type ModuleInfo } from "../build/buildModule";
 
 export interface PlannedRelease {
@@ -79,7 +79,7 @@ export async function planReleases(modulesDir: string, publishedTags: string[]):
   const plans = await Promise.all(
     folders.map(async (folder): Promise<PlannedRelease | undefined> => {
       const dir = path.join(modulesDir, folder);
-      const { module_info: info } = yaml.load(await fs.readFile(path.join(dir, "module.yaml"), "utf8")) as {
+      const { module_info: info } = load(await fs.readFile(path.join(dir, "module.yaml"), "utf8")) as {
         module_info: ModuleInfo;
       };
       const tag = `${info.id}/v${info.version}`;

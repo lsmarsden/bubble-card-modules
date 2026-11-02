@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import yaml from "js-yaml";
+import { dump, load } from "js-yaml";
 import * as esbuild from "esbuild";
 
 export interface ModuleInfo {
@@ -53,7 +53,7 @@ const CARD_THIS = "__bubble_card_this";
  */
 export async function buildModule(moduleDir: string): Promise<BuiltModule> {
   const folder = path.basename(moduleDir);
-  const parsed = yaml.load(await fs.readFile(path.join(moduleDir, "module.yaml"), "utf8")) as {
+  const parsed = load(await fs.readFile(path.join(moduleDir, "module.yaml"), "utf8")) as {
     module_info: ModuleInfo;
   };
   const info = parsed?.module_info;
@@ -71,7 +71,7 @@ export async function buildModule(moduleDir: string): Promise<BuiltModule> {
   const moduleCode = `\${(() => {\nconst ${CARD_THIS} = this;\n${code.trim()}\nreturn "";\n})()}\n\n${styles.trim()}`;
   assertNoJinja(moduleCode, info.id);
 
-  const editorParsed = yaml.load(editorYaml) as { editor?: unknown } | undefined;
+  const editorParsed = load(editorYaml) as { editor?: unknown } | undefined;
   const output = {
     [info.id]: {
       name: info.name,
@@ -85,7 +85,7 @@ export async function buildModule(moduleDir: string): Promise<BuiltModule> {
     },
   };
 
-  return { id: info.id, info, yaml: yaml.dump(output, { lineWidth: 120 }), warnings };
+  return { id: info.id, info, yaml: dump(output, { lineWidth: 120 }), warnings };
 }
 
 async function bundleCode(moduleDir: string, info: ModuleInfo) {
