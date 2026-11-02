@@ -49,6 +49,30 @@ jobs:
           name: test-report
           path: reports/
 
+  store-preview:
+    name: Module store preview
+    # What publishing to Bubble Card's module store would change, read from the live posts: shown in the job summary.
+    # Publishes nothing and isn't a required check (it depends on GitHub's API, not on this change being right).
+    runs-on: ubuntu-latest
+    concurrency:
+      group: store-preview-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Preview module store posts
+        shell: bash # -o pipefail: a failed preview fails the step despite tee
+        run: npx tsx scripts/ts/store/preview_store.ts | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   dependabot-auto-merge:
     name: Merge Dependabot update
     # Merges a Dependabot pull request once the job above has passed on it, unless it is a major update (those need a
