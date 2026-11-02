@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { load } from "js-yaml";
 import { findModuleFolders, type ModuleInfo } from "../build/buildModule";
+import { STORE_POST_FILE } from "../store/storePost";
 
 export interface PlannedRelease {
   folder: string;
@@ -10,8 +11,8 @@ export interface PlannedRelease {
   /** Git tag of the release, `<id>/v<version>`. */
   tag: string;
   title: string;
-  /** Built module YAML attached to the release. */
-  asset: string;
+  /** Files attached to the release: the built module YAML and its store post. */
+  assets: string[];
   notes: string;
 }
 
@@ -94,7 +95,7 @@ export async function planReleases(modulesDir: string, publishedTags: string[]):
         version: info.version,
         tag,
         title: `${info.name} v${info.version}`,
-        asset: path.join(dir, "dist", `${info.id}.yaml`),
+        assets: [path.join(dir, "dist", `${info.id}.yaml`), path.join(dir, "dist", STORE_POST_FILE)],
         notes: releaseNotes(changelog, info.version, publishedVersions),
       };
     }),

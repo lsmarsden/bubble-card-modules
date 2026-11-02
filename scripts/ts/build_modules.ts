@@ -5,7 +5,7 @@ import { buildModule, findModuleFolders } from "./build/buildModule";
 import { generateDocs } from "./generate_docs";
 import { logProgress, visibleLog } from "./helpers/logging";
 import { modulesDir } from "./paths";
-import { renderStorePost } from "./store/storePost";
+import { STORE_POST_FILE, renderStorePost } from "./store/storePost";
 
 // CI and releases only need the module YAML and store post; --skip-docs skips the Python schema docs.
 const skipDocs = process.argv.includes("--skip-docs");
@@ -21,7 +21,7 @@ async function buildAndWrite(folder: string): Promise<void> {
     const distPath = path.join(moduleDir, "dist");
     await fs.mkdir(distPath, { recursive: true });
     await fs.writeFile(path.join(distPath, `${built.id}.yaml`), built.yaml, "utf8");
-    await fs.writeFile(path.join(distPath, "STORE_POST.md"), renderStorePost(built), "utf8");
+    await fs.writeFile(path.join(distPath, STORE_POST_FILE), renderStorePost(built), "utf8");
     visibleLog(`BUILT MODULE: ${built.id} (${Date.now() - startTime}ms)`, chalk.green);
 
     if (!skipDocs) await generateDocs(built.id);
