@@ -1,0 +1,19 @@
+name: Label pull requests
+
+# Applies module:*, type:testing and type:documentation labels from the files a pull request changes
+# (.github/labeler.yml). pull_request_target so it can label pull requests from forks; it never checks out their code.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    if: github.repository == 'lsmarsden/bubble-card-modules'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5

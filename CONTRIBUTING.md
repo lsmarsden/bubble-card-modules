@@ -62,3 +62,10 @@ the built YAML attached. To release a module:
 
 Release notes are the CHANGELOG entries since the module's last release, so versions bumped in between (and never
 released on their own) are included.
+
+## 🤖 Automation
+
+- **Dependabot** opens update pull requests for npm (weekly) and GitHub Actions (monthly). Once CI passes, `ci.yml`
+  merges minor and patch updates automatically; major updates wait for review.
+- **Labels**: pull requests are labelled by the files they change (`module:*`, `type:testing`, `type:documentation`).
+- **Stale issues and pull requests**: see [.github/ISSUE_MANAGEMENT.md](.github/ISSUE_MANAGEMENT.md#stale-issues-and-pull-requests).

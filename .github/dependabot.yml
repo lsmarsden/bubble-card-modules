@@ -1,5 +1,4 @@
-# Keeps GitHub Actions versions current (the workflows were on deprecated Node 20 action runtimes).
-# npm dependencies are updated by hand: the test harness and build depend on exact Jest/jsdom/esbuild behaviour.
+# Dependency updates. ci.yml merges Dependabot pull requests automatically once CI passes, except major updates.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -11,3 +10,15 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "ci"
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Minor and patch updates together (merged automatically when CI passes); majors arrive one per pull request.
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "deps"
