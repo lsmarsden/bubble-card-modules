@@ -1,5 +1,15 @@
 # Changelog
 
+### v1.3.1
+
+<details><summary>See Changes</summary>
+
+- Fixed the hidden wheel overlay causing a horizontal page scroll when the card sits inside a transformed element
+  ([#17](https://github.com/lsmarsden/bubble-card-modules/pull/17), thanks @finder39). The overlay still fades out when
+  the wheel closes.
+
+</details>
+
 ### v1.3.0
 
 <details><summary>See Changes</summary>
