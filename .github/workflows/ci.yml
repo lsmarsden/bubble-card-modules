@@ -1,0 +1,50 @@
+name: CI
+
+# Runs on every pull request, and before every release (release.yaml calls it).
+# Everything the release depends on is checked here: formatting, script types, every test (module suites run against
+# the source and the built module YAML), and the build itself.
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Format, types, tests, build
+    runs-on: ubuntu-latest
+    concurrency:
+      # A new push to a pull request cancels its previous run; release runs never cancel each other.
+      group: ci-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Type-check build scripts
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Run all tests
+        run: npm test
+
+      - name: Build modules
+        run: npm run build -- --skip-docs
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: reports/

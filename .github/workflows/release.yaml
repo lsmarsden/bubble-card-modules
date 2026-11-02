@@ -1,189 +1,70 @@
-name: Build and Release Modules
+name: Release
+
+# On every push to main: run CI, then publish a GitHub release for each module whose version in module.yaml has no
+# release yet (tag `<module_id>/v<version>`). Bumping a module's version is the release signal; anything else is a
+# no-op, so the workflow is safe to re-run. Release notes are that module's CHANGELOG entries since its last release.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-env:
-  NODE_VERSION: 23
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  lint-and-test:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Publish new module versions
+    needs: ci
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+          node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linting
-        run: npm run format:check
-
-      - name: Run core tests (helpers)
-        run: npm run test:helpers
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            reports/
-            coverage/
-
-  build:
-    runs-on: ubuntu-latest
-    needs: [lint-and-test]
-    outputs:
-      changed: ${{ steps.detect_changes.outputs.changed }}
-      changed_files: ${{ steps.detect_changes.outputs.changed_files }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: "0"
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Get last successful workflow commit
-        id: last_success
-        run: |
-          LAST_SUCCESS=$(gh run list --workflow=release.yaml --branch=main --status=success --limit 1 --json headSha -q '.[0].headSha')
-          echo "last_success=$LAST_SUCCESS" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Detect changed modules
-        id: detect_changes
-        run: |
-          echo "Detecting changed modules since last successful workflow..."
-
-          # Get all changed files
-          CHANGED_FILES=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
-
-          # Only consider modules with code changes (not just docs or tests)
-          CHANGED=$(git diff --name-only ${{ steps.last_success.outputs.last_success }} ${{ github.sha }} \
-            | grep '^modules/' \
-            | grep -vE '^modules/(templates|helpers)/' \
-            | grep -vE '/__tests__/' \
-            | grep -vE '\.(md|txt|test\.js|spec\.js)$' \
-            | cut -d/ -f2 \
-            | sort -u \
-            | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
-
-          echo "Changed files: $CHANGED_FILES"
-          echo "Modules with code changes: $CHANGED"
+      - run: npm ci
 
       - name: Build modules
-        run: npm run build
+        run: npm run build -- --skip-docs
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-modules
-          path: modules/*/dist/
+      - name: Plan releases
+        run: |
+          gh release list --limit 1000 --json tagName --jq '[.[].tagName]' > "$RUNNER_TEMP/published-tags.json"
+          node --import tsx scripts/ts/release/writeReleasePlan.ts "$RUNNER_TEMP/published-tags.json" "$RUNNER_TEMP/releases"
 
-  test-changed-modules:
+      - name: Publish releases
+        run: |
+          jq -c '.[]' "$RUNNER_TEMP/releases/plan.json" | while read -r release; do
+            tag=$(jq -r .tag <<<"$release")
+            gh release create "$tag" "$(jq -r .asset <<<"$release")" \
+              --title "$(jq -r .title <<<"$release")" \
+              --notes-file "$(jq -r .notesFile <<<"$release")" \
+              --target "$GITHUB_SHA"
+            echo "::notice::Published $tag"
+          done
+
+  keep-stale-enabled:
+    name: Keep the stale workflow enabled
+    # GitHub disables scheduled workflows after 60 days without commits; each push to main turns it back on.
     runs-on: ubuntu-latest
-    needs: [build]
-    if: needs.build.outputs.changed != '[]'
-    strategy:
-      matrix:
-        module: ${{ fromJson(needs.build.outputs.changed) }}
+    permissions:
+      actions: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Test specific module
-        run: npm test -- --testPathPatterns="modules/${{ matrix.module }}" --testPathIgnorePatterns="modules/helpers"
-        continue-on-error: true
-
-  create-release:
-    needs: [build, test-changed-modules]
-    runs-on: ubuntu-latest
-    if: needs.build.outputs.changed != '[]'
-    strategy:
-      matrix:
-        module: ${{ fromJson(needs.build.outputs.changed) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: built-modules
-          path: modules/
-
-      - name: Install dependencies
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
-
-      - name: Check if release already exists
-        id: check_release
+      - run: gh workflow enable stale.yml --repo "$GITHUB_REPOSITORY"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          MODULE=${{ matrix.module }}
-          cd modules/$MODULE
-
-          ID=$(yq eval '.module_info.id' module.yaml)
-          VERSION=$(yq eval '.module_info.version' module.yaml)
-          TAG="$ID/v$VERSION"
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists, skipping..."
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create release
-        if: steps.check_release.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          MODULE=${{ matrix.module }}
-          echo "Creating release for $MODULE..."
-
-          cd modules/$MODULE
-
-          # Parse ID and version
-          ID=$(yq eval '.module_info.id' module.yaml)
-          VERSION=$(yq eval '.module_info.version' module.yaml)
-          NAME=$(yq eval '.module_info.name' module.yaml)
-          TAG="$ID/v$VERSION"
-
-          # Create a release
-          gh release create "${TAG}" \
-            "dist/${ID}.yaml" \
-            --title "${NAME} v${VERSION}" \
-            --notes "Auto-generated build from module.yaml" \
-            --target ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
