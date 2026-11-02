@@ -1,0 +1,70 @@
+name: Publish to module store
+
+# Publishes each module's released store post (STORE_POST.md on its GitHub release): comments the changes on its
+# discussion and updates the post, or creates it for a new module, then reads it back the way Bubble Card's store does.
+# Run by hand. Dry run unless "publish" is ticked; the report is in the job summary.
+#
+# Target "sandbox" writes to this repository's "Share your Modules" discussion category with GITHUB_TOKEN, to rehearse
+# a publish. "Seed" first copies each module's live post from Clooos/Bubble-Card into the sandbox, so the rehearsal
+# updates the same posts the real publish would.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to publish
+        type: choice
+        options: [sandbox]
+        default: sandbox
+      publish:
+        description: Write to GitHub (otherwise a dry run)
+        type: boolean
+        default: false
+      seed:
+        description: "Sandbox: copy each module's live store post into the sandbox first"
+        type: boolean
+        default: false
+      force:
+        description: Also rewrite posts that already show the current version
+        type: boolean
+        default: false
+      modules:
+        description: Comma-separated module ids (default all)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-store
+  cancel-in-progress: false
+
+jobs:
+  sandbox:
+    name: Publish to the sandbox
+    if: inputs.target == 'sandbox'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Publish
+        shell: bash # -o pipefail: a failed publish fails the step despite tee
+        run: npx tsx scripts/ts/store/publish_store.ts | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STORE_REPOSITORY: ${{ github.repository }}
+          STORE_AUTHOR: github-actions[bot]
+          SEED_FROM: ${{ inputs.seed && 'Clooos/Bubble-Card' || '' }}
+          PUBLISH: ${{ inputs.publish }}
+          FORCE: ${{ inputs.force }}
+          MODULES: ${{ inputs.modules }}

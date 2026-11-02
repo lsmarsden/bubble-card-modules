@@ -4,11 +4,20 @@ import { _compareVersions } from "../upstream/bubble-card/store-shim.js";
 import type { LivePost } from "./storeListing";
 import { REPOSITORY, renderStorePost } from "./storePost";
 
-/** What publishing would do for one module. `version` is the version the post would show, as the store reads it. */
+interface PlanBase {
+  id: string;
+  name: string;
+  /** The version the post shows, as the store reads it. */
+  version: string;
+  /** The post to publish. */
+  post: string;
+}
+
+/** What publishing would do for one module. */
 export type StorePlan =
-  | { id: string; status: "new"; version: string; post: string }
-  | { id: string; status: "up-to-date"; version: string; live: LivePost }
-  | { id: string; status: "update"; version: string; live: LivePost; post: string; comment: string };
+  | (PlanBase & { status: "new" })
+  | (PlanBase & { status: "up-to-date"; live: LivePost })
+  | (PlanBase & { status: "update"; live: LivePost; comment: string });
 
 /** Hidden in each release comment, so publishing again doesn't comment the same version twice. */
 export function releaseCommentMarker(id: string, version: string): string {
@@ -16,18 +25,25 @@ export function releaseCommentMarker(id: string, version: string): string {
 }
 
 /**
- * Compares a built module with its live store post. A post is only replaced for a newer version; the release comment
- * lists every CHANGELOG entry since the version the post showed, since that is what its readers get by updating.
+ * Compares a built module and its post (rendered unless given) with its live store post. A post is only replaced for
+ * a newer version; the release comment lists every CHANGELOG entry since the version the post showed, since that is
+ * what its readers get by updating.
  *
  * @throws if the store shows a newer version than the module (something was published from elsewhere).
  */
-export function planStoreUpdate(built: BuiltModule, live: LivePost | undefined, changelog: string): StorePlan {
+export function planStoreUpdate(
+  built: BuiltModule,
+  live: LivePost | undefined,
+  changelog: string,
+  post: string = renderStorePost(built),
+): StorePlan {
   const { id, info } = built;
-  const version = `v${info.version}`;
-  if (!live) return { id, status: "new", version, post: renderStorePost(built) };
+  const base = { id, name: info.name, version: `v${info.version}`, post };
+  const { version } = base;
+  if (!live) return { ...base, status: "new" };
 
   const order = _compareVersions(version, live.version);
-  if (order === 0) return { id, status: "up-to-date", version, live };
+  if (order === 0) return { ...base, status: "up-to-date", live };
   if (order < 0) throw new Error(`${id}: the store shows ${live.version}, newer than ${version}`);
 
   const notes = releaseNotes(changelog, info.version, [live.version.replace(/^v/, "")]);
@@ -37,7 +53,7 @@ export function planStoreUpdate(built: BuiltModule, live: LivePost | undefined, 
     "",
     linkIssueReferences(notes),
   ].join("\n");
-  return { id, status: "update", version, live, post: renderStorePost(built), comment };
+  return { ...base, status: "update", live, comment };
 }
 
 // On Clooos/Bubble-Card a bare #12 would link to its own issue 12.

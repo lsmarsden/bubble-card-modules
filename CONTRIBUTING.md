@@ -85,8 +85,13 @@ Every CI run has a **Module store preview** job: it finds each module's live pos
 each post), the post diff and the release comment (`scripts/ts/store/storePlan.ts`). A post is only updated for a
 newer version. Run it locally with `GH_TOKEN=<token> npx tsx scripts/ts/store/preview_store.ts`.
 
-Publishing itself is still manual: after a release, copy `dist/STORE_POST.md` over the module's post and comment the
-changes.
+Each GitHub release carries the module's `STORE_POST.md`. The **Publish to module store** workflow (run by hand,
+`.github/workflows/publish-store.yml`, script `scripts/ts/store/publish_store.ts`) publishes those files: it comments
+the changes on each module's discussion and updates the post (or creates it), then reads the posts back the way the
+store does and fails if the store doesn't show the new versions. It is a dry run unless "publish" is ticked, and safe to
+re-run: a version's comment is never posted twice and a post that already reads right isn't rewritten. For now it only
+targets the sandbox: this repository's "Share your Modules" discussion category, which "seed" fills with copies of the
+live store posts so a rehearsal updates the same posts the real publish would.
 
 ## 🤖 Automation
 
