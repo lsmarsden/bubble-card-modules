@@ -20,5 +20,9 @@ updates:
       # Minor and patch updates together (merged automatically when CI passes); majors arrive one per pull request.
       npm-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Types must match the Node version in .nvmrc; bump both together.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "deps"

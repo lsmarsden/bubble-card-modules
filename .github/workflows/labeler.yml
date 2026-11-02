@@ -16,4 +16,4 @@ jobs:
     if: github.repository == 'lsmarsden/bubble-card-modules'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v7

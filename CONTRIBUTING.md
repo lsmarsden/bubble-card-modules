@@ -6,7 +6,7 @@ This project enables users to create and share custom modules for [Bubble Card](
 
 ## Requirements
 
-- Node.js 16+
+- Node.js 22+ (CI and releases use the version in `.nvmrc`, currently 26)
 - Python 3.7+ (for schema documentation generation)
 - Run `pip install -r requirements.txt` to install the required Python packages
 - Run `npm install` to install the required Node packages
