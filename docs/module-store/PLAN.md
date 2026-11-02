@@ -38,7 +38,7 @@ them through the store listing (step 2 does this).
 
 ## Steps
 
-### 1. Store post renderer + contract tests — done (PR #34)
+### 1. Store post renderer + contract tests — done (PR #34, merged)
 
 - [x] `scripts/ts/store/storePost.ts`: `renderStorePost(built)` → `dist/STORE_POST.md` on every build. Replaces
       SHARE_MODULE.md.
@@ -63,21 +63,21 @@ Bubble Card isn't on npm, so the parser has to come from its git repo. Options:
   releases), CI needs submodule checkout, and the parser's imports still need stubbing at test time.
 - Fetch at test time: always latest, but tests depend on the network and break without any change of ours.
 
-### 2. Read-only store preview in CI — in progress
+### 2. Read-only store preview in CI — PR #35 open
 
 No secret, publishes nothing.
 
-- [ ] Move the vendored parser out of `testing/` (it's now used by scripts too).
-- [ ] `fetchStoreDiscussions(fetch)`: the store's own listing (paginate, category filter); unit-tested with a fake
-      fetch.
-- [ ] `findLivePost(discussions, module)`: the post the store shows for a module id, authored by lsmarsden, parsed with
-      the vendored parser (discussion number, node id, live version, body).
-- [ ] `planStoreUpdate(module, livePost, changelog)`: up to date / update vX → vY / new post, rendered post, and the
-      release comment (CHANGELOG entries since the live version, with a hidden marker
-      `<!-- bubble-card-modules:release <id>@<version> -->` so re-runs don't comment twice).
-- [ ] `renderPreview(plans)`: job summary markdown (status table, diff, comment text).
-- [ ] CLI + a non-required "Module store preview" job in CI (pull requests and release runs).
-- [ ] Check the first real run shows the known posts and their versions.
+- [x] Vendored parser moved to `scripts/ts/upstream/bubble-card/` (used by scripts, not just tests).
+- [x] `fetchStoreDiscussions(fetch, { repository, token })` (`scripts/ts/store/storeListing.ts`): every page of the
+      REST listing; fails rather than return part of it.
+- [x] `findLivePost(discussions, id, author)`: store category + author, store parser decides the module (each post
+      parsed alone: the parser drops unreadable posts, so batch output doesn't line up). Two posts → error.
+- [x] `planStoreUpdate(built, live, changelog)` (`storePlan.ts`): `new` / `up-to-date` / `update` + release comment
+      (entries since the live version; marker `<!-- bubble-card-modules release <id>@<version> -->`; bare `#123` →
+      `lsmarsden/bubble-card-modules#123`). Store newer than repo → error.
+- [x] `renderPreview(plans, diff)` (`storePreview.ts`) + `preview_store.ts` CLI; non-required "Module store preview"
+      CI job (output teed to the log too).
+- [ ] Check the first real run shows the known posts and their versions (PR #35's job).
 
 ### 3. Publisher, dry run by default, sandbox first
 
@@ -102,5 +102,7 @@ No secret, publishes nothing.
 
 ## Log
 
+- 2026-11-02: PR #34 merged. Step 2 (PR #35) built test-first; the sandbox here can't call the GitHub API directly,
+  so live reads are only verified in CI.
 - 2026-11-02: plan agreed (option A, approval button, update on new versions only, re-run overwrites, release
   comment). Step 1 opened as PR #34.
