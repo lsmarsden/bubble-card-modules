@@ -10,7 +10,7 @@ const config = {
   coverageReporters: ["text", "html", "json-summary"],
   extensionsToTreatAsEsm: [".ts"],
   transform: {
-    "^.+\\.ts$": ["ts-jest", { useESM: true, tsconfig: "./tsconfig.json" }],
+    "^.+\\.ts$": "./testing/tsTransform.cjs",
   },
   reporters: [
     "default",

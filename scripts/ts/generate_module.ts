@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import fs from "node:fs/promises";
 import path from "node:path";
-import yaml from "js-yaml";
+import { dump } from "js-yaml";
 import { createFileFromTemplate } from "./helpers/files";
 
 interface ModuleInfo {
@@ -64,7 +64,7 @@ async function generateModule() {
 
   await fs.mkdir(path.join(modulePath, "assets"), { recursive: true });
   await fs.copyFile("./modules/templates/assets/preview.png", path.join(modulePath, "assets/preview.png"));
-  await fs.writeFile(path.join(modulePath, "module.yaml"), yaml.dump(moduleYaml));
+  await fs.writeFile(path.join(modulePath, "module.yaml"), dump(moduleYaml));
   await fs.writeFile(path.join(modulePath, "styles.css"), `/* Styles for ${answers.name} */`);
   await fs.writeFile(path.join(modulePath, "editor.yaml"), `editor:`);
   await fs.writeFile(

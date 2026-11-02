@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import yaml from "js-yaml";
+import { load } from "js-yaml";
 import type { ModuleInfo } from "./build/buildModule";
 import { createFileFromTemplate } from "./helpers/files";
 
@@ -9,7 +9,7 @@ export async function shareModule(moduleId: string) {
   const moduleYamlPath = path.join(modulePath, "module.yaml");
 
   const rawYaml = await fs.readFile(moduleYamlPath, "utf8");
-  const parsed = yaml.load(rawYaml) as { module_info: ModuleInfo };
+  const parsed = load(rawYaml) as { module_info: ModuleInfo };
   const info = parsed.module_info;
 
   const moduleStoreDescription = await fs.readFile(path.join(modulePath, info.description_file), "utf8");

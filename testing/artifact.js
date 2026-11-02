@@ -5,7 +5,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
+import { load } from "js-yaml";
 
 // Names in `code:` scope, in Bubble Card's order (src/tools/style-processor.js).
 const SCOPE = [
@@ -29,7 +29,7 @@ const SCOPE = [
 export function loadArtifact(moduleId) {
   const dir = process.env.BUBBLE_CARD_ARTIFACTS;
   if (!dir) throw new Error("No built artifacts: run tests through Jest so testing/globalSetup.js builds them");
-  return yaml.load(fs.readFileSync(path.join(dir, `${moduleId}.yaml`), "utf8"))[moduleId];
+  return load(fs.readFileSync(path.join(dir, `${moduleId}.yaml`), "utf8"))[moduleId];
 }
 
 /**
