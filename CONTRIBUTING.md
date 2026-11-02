@@ -89,9 +89,13 @@ Each GitHub release carries the module's `STORE_POST.md`. The **Publish to modul
 `.github/workflows/publish-store.yml`, script `scripts/ts/store/publish_store.ts`) publishes those files: it comments
 the changes on each module's discussion and updates the post (or creates it), then reads the posts back the way the
 store does and fails if the store doesn't show the new versions. It is a dry run unless "publish" is ticked, and safe to
-re-run: a version's comment is never posted twice and a post that already reads right isn't rewritten. For now it only
-targets the sandbox: this repository's "Share your Modules" discussion category, which "seed" fills with copies of the
-live store posts so a rehearsal updates the same posts the real publish would.
+re-run: a version's comment is never posted twice and a post that already reads right isn't rewritten. Targets:
+
+- **store**: Bubble Card's module store, as lsmarsden (who authored the posts). Runs in the protected `module-store`
+  environment, so every run waits for lsmarsden's approval; only that environment holds `MODULE_STORE_TOKEN`, a classic
+  token with `public_repo` (GitHub only lets classic tokens write to repositories you don't own).
+- **sandbox**: this repository's "Share your Modules" discussion category, written with `GITHUB_TOKEN`. "seed" fills it
+  with copies of the live store posts, so a rehearsal updates the same posts the real publish would.
 
 ## 🤖 Automation
 
