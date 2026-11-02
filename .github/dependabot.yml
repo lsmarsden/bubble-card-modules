@@ -1,0 +1,13 @@
+# Keeps GitHub Actions versions current (the workflows were on deprecated Node 20 action runtimes).
+# npm dependencies are updated by hand: the test harness and build depend on exact Jest/jsdom/esbuild behaviour.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"

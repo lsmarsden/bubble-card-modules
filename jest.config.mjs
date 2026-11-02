@@ -1,5 +1,4 @@
 const config = {
-  preset: "ts-jest/presets/default-esm",
   testEnvironment: "jsdom",
   globalSetup: "./testing/globalSetup.js",
   globalTeardown: "./testing/globalTeardown.js",
@@ -9,13 +8,10 @@ const config = {
   coverageDirectory: "coverage",
   collectCoverageFrom: ["modules/**/*.{js,ts}", "!**/__tests__/**"],
   coverageReporters: ["text", "html", "json-summary"],
-  globals: {
-    "ts-jest": {
-      useESM: true,
-      tsconfig: "./tsconfig.json",
-    },
+  extensionsToTreatAsEsm: [".ts"],
+  transform: {
+    "^.+\\.ts$": ["ts-jest", { useESM: true, tsconfig: "./tsconfig.json" }],
   },
-  transform: {},
   reporters: [
     "default",
     [
