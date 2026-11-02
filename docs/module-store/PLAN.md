@@ -111,6 +111,9 @@ No secret, publishes nothing.
 
 ## Log
 
+- 2026-11-02: first sandbox rehearsal (runs 1–4) succeeded but did nothing: the workflow passes MODULES="" for a blank
+  input and the CLI read that as "no modules". Fixed test-first (`selectModules`) in PR #39. Lesson: a run that
+  reports nothing per module is a failure; read the report, not the green tick.
 - 2026-11-02: #37 (publisher) and #38 (patch releases) merged; releases carry STORE_POST.md. Sandbox rehearsal
   commands given to lsmarsden (dry run with seed → seed + publish → re-run → forced re-run).
 - 2026-11-02: #35 merged (preview found all four posts: 1.7.0, 1.1.1, 1.5.0, 1.3.0). #36 merged (weekly parser sync;
