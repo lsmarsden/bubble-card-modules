@@ -9,6 +9,23 @@ export type PublishStep =
   | { kind: "comment"; discussionId: string; url: string; body: string }
   | { kind: "update"; discussionId: string; url: string; body: string };
 
+/**
+ * The module ids to publish: those listed in `modules` (comma-separated, as the MODULES variable), or every module when
+ * it lists none. Workflows pass an empty string for a blank input, which means all, not none.
+ *
+ * @throws if a listed module doesn't exist.
+ */
+export function selectModules(ids: string[], modules: string | undefined): string[] {
+  const listed = (modules ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (!listed.length) return ids;
+  const unknown = listed.filter((id) => !ids.includes(id));
+  if (unknown.length) throw new Error(`Unknown module in MODULES: ${unknown.join(", ")}`);
+  return ids.filter((id) => listed.includes(id));
+}
+
 /** The title of a new store post, following the store's "[Module type] Name" convention. */
 export function postTitle(name: string): string {
   return `[JS+Editor Module] ${name}`;
