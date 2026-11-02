@@ -50,7 +50,7 @@ them through the store listing (step 2 does this).
       as an update, and installs the built YAML byte for byte.
 - [x] Fixed module `link` (404) and a README image filename case.
 
-### 1b. Keep the vendored parser current — proposed, needs a decision
+### 1b. Keep the vendored parser current — done (PR #36, merged; option 1 chosen)
 
 Bubble Card isn't on npm, so the parser has to come from its git repo. Options:
 
@@ -63,7 +63,7 @@ Bubble Card isn't on npm, so the parser has to come from its git repo. Options:
   releases), CI needs submodule checkout, and the parser's imports still need stubbing at test time.
 - Fetch at test time: always latest, but tests depend on the network and break without any change of ours.
 
-### 2. Read-only store preview in CI — PR #35 open
+### 2. Read-only store preview in CI — done (PR #35, merged)
 
 No secret, publishes nothing.
 
@@ -80,16 +80,24 @@ No secret, publishes nothing.
 - [x] First real run (PR #35) found all four posts: icon_border_progress v1.7.0, separator_as_progress_bar v1.1.1,
       separator_as_timeline v1.5.0, sub_button_wheel v1.3.0. All four would update; comments list the missed versions.
 
-### 3. Publisher, dry run by default, sandbox first
+### 3. Publisher, dry run by default, sandbox first — PR #37 open
 
-- [ ] Release job attaches `STORE_POST.md` to each GitHub release; publishing uses the release asset, so a re-run
-      republishes exactly what was released.
-- [ ] `publishStorePost` (GraphQL `updateDiscussion` / `addDiscussionComment`, `createDiscussion` for new modules):
-      only rewrites a differing body; comments only if the marker for that version is missing. Unit-tested with a fake
-      GraphQL client.
-- [ ] `--repo` target. Sandbox = this repo with Discussions on and a `Share your Modules` category, written with
-      `GITHUB_TOKEN` (`discussions: write`). **Needs:** enable Discussions + create the category.
-- [ ] Manual `workflow_dispatch` "Publish to module store" with `target: sandbox` and `dry-run: true` defaults.
+- [x] Release job attaches `STORE_POST.md` to each GitHub release (`PlannedRelease.assets`); publishing downloads it
+      (`fetchReleasePost`), so a re-run republishes exactly what was released.
+- [x] `publishSteps(plan, { comments, force })` (`scripts/ts/store/storePublish.ts`): comment first (skipped when its
+      marker is on the post), then update (skipped when the body already matches); create for new modules
+      (title `[JS+Editor Module] <name>`); up-to-date only rewritten with `force`.
+- [x] `githubGraphql`, `fetchComments`, `fetchTarget` (store category), `runSteps` (GraphQL mutations), all against
+      fakes.
+- [x] `publish_store.ts`: env-driven (`STORE_REPOSITORY`, `STORE_AUTHOR`, `PUBLISH`, `FORCE`, `MODULES`,
+      `SEED_FROM`); plans all modules before any write; reads back through the store listing (5 tries, 5s apart) and
+      fails if a new version isn't shown.
+- [x] `publish-store.yml`: manual, target `sandbox` only, GITHUB_TOKEN with `discussions: write`. Sandbox = this repo's
+      "Share your Modules" category (enabled by lsmarsden 2026-11-02).
+- [ ] Patch release all four modules (ships the module link fix, gives every module a release with STORE_POST.md;
+      needed before even a dry run works).
+- [ ] Rehearse in the sandbox: dry run → `seed` + `publish` (should comment + update all four, verify passes) → re-run
+      (should do nothing) → `force` re-run (should do nothing: bodies match).
 
 ### 4. Real store, behind approval
 
@@ -103,6 +111,8 @@ No secret, publishes nothing.
 
 ## Log
 
+- 2026-11-02: #35 merged (preview found all four posts: 1.7.0, 1.1.1, 1.5.0, 1.3.0). #36 merged (weekly parser sync;
+  needs "Allow GitHub Actions to create and approve pull requests" for its PR step). Step 3 opened as #37.
 - 2026-11-02: PR #34 merged. Step 2 (PR #35) built test-first; the sandbox here can't call the GitHub API directly,
   so live reads are only verified in CI.
 - 2026-11-02: plan agreed (option A, approval button, update on new versions only, re-run overwrites, release
