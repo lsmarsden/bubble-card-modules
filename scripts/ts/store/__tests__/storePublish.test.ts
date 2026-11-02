@@ -12,6 +12,7 @@ import {
   postTitle,
   publishSteps,
   runSteps,
+  selectModules,
 } from "../storePublish";
 
 const live: LivePost = {
@@ -181,5 +182,21 @@ describe("fetchReleasePost", () => {
     await expect(fetchReleasePost(fetch, "demo_mod/v1.2.3")).rejects.toThrow(
       "Release demo_mod/v1.2.3 has no STORE_POST.md (404): release a new version to publish this module",
     );
+  });
+});
+
+describe("selectModules", () => {
+  const ids = ["alpha", "beta", "gamma"];
+
+  it.each([[undefined], [""], ["  "], [" , "]])("selects every module when MODULES is %j", (modules) => {
+    expect(selectModules(ids, modules)).toEqual(ids);
+  });
+
+  it("selects the listed modules, ignoring spaces", () => {
+    expect(selectModules(ids, " gamma, alpha ")).toEqual(["alpha", "gamma"]);
+  });
+
+  it("fails on a module that doesn't exist", () => {
+    expect(() => selectModules(ids, "alpha,delta")).toThrow("Unknown module in MODULES: delta");
   });
 });

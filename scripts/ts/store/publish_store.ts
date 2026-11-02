@@ -24,6 +24,7 @@ import {
   postTitle,
   publishSteps,
   runSteps,
+  selectModules,
 } from "./storePublish";
 
 const env = process.env;
@@ -32,9 +33,6 @@ if (!token) throw new Error("GH_TOKEN is required");
 const repository = env.STORE_REPOSITORY || "Clooos/Bubble-Card";
 const publish = env.PUBLISH === "true";
 const force = env.FORCE === "true";
-const only = env.MODULES?.split(",")
-  .map((id) => id.trim())
-  .filter(Boolean);
 
 const gql = githubGraphql(fetch, token);
 const listing = () => fetchStoreDiscussions(fetch, { repository, token });
@@ -50,8 +48,11 @@ const modules = await Promise.all(
     built: await buildModule(path.join(modulesDir, folder)),
   })),
 );
-const selected = modules.filter(({ built }) => !only || only.includes(built.id));
-if (only && selected.length !== only.length) throw new Error(`Unknown module in MODULES=${env.MODULES}`);
+const wanted = selectModules(
+  modules.map(({ built }) => built.id),
+  env.MODULES,
+);
+const selected = modules.filter(({ built }) => wanted.includes(built.id));
 const target = publish ? await fetchTarget(gql, repository) : undefined;
 const authorOf = (creator: string) => env.STORE_AUTHOR || creator;
 
