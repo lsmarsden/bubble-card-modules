@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@jest/globals": "^30.5.2",
-    "inquirer": "^12.6.0",
+    "inquirer": "^14.2.5",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
