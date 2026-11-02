@@ -1,50 +1,113 @@
-name: "Manage Stale Issues and PRs"
+name: Stale
+
+# Policy:
+# - Pull requests: stale after 60 days without activity, closed 7 days later. Exempt: `no-stale`, `status:blocked`.
+# - Issues waiting on the reporter (`status:waiting-for-feedback`): stale after 14 days, closed 7 days later.
+#   A reply removes `status:waiting-for-feedback` and puts the issue back to `status:needs-triage`.
+# - Other issues: marked stale after 90 days, never closed automatically.
+# - Assigned issues and PRs, and issues labelled as planned or important, are exempt.
+#
+# Runs daily and also on issue and PR activity. GitHub disables scheduled workflows after 60 days without commits;
+# release.yaml re-enables this one on every push to main.
 
 on:
   schedule:
-    # Run every day at 2:30 AM UTC
-    - cron: "30 2 * * *"
+    - cron: "17 3 * * *"
   workflow_dispatch:
+  issues:
+    types: [opened, reopened, edited, labeled, unlabeled]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    # Safe: this workflow never checks out or runs pull request code.
+    types: [opened, reopened, synchronize, ready_for_review]
 
 permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: stale
+  cancel-in-progress: false
+
 jobs:
   stale:
+    if: github.repository == 'lsmarsden/bubble-card-modules'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9.1.0
+      - name: Pull requests (60 days, then close after 7)
+        uses: actions/stale@v9.1.0
         with:
-          days-before-stale: 7
-          days-before-close: 14
-
-          stale-issue-label: "status:stale"
+          days-before-stale: 60
+          days-before-close: 7
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
           stale-pr-label: "status:stale"
-
-          # Exempt all assigned items (assigned = in progress)
+          exempt-pr-labels: "no-stale,status:blocked"
           exempt-all-assignees: true
-
-          # Also exempt by specific labels for special cases
-          exempt-issue-labels: "status:blocked,priority:high,priority:critical"
-          exempt-pr-labels: "status:blocked,priority:high,priority:critical"
-
-          stale-issue-message: |
-            This issue has been automatically marked as stale due to inactivity. 
-            Please add a comment if you're still working on this or if it's still relevant.
-
-          stale-pr-message: |
-            This pull request has been automatically marked as stale due to inactivity. 
-            Please add a comment if you're still working on this or if it's still relevant.
-
-          close-issue-message: |
-            This issue has been automatically closed due to inactivity. 
-            If you'd like to continue working on this, please reopen the issue or create a new one.
-
-          close-pr-message: |
-            This pull request has been automatically closed due to inactivity. 
-            If you'd like to continue working on this, please reopen the pull request or create a new one.
-
           remove-stale-when-updated: true
-          operations-per-run: 30
-          enable-statistics: true
+          operations-per-run: 100
+          stale-pr-message: >
+            This pull request has had no activity for 60 days, so it has been marked as stale and will be closed in 7
+            days unless there is new activity. If you'd like to keep it open, leave a comment, and please rebase onto
+            the latest `main`. Thanks for contributing!
+          close-pr-message: >
+            Closing this pull request after 67 days without activity. Feel free to reopen it, or open a new one
+            rebased onto the latest `main`.
+
+      - name: Issues waiting for feedback (14 days, then close after 7)
+        uses: actions/stale@v9.1.0
+        with:
+          only-labels: "status:waiting-for-feedback"
+          days-before-stale: 14
+          days-before-close: 7
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          stale-issue-label: "status:stale"
+          exempt-issue-labels: "no-stale"
+          exempt-all-assignees: true
+          remove-stale-when-updated: true
+          close-issue-reason: not_planned
+          operations-per-run: 100
+          stale-issue-message: >
+            This issue is waiting for more information and has had no reply for 14 days. It will be closed in 7 days
+            unless there is a reply. If you're still having the problem, please check the latest module version and
+            reply with the details requested above.
+          close-issue-message: >
+            Closing this issue because the information needed to look into it wasn't provided. Reply or open a new
+            issue with the requested details and it can be picked up again.
+
+      - name: A reply clears waiting-for-feedback
+        # Treats `status:waiting-for-feedback` as this step's stale label, so any reply after it was added removes it
+        # and marks the issue for triage again. Add the label after posting your question, or your own comment clears
+        # it. Never marks or closes anything itself: closing is the step above, so days-before-close is unreachable
+        # (a closing value is still required for actions/stale to process labelled issues).
+        uses: actions/stale@v9.1.0
+        with:
+          only-labels: "status:waiting-for-feedback"
+          stale-issue-label: "status:waiting-for-feedback"
+          labels-to-add-when-unstale: "status:needs-triage"
+          days-before-stale: -1
+          days-before-close: 3650
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          exempt-issue-labels: "no-stale"
+          remove-stale-when-updated: true
+          operations-per-run: 100
+
+      - name: Other issues (marked stale after 90 days, never closed)
+        uses: actions/stale@v9.1.0
+        with:
+          days-before-stale: 90
+          days-before-close: -1
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          stale-issue-label: "status:stale"
+          exempt-issue-labels: >-
+            no-stale,status:waiting-for-feedback,status:ready-for-dev,status:in-progress,status:blocked,priority:high,priority:critical,help-wanted,good-first-issue
+          exempt-all-assignees: true
+          remove-stale-when-updated: true
+          operations-per-run: 100
+          stale-issue-message: >
+            This issue has had no activity for 90 days, so it has been marked as stale. It won't be closed
+            automatically. If it still affects you on the latest module version, a comment helps prioritise it.

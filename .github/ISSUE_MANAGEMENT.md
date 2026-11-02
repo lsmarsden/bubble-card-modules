@@ -7,7 +7,7 @@ This directory contains tools to set up comprehensive GitHub issue management fo
 ### 1. Set up GitHub Labels
 
 ```bash
-npm run setup:github-labels
+bash scripts/setup-github-labels.sh
 ```
 
 This creates:
@@ -19,14 +19,11 @@ This creates:
 - **Complexity labels**: `complexity:simple`, `complexity:moderate`, `complexity:complex`
 - **Community labels**: `good-first-issue`, `help-wanted`, etc.
 - **Release labels**: `release:major`, `release:minor`, `release:patch`
+- **Stale labels**: `status:stale` (applied by the stale workflow), `no-stale` (exempts an issue or PR)
 
-### 2. Verify Issue Templates
+### 2. Issue Templates
 
-```bash
-npm run setup:issue-templates
-```
-
-This verifies the issue templates are in place:
+The issue templates in `.github/ISSUE_TEMPLATE/` are:
 
 - **Bug Report** - For reporting module bugs with reproducible YAML configs
 - **Feature Request** - For suggesting new features
@@ -101,10 +98,10 @@ Labels: module:helpers, type:performance, priority:high, status:ready-for-dev
 - Common issues: Date formatting, event positioning, responsive layout
 - Required info: Event data structure, timeline configuration
 
-### circular_progress_bar
+### sub_button_wheel
 
-- Common issues: SVG rendering, animation performance, size calculations
-- Required info: Size settings, animation configuration, browser details
+- Common issues: Button positions per layout, open/close behaviour, overlay and page scrolling
+- Required info: Wheel configuration (layout, buttons, positions), card type, browser details
 
 ### helpers
 
@@ -151,7 +148,7 @@ Edit files in `.github/ISSUE_TEMPLATE/`:
 1. Ensure GitHub CLI is installed: `brew install gh`
 2. Authenticate: `gh auth login`
 3. Check repository permissions
-4. Re-run: `npm run setup:github-labels`
+4. Re-run: `bash scripts/setup-github-labels.sh`
 
 ### Issue Templates Not Appearing
 
@@ -191,11 +188,28 @@ module:helpers + type:feature-request + status:needs-triage
 5. **Link related issues** - Use "Related to #123" or "Fixes #123"
 6. **Close with resolution** - Comment on why/how issue was resolved
 
+## Stale Issues and Pull Requests
+
+`.github/workflows/stale.yml` runs daily and on issue/PR activity:
+
+| Applies to                                    | Marked `status:stale` after | Closed after |
+| --------------------------------------------- | --------------------------- | ------------ |
+| Pull requests                                 | 60 days without activity    | 7 more days  |
+| Issues labelled `status:waiting-for-feedback` | 14 days without a reply     | 7 more days  |
+| Other issues                                  | 90 days without activity    | never        |
+
+- Any activity removes `status:stale`.
+- A reply to a `status:waiting-for-feedback` issue removes that label and adds `status:needs-triage`. Add the label
+  **after** posting your question, or your own comment clears it.
+- Exempt: assigned issues and PRs, `no-stale`, `status:blocked`, and for issues also `status:ready-for-dev`,
+  `status:in-progress`, `priority:high`, `priority:critical`, `help-wanted`, `good-first-issue`.
+- GitHub disables scheduled workflows after 60 days without commits. `release.yaml` re-enables the stale workflow on
+  every push to `main`; if it has been disabled in the meantime, re-enable it from the Actions tab.
+
 ## Automation Opportunities
 
 Consider setting up GitHub Actions to:
 
 - Auto-apply module labels based on file paths in PRs
-- Auto-close stale issues with `status:waiting-for-feedback`
 - Auto-assign reviewers based on module labels
 - Generate release notes grouped by module and type
