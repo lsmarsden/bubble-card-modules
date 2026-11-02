@@ -1,5 +1,20 @@
 # Changelog
 
+### v1.3.2
+
+<details><summary>See Changes</summary>
+
+- Fixed `fixed-position` ignoring each button's `position`: buttons were laid out in order, so gaps in the positions
+  were closed up. A button now sits in the slot its `position` names (1 = top, then clockwise, up to 8). Thanks to
+  @avano for reporting this and proposing a fix in
+  [#14](https://github.com/lsmarsden/bubble-card-modules/pull/14).
+- Fixed buttons without a `position` losing their automatic position (and order) in Home Assistant, which passes the
+  configuration read-only.
+- Fixed layouts and `close_on_click` applying to the wrong buttons, or the wheel failing to build, when a configured
+  sub-button doesn't exist.
+
+</details>
+
 ### v1.3.1
 
 <details><summary>See Changes</summary>
