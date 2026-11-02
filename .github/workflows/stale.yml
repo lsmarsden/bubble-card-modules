@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull requests (60 days, then close after 7)
-        uses: actions/stale@v9.1.0
+        uses: actions/stale@v11.0.0
         with:
           days-before-stale: 60
           days-before-close: 7
@@ -56,7 +56,7 @@ jobs:
             rebased onto the latest `main`.
 
       - name: Issues waiting for feedback (14 days, then close after 7)
-        uses: actions/stale@v9.1.0
+        uses: actions/stale@v11.0.0
         with:
           only-labels: "status:waiting-for-feedback"
           days-before-stale: 14
@@ -82,7 +82,7 @@ jobs:
         # and marks the issue for triage again. Add the label after posting your question, or your own comment clears
         # it. Never marks or closes anything itself: closing is the step above, so days-before-close is unreachable
         # (a closing value is still required for actions/stale to process labelled issues).
-        uses: actions/stale@v9.1.0
+        uses: actions/stale@v11.0.0
         with:
           only-labels: "status:waiting-for-feedback"
           stale-issue-label: "status:waiting-for-feedback"
@@ -96,7 +96,7 @@ jobs:
           operations-per-run: 100
 
       - name: Other issues (marked stale after 90 days, never closed)
-        uses: actions/stale@v9.1.0
+        uses: actions/stale@v11.0.0
         with:
           days-before-stale: 90
           days-before-close: -1
