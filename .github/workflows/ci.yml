@@ -48,3 +48,29 @@ jobs:
         with:
           name: test-report
           path: reports/
+
+  dependabot-auto-merge:
+    name: Merge Dependabot update
+    # Merges a Dependabot pull request once the job above has passed on it, unless it is a major update (those need a
+    # human: majors of Jest, jsdom or esbuild can change test or build behaviour). Merges made with this token don't
+    # start other workflows, so no release runs; Dependabot never bumps a module version anyway.
+    needs: test
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@v2
+
+      - name: Merge
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --rebase "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Leave major updates for review
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: echo "::notice::Major update (${{ steps.metadata.outputs.dependency-names }}) left for manual review."

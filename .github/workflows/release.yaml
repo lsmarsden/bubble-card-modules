@@ -19,6 +19,11 @@ concurrency:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    # ci.yml's Dependabot merge job (skipped here) declares write access; a called workflow may not ask for more than
+    # its caller grants, even for a job that won't run.
+    permissions:
+      contents: write
+      pull-requests: write
 
   release:
     name: Publish new module versions

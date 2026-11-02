@@ -1,0 +1,22 @@
+# Labels pull requests by the files they change (.github/workflows/labeler.yml).
+"module:icon_border_progress":
+  - changed-files:
+      - any-glob-to-any-file: "modules/icon_border_progress/**"
+"module:separator_as_progress_bar":
+  - changed-files:
+      - any-glob-to-any-file: "modules/separator_as_progress_bar/**"
+"module:separator_as_timeline":
+  - changed-files:
+      - any-glob-to-any-file: "modules/separator_as_timeline/**"
+"module:sub_button_wheel":
+  - changed-files:
+      - any-glob-to-any-file: "modules/sub_button_wheel/**"
+"module:helpers":
+  - changed-files:
+      - any-glob-to-any-file: "modules/helpers/**"
+"type:testing":
+  - changed-files:
+      - any-glob-to-any-file: ["**/__tests__/**", "testing/**"]
+"type:documentation":
+  - changed-files:
+      - any-glob-to-all-files: "**/*.md"
