@@ -80,7 +80,7 @@ No secret, publishes nothing.
 - [x] First real run (PR #35) found all four posts: icon_border_progress v1.7.0, separator_as_progress_bar v1.1.1,
       separator_as_timeline v1.5.0, sub_button_wheel v1.3.0. All four would update; comments list the missed versions.
 
-### 3. Publisher, dry run by default, sandbox first — merged (PR #37); rehearsal pending
+### 3. Publisher, dry run by default, sandbox first — done (PRs #37, #38, #39; rehearsal passed)
 
 - [x] Release job attaches `STORE_POST.md` to each GitHub release (`PlannedRelease.assets`); publishing downloads it
       (`fetchReleasePost`), so a re-run republishes exactly what was released.
@@ -96,8 +96,9 @@ No secret, publishes nothing.
       "Share your Modules" category (enabled by lsmarsden 2026-11-02).
 - [x] Patch released all four modules (PR #38): icon_border_progress 1.7.4, separator_as_progress_bar 1.2.3,
       separator_as_timeline 1.6.2, sub_button_wheel 1.3.3. Every release has STORE_POST.md; tag image links resolve.
-- [ ] Rehearse in the sandbox: dry run → `seed` + `publish` (should comment + update all four, verify passes) → re-run
-      (should do nothing) → `force` re-run (should do nothing: bodies match).
+- [x] Rehearsed in the sandbox (runs 5–8, 2026-11-02): dry run listed seeds + creates; seed + publish created
+      discussions #40–#43 from the live posts (#1525 v1.7.0, #1518 v1.1.1, #1426 v1.5.0, #1728 v1.3.0), commented and
+      updated each, verification passed; re-run and forced re-run: "nothing to do" for all four.
 
 ### 4. Real store, behind approval
 
