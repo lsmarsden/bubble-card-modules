@@ -46,3 +46,19 @@ Each module resides in its own folder under `modules/<module_id>`. A module cons
 - `config_options.md`: auto-generated configuration documentation
 
 Each module has a `dist/` folder created during the build, containing the final `.yaml` file used in Home Assistant.
+
+## 🚀 Releasing
+
+CI (`.github/workflows/ci.yml`) runs on every pull request: formatting, script type checks, all tests (each module
+suite runs against both the source and the built module YAML), and the build.
+
+Releases are automatic. On every push to `main`, `.github/workflows/release.yaml` runs CI again, then publishes a
+GitHub release for each module whose `module.yaml` version has no release yet (tag `<module_id>/v<version>`), with
+the built YAML attached. To release a module:
+
+1. Bump `version` in `modules/<module_id>/module.yaml` (semver).
+2. Add a `### v<version>` entry at the top of `modules/<module_id>/CHANGELOG.md`. The release fails without one.
+3. Merge to `main`.
+
+Release notes are the CHANGELOG entries since the module's last release, so versions bumped in between (and never
+released on their own) are included.

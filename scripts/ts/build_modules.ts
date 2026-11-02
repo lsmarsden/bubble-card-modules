@@ -6,6 +6,9 @@ import { generateDocs } from "./generate_docs";
 import { logProgress, visibleLog } from "./helpers/logging";
 import { modulesDir } from "./paths";
 
+// CI and releases only need the module YAML; --skip-docs skips the Python schema docs and SHARE_MODULE.md.
+const skipDocs = process.argv.includes("--skip-docs");
+
 async function buildAndWrite(folder: string): Promise<void> {
   const startTime = Date.now();
   const moduleDir = path.join(modulesDir, folder);
@@ -19,7 +22,7 @@ async function buildAndWrite(folder: string): Promise<void> {
     await fs.writeFile(path.join(distPath, `${built.id}.yaml`), built.yaml, "utf8");
     visibleLog(`BUILT MODULE: ${built.id} (${Date.now() - startTime}ms)`, chalk.green);
 
-    await generateDocs(built.id);
+    if (!skipDocs) await generateDocs(built.id);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Module '${folder}' build failed after ${Date.now() - startTime}ms: ${message}`);
