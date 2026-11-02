@@ -2,20 +2,6 @@ import fs from "node:fs/promises";
 import { PathLike } from "node:fs";
 
 /**
- * Reads the content of a file at the specified path or returns an empty string if an error occurs.
- *
- * @param {string} filePath - The path to the file to be read.
- * @return {Promise<string>} A promise that resolves with the file's content as a string, or an empty string if an error occurs.
- */
-export async function readOrEmpty(filePath: string): Promise<string> {
-  try {
-    return await fs.readFile(filePath, "utf8");
-  } catch {
-    return "";
-  }
-}
-
-/**
  * Checks if a file or directory exists at the specified path.
  *
  * @param {string} filePath - The path to the file or directory to check.

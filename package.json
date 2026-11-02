@@ -7,7 +7,7 @@
     "create-module": "tsx scripts/ts/generate_module.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:helpers": "npm test -- modules/helpers",
-    "test:modules": "npm test -- modules --ignore='**/helpers/**'",
+    "test:modules": "npm test -- modules --testPathIgnorePatterns=modules/helpers",
     "test:watch": "npm test -- --watch",
     "test:module": "npm test -- --testPathPatterns=modules/$npm_config_module",
     "test:coverage": "npm test -- --coverage",
@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@jest/globals": "^30.5.2",
-    "glob": "^11.0.2",
     "inquirer": "^12.6.0",
     "js-yaml": "^4.1.0"
   },
