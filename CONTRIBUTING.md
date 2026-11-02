@@ -75,7 +75,7 @@ renders each module's post from the built module (`dist/STORE_POST.md`); its ima
 so a post is only valid once that version is released.
 
 `scripts/ts/store/__tests__/storePost.contract.test.ts` runs every post through Bubble Card's own store parser, vendored
-in `testing/upstream/bubble-card` (see `VERSION` there). To move to a newer Bubble Card release, clone it and run
+in `scripts/ts/upstream/bubble-card` (see `VERSION` there). To move to a newer Bubble Card release, clone it and run
 `npx tsx scripts/ts/upstream/vendorStoreParser.ts <checkout>`.
 
 Publishing the posts is still manual: copy `dist/STORE_POST.md` over the module's discussion post after its release.

@@ -9,7 +9,7 @@ coverage/
 reports/
 
 # Vendored upstream code, kept byte-for-byte
-testing/upstream/
+scripts/ts/upstream/bubble-card/
 
 # Template files with placeholders that break when formatted
 modules/templates/schema_template.yaml

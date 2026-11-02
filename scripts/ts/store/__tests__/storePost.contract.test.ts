@@ -1,13 +1,13 @@
 /**
  * @jest-environment node
  */
-// Runs every module's store post through Bubble Card's own store parser (vendored in testing/upstream/bubble-card,
+// Runs every module's store post through Bubble Card's own store parser (vendored in scripts/ts/upstream/bubble-card,
 // see VERSION there), so a post that builds is a post the store reads as intended.
 import path from "node:path";
 import { load } from "js-yaml";
 import storeYaml from "store-js-yaml";
-import { parseDiscussionsREST } from "../../../../testing/upstream/bubble-card/parser.js";
-import { _compareVersions, getAvailableCardTypes } from "../../../../testing/upstream/bubble-card/store-shim.js";
+import { parseDiscussionsREST } from "../../upstream/bubble-card/parser.js";
+import { _compareVersions, getAvailableCardTypes } from "../../upstream/bubble-card/store-shim.js";
 import { type BuiltModule, buildModule, findModuleFolders } from "../../build/buildModule";
 import { modulesDir } from "../../paths";
 import { CARD_NAMES, assetUrl, releaseTag, renderStorePost } from "../storePost";
