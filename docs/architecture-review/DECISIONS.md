@@ -145,3 +145,16 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
      include the `exists` fix); 3. `hasChanged` gating (read all inputs every pass, gate only DOM writes, since Bubble
      Card's tracking-proxy `hass` registers dependencies on reads; keep calling `showProgress` each pass). An earlier
      `hasChanged` session was started from the pre-dependency prompt and may be based on pre-refactor `main`.
+- **Stack merged** (2026-11-02): #22 → #21 → #20 rebase-merged top-down into their bases, then #19 into `main`
+  (`9f9f1a7`), so `main` got one push. Combined tree verified identical to the tested #22 head (1,341 tests).
+- **Release did not happen**: run #56 "succeeded" but skipped testing and releasing. Its change detection diffed
+  against the last successful run's SHA, which was empty, so it saw no changes. Module tests also only ran for
+  "changed" modules, with `continue-on-error`.
+- **#17 merged** (overlay scroll fix); follow-up delays the collapse until the fade-out ends; `sub_button_wheel` 1.3.1.
+- **Workflow overhaul** (branch `claude/affectionate-maxwell-rouon6`, restarted from `main`): `ci.yml` on PRs and
+  before releases (format, tsc, full tests, build); `release.yaml` releases every module version without a
+  `<id>/v<version>` release, with notes = CHANGELOG entries since the last release (pending: icon 1.7.3, separator
+  1.2.2, timeline 1.6.1, wheel 1.3.1). Stale policy (user decisions): PRs 60/7; waiting-for-feedback issues 14/7 with
+  a reply clearing the label; other issues stale at 90 days, never closed; assigned items exempt; runs on activity plus
+  `gh workflow enable` on each push to `main` (both scheduled workflows were `disabled_inactivity`). Progress-check
+  nags removed. Cleanup: angleUtils, readOrEmpty, glob dependency, test:modules flag, Jest config, Dependabot (actions).
