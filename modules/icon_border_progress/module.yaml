@@ -3,8 +3,6 @@ module_info:
   name: Icon Border Progress
   version: 1.7.3
   creator: lsmarsden
-  link: >-
-    https://github.com/lsmarsden/bubble-card-modules/tree/main/icon_border_progress
   supported:
     - button
     - climate
@@ -17,3 +15,6 @@ module_info:
   code_file: code.js
   styles: styles.css
   editor_file: editor.yaml
+  screenshots:
+    - file: assets/icon_border_preview.png
+      alt: Icon Border Progress preview

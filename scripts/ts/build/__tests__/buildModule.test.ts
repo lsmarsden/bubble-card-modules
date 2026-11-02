@@ -62,7 +62,7 @@ describe("buildModule", () => {
       name: "Demo",
       version: "v1.2.3",
       creator: "me",
-      link: "https://github.com/lsmarsden/bubble-card-modules/tree/main/demo_mod",
+      link: "https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/demo_mod",
       supported: ["button"],
       description: "<p>Demo</p>",
       editor: [{ name: "label", selector: { text: {} } }],
@@ -77,6 +77,14 @@ describe("buildModule", () => {
     const def = await definition();
     expect(def.link).toBe("https://example.com");
     expect(def.editor).toEqual([{ name: "label" }]);
+  });
+
+  it("accepts screenshots that exist and reports the module folder", async () => {
+    write("modules/demo_mod/assets/shot.png", "");
+    write("modules/demo_mod/module.yaml", moduleYaml({ screenshots: [{ file: "assets/shot.png", alt: "Shot" }] }));
+    const built = await buildModule(moduleDir);
+    expect(built.folder).toBe("demo_mod");
+    expect(built.info.screenshots).toEqual([{ file: "assets/shot.png", alt: "Shot" }]);
   });
 
   it("bundles imported helpers, tree-shaking unused ones", async () => {
@@ -116,6 +124,13 @@ describe("buildModule", () => {
     ["an invalid version", moduleYaml({ version: "1.2" }), /Invalid or missing version for module demo_mod/],
     ["supported not a list", moduleYaml({ supported: "button" }), /Supported must be an array/],
     ["a missing file reference", moduleYaml({ code_file: "" }), /Missing code_file/],
+    ["screenshots not a list", moduleYaml({ screenshots: "a.png" }), /Screenshots must be a list/],
+    ["a screenshot without alt text", moduleYaml({ screenshots: [{ file: "a.png" }] }), /needs a file and alt text/],
+    [
+      "a screenshot that doesn't exist",
+      moduleYaml({ screenshots: [{ file: "assets/nope.png", alt: "Nope" }] }),
+      /Screenshot assets\/nope.png of module demo_mod does not exist/,
+    ],
   ])("rejects module.yaml with %s", async (_, content, error) => {
     write("modules/demo_mod/module.yaml", content);
     await expect(buildModule(moduleDir)).rejects.toThrow(error);

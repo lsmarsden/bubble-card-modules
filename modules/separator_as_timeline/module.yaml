@@ -3,10 +3,12 @@ module_info:
   name: Separator as Timeline
   version: 1.6.1
   creator: lsmarsden
-  link: https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_timeline
   supported:
     - separator
   description_file: module_store_description.html
   code_file: code.js
   styles: styles.css
   editor_file: editor.yaml
+  screenshots:
+    - file: assets/TimelineUse.gif
+      alt: Separator as Timeline in use

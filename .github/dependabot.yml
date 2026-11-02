@@ -24,5 +24,7 @@ updates:
       # Types must match the Node version in .nvmrc; bump both together.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # Pinned to the js-yaml Bubble Card ships; scripts/ts/upstream/vendorStoreParser.ts says when to move it.
+      - dependency-name: "store-js-yaml"
     commit-message:
       prefix: "deps"

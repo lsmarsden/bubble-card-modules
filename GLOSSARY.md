@@ -18,6 +18,12 @@ Domain terms used in code, tests and docs. Use these names; don't invent synonym
   sizes, the clock), then gates only the writes. Each gate also compares the DOM it owns (nodes it created, styles and
   classes it sets), so it redraws whatever something else removed.
 
+- **Module store**: Bubble Card's in-editor catalogue of modules. It reads the posts in Clooos/Bubble-Card's "Share
+  your Modules" discussion category through the GitHub API, cached for 24 hours per browser.
+- **Store post**: a module's discussion post in that category (`scripts/ts/store/storePost.ts`). The store installs its
+  first module YAML block as written, shows its `version` (an update badge when it is newer than the installed one),
+  and previews its first https image. Only the post's author can edit it.
+
 ## Progress
 
 - **Progress source**: what progress is read from: an entity, `entity[attribute]`, a `timer` entity, or a raw value.

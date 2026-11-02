@@ -37,6 +37,7 @@
     "jest-html-reporter": "^4.4.2",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
+    "store-js-yaml": "npm:js-yaml@4.3.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
