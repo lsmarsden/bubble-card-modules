@@ -1,36 +1,8 @@
 /**
  * @jest-environment node
  */
-import { dump } from "js-yaml";
-import type { BuiltModule, ModuleInfo } from "../../build/buildModule";
 import { DISCUSSION_BODY_LIMIT, GENERATED_MARKER, assetUrl, releaseTag, renderStorePost } from "../storePost";
-
-const info = (overrides: Partial<ModuleInfo> = {}): ModuleInfo => ({
-  id: "demo_mod",
-  name: "Demo Module",
-  version: "1.2.3",
-  creator: "someone",
-  supported: ["button", "pop-up"],
-  description_file: "description.html",
-  code_file: "code.js",
-  styles: "styles.css",
-  editor_file: "editor.yaml",
-  ...overrides,
-});
-
-const built = (overrides: Partial<ModuleInfo> = {}, definition: Record<string, unknown> = {}): BuiltModule => {
-  const moduleInfo = info(overrides);
-  const yaml = dump({
-    [moduleInfo.id]: {
-      name: moduleInfo.name,
-      version: `v${moduleInfo.version}`,
-      description: "<div>\n    <p>\n        Does a thing.\n\n    </p>\n</div>",
-      code: "${(() => {})()}",
-      ...definition,
-    },
-  });
-  return { id: moduleInfo.id, folder: "demo_folder", info: moduleInfo, yaml, warnings: [] };
-};
+import { builtModule as built } from "./fixtures";
 
 describe("releaseTag", () => {
   it("is <id>/v<version>, the tag the release workflow creates", () => {

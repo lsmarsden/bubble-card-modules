@@ -10,6 +10,7 @@ import { parseDiscussionsREST } from "../../upstream/bubble-card/parser.js";
 import { _compareVersions, getAvailableCardTypes } from "../../upstream/bubble-card/store-shim.js";
 import { type BuiltModule, buildModule, findModuleFolders } from "../../build/buildModule";
 import { modulesDir } from "../../paths";
+import { findLivePost } from "../storeListing";
 import { CARD_NAMES, assetUrl, releaseTag, renderStorePost } from "../storePost";
 
 const folders = await findModuleFolders(modulesDir);
@@ -20,6 +21,7 @@ const modules: Record<string, BuiltModule> = Object.fromEntries(
 // What GET /repos/Clooos/Bubble-Card/discussions returns for the post, as far as the store reads it.
 const asDiscussion = (body: string) => ({
   number: 1,
+  node_id: "D_1",
   title: "[JS+Editor Module] Title the store ignores",
   html_url: "https://github.com/Clooos/Bubble-Card/discussions/1",
   body,
@@ -66,6 +68,14 @@ describe.each(folders)("the store post for %s", (folder) => {
     const [first] = module.info.screenshots ?? [];
     expect(first).toBeDefined();
     expect(parse().imageUrl).toBe(assetUrl(module.folder, releaseTag(module.id, module.info.version), first.file));
+  });
+
+  it("is found again as this module's live post once published", () => {
+    const body = renderStorePost(module);
+    expect(findLivePost([asDiscussion(body)], module.id, module.info.creator)).toMatchObject({
+      version: `v${module.info.version}`,
+      body,
+    });
   });
 
   it("shows as an update to the previous version", () => {

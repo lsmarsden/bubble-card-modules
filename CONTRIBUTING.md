@@ -78,7 +78,13 @@ so a post is only valid once that version is released.
 in `scripts/ts/upstream/bubble-card` (see `VERSION` there). To move to a newer Bubble Card release, clone it and run
 `npx tsx scripts/ts/upstream/vendorStoreParser.ts <checkout>`.
 
-Publishing the posts is still manual: copy `dist/STORE_POST.md` over the module's discussion post after its release.
+Every CI run has a **Module store preview** job: it finds each module's live post the way the store does
+(`scripts/ts/store/storeListing.ts`), and its job summary shows what publishing would do (create, update or leave
+each post), the post diff and the release comment (`scripts/ts/store/storePlan.ts`). A post is only updated for a
+newer version. Run it locally with `GH_TOKEN=<token> npx tsx scripts/ts/store/preview_store.ts`.
+
+Publishing itself is still manual: after a release, copy `dist/STORE_POST.md` over the module's post and comment the
+changes.
 
 ## 🤖 Automation
 
