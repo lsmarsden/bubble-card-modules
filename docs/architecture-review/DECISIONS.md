@@ -176,3 +176,27 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
 - **Repo settings (applied by the user)**: ruleset "Protect main" (PR required, required check "Format, types, tests,
   build", no force push, no deletion), auto-delete merged branches, merge commits off, Dependabot security alerts and
   fixes. Merged branches deleted; remaining: `main`, this branch, `copilot/fix-3` (open PR #4).
+
+## Module store publishing (2026-11-02)
+
+Question: can the manual "update the GitHub discussion" step be automated?
+
+- How the store works (Bubble Card v3.4.3): unauthenticated `GET /repos/Clooos/Bubble-Card/discussions`, keeps category
+  "Share your Modules", installs the first module ```yaml block as written, update badge from YAML `version`, preview
+  = first https image, 24h browser cache. Discussion body limit 65,536 chars; our posts are 32–37 KB.
+- Posts live in Clooos's repo and only the author can edit them, so writing needs a **classic** PAT (`public_repo`) of
+  lsmarsden; fine-grained PATs cannot write to public repos you aren't a member of.
+- **Decision: option A** (full automation), behind a manual approval button until we trust it. Incremental steps,
+  each testable without touching the real posts:
+  1. Renderer + contract tests against the vendored upstream parser (done: commit 30ba69e on
+     claude/affectionate-maxwell-rouon6).
+  2. Read-only preview in CI: live post vs rendered post diff in the job summary (no secret).
+  3. Publisher, dry-run by default, tested against a sandbox discussion in our own repo (GITHUB_TOKEN).
+  4. Publish to the real store from a protected `module-store` environment with required approval; verify through
+     the store's own endpoint and parser afterwards.
+- **Update only on new versions.** Re-running the release/publish re-renders and overwrites the post (idempotent).
+- **Release comment** with the CHANGELOG entry on each publish (edits don't notify followers; comments do).
+- Live posts are behind: icon_border_progress #1525 shows v1.7.0 (repo 1.7.3), sub_button_wheel #1728 shows v1.3.0
+  (repo 1.3.2). Screenshots for the posts come from each module's assets/ folder, declared in module.yaml.
+- Found on the way: the module `link` 404'd (tree/main/<id> instead of tree/main/modules/<id>); fixed, ships with the
+  next release of each module.
