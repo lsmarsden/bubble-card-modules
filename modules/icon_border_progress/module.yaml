@@ -1,7 +1,7 @@
 module_info:
   id: icon_border_progress
   name: Icon Border Progress
-  version: 1.7.3
+  version: 1.7.4
   creator: lsmarsden
   supported:
     - button
