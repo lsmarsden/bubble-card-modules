@@ -8,9 +8,11 @@ dist/
 coverage/
 reports/
 
+# Vendored upstream code, kept byte-for-byte
+testing/upstream/
+
 # Template files with placeholders that break when formatted
 modules/templates/schema_template.yaml
-modules/templates/SHARE_MODULE_TEMPLATE.md
 modules/templates/README_TEMPLATE.md
 
 # OS files

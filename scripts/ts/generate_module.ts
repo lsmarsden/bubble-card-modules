@@ -53,12 +53,12 @@ async function generateModule() {
       name: moduleInfo.name,
       version: moduleInfo.version,
       creator: "lsmarsden",
-      link: `https://github.com/lsmarsden/bubble-card-modules/tree/main/${moduleInfo.id}`,
       supported: moduleInfo.supported,
       description_file: "module_store_description.html",
       code_file: "code.js",
       styles: "styles.css",
       editor_file: "editor.yaml",
+      screenshots: [{ file: "assets/preview.png", alt: moduleInfo.name }],
     },
   };
 

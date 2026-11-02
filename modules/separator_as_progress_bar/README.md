@@ -7,7 +7,7 @@
 ---
 
 ![exampleStyles.gif](assets/exampleStyles.gif)
-![lowPctExample.gif](assets/lowPctExample.gif)
+![lowPctExample.gif](assets/LowPctExample.gif)
 ![highPctExample.gif](assets/highPctExample.gif)
 
 This module transforms the standard separator line into a sleek, customisable progress

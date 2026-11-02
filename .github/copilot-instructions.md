@@ -28,11 +28,12 @@ bubble-card-modules/
 │   │   ├── paths.ts           # Project paths
 │   │   ├── generate_module.ts # New module scaffolding
 │   │   ├── generate_docs.ts   # Schema documentation generator
-│   │   ├── share_module.ts    # Module sharing utilities
+│   │   ├── store/storePost.ts # Module store post (dist/STORE_POST.md), contract-tested against Bubble Card's parser
+│   │   ├── upstream/          # Vendors Bubble Card's store parser into testing/upstream
 │   │   └── helpers/           # File system and logging utilities
 │   ├── py/                    # Python utilities
 │   └── *.sh                   # Shell scripts for setup/reports
-├── testing/                   # Card harness, built-artifact loader, Jest global setup
+├── testing/                   # Card harness, built-artifact loader, Jest global setup, vendored upstream code
 ├── reports/                   # Generated test reports
 │   ├── test-report.html       # Human-readable test results
 │   └── junit.xml              # CI/CD compatible test results

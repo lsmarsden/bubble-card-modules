@@ -3,11 +3,16 @@ module_info:
   name: Separator As Progress Bar
   version: 1.2.2
   creator: lsmarsden
-  link: >-
-    https://github.com/lsmarsden/bubble-card-modules/tree/main/separator_as_progress_bar
   supported:
     - separator
   description_file: module_store_description.html
   code_file: code.js
   styles: styles.css
   editor_file: editor.yaml
+  screenshots:
+    - file: assets/exampleStyles.gif
+      alt: Progress bar styles
+    - file: assets/LowPctExample.gif
+      alt: Progress bar at a low percentage
+    - file: assets/highPctExample.gif
+      alt: Progress bar at a high percentage

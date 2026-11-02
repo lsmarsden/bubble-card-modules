@@ -14,10 +14,19 @@ export interface ModuleInfo {
   code_file: string;
   styles: string;
   editor_file: string;
+  /** Images under the module folder, shown in the module store post. The first is the store's preview image. */
+  screenshots?: Screenshot[];
+}
+
+export interface Screenshot {
+  file: string;
+  alt: string;
 }
 
 export interface BuiltModule {
   id: string;
+  /** The module's folder name under modules/. */
+  folder: string;
   info: ModuleInfo;
   /** The module YAML users import into Bubble Card. */
   yaml: string;
@@ -58,6 +67,7 @@ export async function buildModule(moduleDir: string): Promise<BuiltModule> {
   };
   const info = parsed?.module_info;
   validateModuleInfo(info, folder);
+  await assertScreenshotsExist(moduleDir, info);
 
   const read = (file: string) => fs.readFile(path.join(moduleDir, file), "utf8").catch(() => "");
   const [description, styles, editorYaml] = await Promise.all([
@@ -77,7 +87,7 @@ export async function buildModule(moduleDir: string): Promise<BuiltModule> {
       name: info.name,
       version: `v${info.version}`,
       creator: info.creator,
-      link: info.link || `https://github.com/lsmarsden/bubble-card-modules/tree/main/${folder}`,
+      link: info.link || `https://github.com/lsmarsden/bubble-card-modules/tree/main/modules/${folder}`,
       supported: info.supported || [],
       description: description.trim(),
       code: moduleCode,
@@ -85,7 +95,7 @@ export async function buildModule(moduleDir: string): Promise<BuiltModule> {
     },
   };
 
-  return { id: info.id, info, yaml: dump(output, { lineWidth: 120 }), warnings };
+  return { id: info.id, folder, info, yaml: dump(output, { lineWidth: 120 }), warnings };
 }
 
 async function bundleCode(moduleDir: string, info: ModuleInfo) {
@@ -121,6 +131,15 @@ function assertNoJinja(code: string, id: string) {
   );
 }
 
+async function assertScreenshotsExist(moduleDir: string, info: ModuleInfo) {
+  for (const shot of info.screenshots ?? []) {
+    if (!shot?.file || !shot.alt) throw new Error(`Each screenshot of module ${info.id} needs a file and alt text`);
+    await fs.access(path.join(moduleDir, shot.file)).catch(() => {
+      throw new Error(`Screenshot ${shot.file} of module ${info.id} does not exist`);
+    });
+  }
+}
+
 function validateModuleInfo(info: ModuleInfo | undefined, folder: string): asserts info is ModuleInfo {
   if (!info) throw new Error(`Missing module_info in ${folder}/module.yaml`);
   if (!info.id || !/^[a-z0-9_]+$/.test(info.id)) {
@@ -131,6 +150,9 @@ function validateModuleInfo(info: ModuleInfo | undefined, folder: string): asser
   }
   if (!Array.isArray(info.supported)) {
     throw new Error(`Supported must be an array for module ${info.id}`);
+  }
+  if (info.screenshots !== undefined && !Array.isArray(info.screenshots)) {
+    throw new Error(`Screenshots must be a list for module ${info.id}`);
   }
   for (const key of ["description_file", "code_file", "styles", "editor_file"] as const) {
     if (!info[key]) throw new Error(`Missing ${key} in module info for ${info.id}`);
