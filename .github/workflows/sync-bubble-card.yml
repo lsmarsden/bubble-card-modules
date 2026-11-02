@@ -1,0 +1,93 @@
+name: Sync Bubble Card store parser
+
+# Keeps the vendored copy of Bubble Card's module store parser (scripts/ts/upstream/bubble-card) on Bubble Card's
+# latest release, so the store post contract tests and the store preview read posts the way users' store does. When a
+# newer release is out, this re-vendors it and opens a pull request; CI on that pull request shows whether our posts
+# still read correctly. Run it by hand with a tag to vendor that release instead (e.g. to try the pull request path).
+
+on:
+  schedule:
+    - cron: "41 4 * * 1" # Mondays
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Bubble Card release tag to vendor (default the latest release)
+        required: false
+
+permissions:
+  actions: write # start CI on the sync branch
+  contents: write # push the sync branch
+  pull-requests: write # open the pull request
+
+jobs:
+  sync:
+    name: Sync store parser
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare with Bubble Card's latest release
+        id: release
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          latest=${REQUESTED_TAG:-$(gh release view --repo Clooos/Bubble-Card --json tagName --jq .tagName)}
+          vendored=$(head -n 1 scripts/ts/upstream/bubble-card/VERSION | cut -d ' ' -f 1)
+          branch="bubble-card-sync/$latest"
+          echo "Vendored $vendored, latest release $latest"
+          echo "tag=$latest" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$vendored" ]; then
+            echo "::notice::Store parser is current ($vendored)."
+          elif git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "::notice::$branch already exists; see its pull request."
+          else
+            echo "outdated=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.release.outputs.outdated
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Vendor the new release
+        if: steps.release.outputs.outdated
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          npm ci
+          git clone --depth 1 --branch "$TAG" https://github.com/Clooos/Bubble-Card "$RUNNER_TEMP/bubble-card"
+          # The parser must read YAML with the js-yaml version Bubble Card ships.
+          yaml=$(node -p "require('$RUNNER_TEMP/bubble-card/package-lock.json').packages['node_modules/js-yaml'].version")
+          npm install --save-dev --save-exact "store-js-yaml@npm:js-yaml@$yaml"
+          npx tsx scripts/ts/upstream/vendorStoreParser.ts "$RUNNER_TEMP/bubble-card"
+
+      - name: Open a pull request
+        if: steps.release.outputs.outdated
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          BRANCH: ${{ steps.release.outputs.branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -m "Vendor Bubble Card $TAG store parser"
+          git push origin "$BRANCH"
+          # Pull requests opened with this token don't trigger pull_request workflows, so start CI on the branch.
+          gh workflow run ci.yml --ref "$BRANCH"
+          gh pr create --head "$BRANCH" --title "Vendor Bubble Card $TAG store parser" --body "$(cat <<EOF
+          Bubble Card [$TAG](https://github.com/Clooos/Bubble-Card/releases/tag/$TAG) is out. This updates the vendored
+          copy of its module store parser in \`scripts/ts/upstream/bubble-card\` (and \`store-js-yaml\`, if Bubble Card
+          moved to another js-yaml).
+
+          CI runs the store post contract tests against it. If they fail, the store reads our posts differently from
+          now on: fix the store post (\`scripts/ts/store/storePost.ts\`) here before merging. Also check the diff for
+          changes to how the store finds, versions or installs modules.
+
+          Opened by \`.github/workflows/sync-bubble-card.yml\`.
+          EOF
+          )"
