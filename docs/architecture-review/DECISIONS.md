@@ -158,3 +158,14 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
   a reply clearing the label; other issues stale at 90 days, never closed; assigned items exempt; runs on activity plus
   `gh workflow enable` on each push to `main` (both scheduled workflows were `disabled_inactivity`). Progress-check
   nags removed. Cleanup: angleUtils, readOrEmpty, glob dependency, test:modules flag, Jest config, Dependabot (actions).
+- **#23 merged; release run #58 worked**: all jobs green; released icon_border_progress v1.7.3 (notes include
+  v1.7.2 and v1.7.1), separator_as_progress_bar v1.2.2, separator_as_timeline v1.6.1, sub_button_wheel v1.3.1. The stale
+  workflow was re-enabled (state `active`). Branch deletion for the three task branches is refused by the session's
+  git proxy (403 policy); the user deletes them in the UI.
+- **#14 was closed by accident**: #23's description said "would have closed #14", which GitHub treats as a closing
+  keyword. Replacement: #30 (sub_button_wheel 1.3.2: fixed-position honours `position` as slot 1-8; no writes into
+  the frozen HA config; configs and buttons kept aligned when a sub-button is missing).
+- **First Dependabot run**: #24 (actions majors) CI green, held for review (auto-merge guard verified: merge step
+  skipped). #25 (npm minor/patch) fails format check (prettier 3.9 reformats icon_border_progress CHANGELOG). #26
+  (inquirer 14), #27 (@types/node 26) green, held. #28 (chalk 6) fails tsc (needs moduleResolution bundler/node16).
+  #29 (js-yaml 5) fails: no default export (use named `load`/`dump`).
