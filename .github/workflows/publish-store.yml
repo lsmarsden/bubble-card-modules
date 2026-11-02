@@ -4,6 +4,11 @@ name: Publish to module store
 # discussion and updates the post, or creates it for a new module, then reads it back the way Bubble Card's store does.
 # Run by hand. Dry run unless "publish" is ticked; the report is in the job summary.
 #
+# Target "store" publishes to Bubble Card's module store (Clooos/Bubble-Card's "Share your Modules" category) as
+# lsmarsden, who authored the posts. It runs in the protected "module-store" environment: each run waits for
+# lsmarsden's approval, and only that environment holds MODULE_STORE_TOKEN (a classic token with public_repo; GitHub
+# only lets classic tokens write to repositories you don't own).
+#
 # Target "sandbox" writes to this repository's "Share your Modules" discussion category with GITHUB_TOKEN, to rehearse
 # a publish. "Seed" first copies each module's live post from Clooos/Bubble-Card into the sandbox, so the rehearsal
 # updates the same posts the real publish would.
@@ -14,14 +19,14 @@ on:
       target:
         description: Where to publish
         type: choice
-        options: [sandbox]
+        options: [sandbox, store]
         default: sandbox
       publish:
         description: Write to GitHub (otherwise a dry run)
         type: boolean
         default: false
       seed:
-        description: "Sandbox: copy each module's live store post into the sandbox first"
+        description: "Sandbox only: copy each module's live store post into the sandbox first"
         type: boolean
         default: false
       force:
@@ -65,6 +70,33 @@ jobs:
           STORE_REPOSITORY: ${{ github.repository }}
           STORE_AUTHOR: github-actions[bot]
           SEED_FROM: ${{ inputs.seed && 'Clooos/Bubble-Card' || '' }}
+          PUBLISH: ${{ inputs.publish }}
+          FORCE: ${{ inputs.force }}
+          MODULES: ${{ inputs.modules }}
+
+  store:
+    name: Publish to the module store
+    if: inputs.target == 'store'
+    runs-on: ubuntu-latest
+    environment: module-store
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Publish
+        shell: bash # -o pipefail: a failed publish fails the step despite tee
+        run: npx tsx scripts/ts/store/publish_store.ts | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ secrets.MODULE_STORE_TOKEN }}
+          STORE_REPOSITORY: Clooos/Bubble-Card
           PUBLISH: ${{ inputs.publish }}
           FORCE: ${{ inputs.force }}
           MODULES: ${{ inputs.modules }}
