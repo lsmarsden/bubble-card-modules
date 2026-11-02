@@ -169,3 +169,10 @@ Source: `Clooos/Bubble-Card` `src/modules/module-documentation.md`, `src/tools/s
   skipped). #25 (npm minor/patch) fails format check (prettier 3.9 reformats icon_border_progress CHANGELOG). #26
   (inquirer 14), #27 (@types/node 26) green, held. #28 (chalk 6) fails tsc (needs moduleResolution bundler/node16).
   #29 (js-yaml 5) fails: no default export (use named `load`/`dump`).
+- **#30 merged** (sub_button_wheel 1.3.2 released); comment posted on #14 pointing to it.
+- **#31 merged**: every dependency and action at latest; Node 26 via `.nvmrc`; TypeScript 7 for type checks only, with
+  ts-jest replaced by an esbuild Jest transformer (`testing/tsTransform.cjs`); js-yaml 5 named imports; chalk 6 with
+  `moduleResolution: "bundler"`; direct jsdom dependency removed. Closed Dependabot #24–#29. Release run #60 green.
+- **Repo settings (applied by the user)**: ruleset "Protect main" (PR required, required check "Format, types, tests,
+  build", no force push, no deletion), auto-delete merged branches, merge commits off, Dependabot security alerts and
+  fixes. Merged branches deleted; remaining: `main`, this branch, `copilot/fix-3` (open PR #4).
