@@ -186,6 +186,7 @@ Question: can the manual "update the GitHub discussion" step be automated?
   = first https image, 24h browser cache. Discussion body limit 65,536 chars; our posts are 32–37 KB.
 - Posts live in Clooos's repo and only the author can edit them, so writing needs a **classic** PAT (`public_repo`) of
   lsmarsden; fine-grained PATs cannot write to public repos you aren't a member of.
+- Plan and progress: `docs/module-store/PLAN.md`.
 - **Decision: option A** (full automation), behind a manual approval button until we trust it. Incremental steps,
   each testable without touching the real posts:
   1. Renderer + contract tests against the vendored upstream parser (done: commit 30ba69e on
