@@ -75,7 +75,9 @@ renders each module's post from the built module (`dist/STORE_POST.md`); its ima
 so a post is only valid once that version is released.
 
 `scripts/ts/store/__tests__/storePost.contract.test.ts` runs every post through Bubble Card's own store parser, vendored
-in `scripts/ts/upstream/bubble-card` (see `VERSION` there). To move to a newer Bubble Card release, clone it and run
+in `scripts/ts/upstream/bubble-card` (see `VERSION` there). Every Monday, `.github/workflows/sync-bubble-card.yml`
+checks for a newer Bubble Card release and, if there is one, vendors it and opens a pull request; its CI shows whether
+the store still reads our posts correctly. By hand: clone a release and run
 `npx tsx scripts/ts/upstream/vendorStoreParser.ts <checkout>`.
 
 Every CI run has a **Module store preview** job: it finds each module's live post the way the store does
@@ -90,5 +92,6 @@ changes.
 
 - **Dependabot** opens update pull requests for npm (weekly) and GitHub Actions (monthly). Once CI passes, `ci.yml`
   merges minor and patch updates automatically; major updates wait for review.
+- **Bubble Card store parser**: a weekly pull request when Bubble Card releases (see [Module store](#-module-store)).
 - **Labels**: pull requests are labelled by the files they change (`module:*`, `type:testing`, `type:documentation`).
 - **Stale issues and pull requests**: see [.github/ISSUE_MANAGEMENT.md](.github/ISSUE_MANAGEMENT.md#stale-issues-and-pull-requests).
