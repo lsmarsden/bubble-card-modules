@@ -3,6 +3,7 @@ name: Release
 # On every push to main: run CI, then publish a GitHub release for each module whose version in module.yaml has no
 # release yet (tag `<module_id>/v<version>`). Bumping a module's version is the release signal; anything else is a
 # no-op, so the workflow is safe to re-run. Release notes are that module's CHANGELOG entries since its last release.
+# Each release carries the built module YAML and its module store post (STORE_POST.md), which publishing uses.
 
 on:
   push:
@@ -56,7 +57,8 @@ jobs:
         run: |
           jq -c '.[]' "$RUNNER_TEMP/releases/plan.json" | while read -r release; do
             tag=$(jq -r .tag <<<"$release")
-            gh release create "$tag" "$(jq -r .asset <<<"$release")" \
+            mapfile -t assets < <(jq -r '.assets[]' <<<"$release")
+            gh release create "$tag" "${assets[@]}" \
               --title "$(jq -r .title <<<"$release")" \
               --notes-file "$(jq -r .notesFile <<<"$release")" \
               --target "$GITHUB_SHA"

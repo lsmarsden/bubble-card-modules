@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { STORE_POST_FILE } from "../../store/storePost";
 import { changelogEntries, planReleases, releaseNotes } from "../releasePlan";
 
 const changelog = `# Changelog
@@ -106,7 +107,10 @@ describe("planReleases", () => {
         version: "1.2.0",
         tag: "alpha/v1.2.0",
         title: "ALPHA v1.2.0",
-        asset: path.join(modulesDir, "alpha", "dist", "alpha.yaml"),
+        assets: [
+          path.join(modulesDir, "alpha", "dist", "alpha.yaml"),
+          path.join(modulesDir, "alpha", "dist", STORE_POST_FILE),
+        ],
         notes: releaseNotes(changelog, "1.2.0", ["1.1.0"]),
       },
     ]);

@@ -4,6 +4,9 @@ import type { BuiltModule } from "../build/buildModule";
 /** The repository modules are released from. Screenshots are linked from its release tags. */
 export const REPOSITORY = "lsmarsden/bubble-card-modules";
 
+/** The store post's file name, in each module's dist/ folder and on each release. */
+export const STORE_POST_FILE = "STORE_POST.md";
+
 /** GitHub rejects a discussion body longer than this many characters. */
 export const DISCUSSION_BODY_LIMIT = 65536;
 
