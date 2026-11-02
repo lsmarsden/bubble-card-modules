@@ -77,7 +77,8 @@ No secret, publishes nothing.
       `lsmarsden/bubble-card-modules#123`). Store newer than repo → error.
 - [x] `renderPreview(plans, diff)` (`storePreview.ts`) + `preview_store.ts` CLI; non-required "Module store preview"
       CI job (output teed to the log too).
-- [ ] Check the first real run shows the known posts and their versions (PR #35's job).
+- [x] First real run (PR #35) found all four posts: icon_border_progress v1.7.0, separator_as_progress_bar v1.1.1,
+      separator_as_timeline v1.5.0, sub_button_wheel v1.3.0. All four would update; comments list the missed versions.
 
 ### 3. Publisher, dry run by default, sandbox first
 
