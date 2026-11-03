@@ -102,5 +102,8 @@ re-run: a version's comment is never posted twice and a post that already reads 
 - **Dependabot** opens update pull requests for npm (weekly) and GitHub Actions (monthly). Once CI passes, `ci.yml`
   merges minor and patch updates automatically; major updates wait for review.
 - **Bubble Card store parser**: a weekly pull request when Bubble Card releases (see [Module store](#-module-store)).
+- **Dependency overrides** (`overrides` in `package.json`): Jest 30 still depends on `glob` 10–13 and `minimatch` 9–10,
+  which have security advisories (GHSA-3g3m-2fjr-6pw4, GHSA-g3hv-75wg-m249). The overrides force the fixed majors
+  (`glob` 14.0.2+, `minimatch` 11.0.1+); remove them once Jest depends on fixed versions itself.
 - **Labels**: pull requests are labelled by the files they change (`module:*`, `type:testing`, `type:documentation`).
 - **Stale issues and pull requests**: see [.github/ISSUE_MANAGEMENT.md](.github/ISSUE_MANAGEMENT.md#stale-issues-and-pull-requests).

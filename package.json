@@ -45,5 +45,9 @@
     "**/*.{js,ts,yaml,yml,md,json}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "glob": "^14.0.2",
+    "minimatch": "^11.0.1"
   }
 }
