@@ -100,14 +100,15 @@ No secret, publishes nothing.
       discussions #40–#43 from the live posts (#1525 v1.7.0, #1518 v1.1.1, #1426 v1.5.0, #1728 v1.3.0), commented and
       updated each, verification passed; re-run and forced re-run: "nothing to do" for all four.
 
-### 4. Real store, behind approval — PR #44 open
+### 4. Real store, behind approval — PR #44 merged; dry run passed, publish pending
 
 - [x] `store` target in publish-store.yml (job `store`, `environment: module-store`, `GH_TOKEN` from
       `MODULE_STORE_TOKEN`, `STORE_REPOSITORY: Clooos/Bubble-Card`, author defaults to the module creator) — PR #44.
-- [ ] `module-store` environment: deployment branch `main`, required reviewer lsmarsden (id 44576399), secret
-      `MODULE_STORE_TOKEN` (classic PAT, `public_repo`, with expiry). `gh` commands given 2026-11-02; waiting on
-      lsmarsden.
-- [ ] Dry run against the real store (`-f target=store`), then publish (`-f publish=true`).
+- [x] `module-store` environment: deployment branch `main`, required reviewer lsmarsden (id 44576399), secret
+      `MODULE_STORE_TOKEN` (classic PAT, `public_repo`, with expiry). Set up by lsmarsden 2026-11-03.
+- [x] Dry run against the real store (run 9, 2026-11-03): approval gate held the job ~2 min; would comment + update
+      #1525 (v1.7.0 → v1.7.4), #1518 (v1.1.1 → v1.2.3), #1426 (v1.5.0 → v1.6.2), #1728 (v1.3.0 → v1.3.3).
+- [ ] Publish (`-f target=store -f publish=true`) and check the read-back verifies.
 - [x] After publishing, re-read through the store's endpoint + vendored parser; fail if the store wouldn't show the
       new version (built in step 3, `publish_store.ts`).
 - [x] Patch-released all four modules (PR #38) so the first publish catches up the stale posts.
